@@ -1,0 +1,45 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": { "ecmaVersion": 2022, "sourceType": "module", "ecmaFeatures": { "jsx": true } },
+  "plugins": ["@typescript-eslint", "import", "jsx-a11y"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:import/recommended",
+    "plugin:import/typescript",
+    "plugin:jsx-a11y/recommended",
+    "prettier"
+  ],
+  "settings": {
+    "import/resolver": { "typescript": { "project": ["packages/*/tsconfig.json", "apps/*/tsconfig.json"] } },
+    "react": { "version": "detect" }
+  },
+  "rules": {
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }
+    ],
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/consistent-type-imports": ["warn", { "prefer": "type-imports", "fixStyle": "inline-type-imports" }],
+    "no-console": ["error", { "allow": ["warn", "error"] }],
+    "eqeqeq": ["error", "smart"],
+    "import/order": [
+      "warn",
+      {
+        "groups": ["builtin", "external", "internal", "parent", "sibling", "index"],
+        "pathGroups": [{ "pattern": "@cheezious/**", "group": "internal", "position": "before" }],
+        "newlines-between": "always",
+        "alphabetize": { "order": "asc", "caseInsensitive": true }
+      }
+    ],
+    "import/no-unresolved": "off"
+  },
+  "ignorePatterns": ["node_modules", "dist", ".next", "coverage", "*.config.js", "*.config.cjs", "packages/database/generated"],
+  "overrides": [
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/seed/**", "**/scripts/**"],
+      "rules": { "no-console": "off", "@typescript-eslint/no-explicit-any": "off" }
+    }
+  ]
+}

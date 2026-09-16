@@ -1,0 +1,51 @@
+{
+  "name": "cheezious-corporate",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cheezious Corporate Digital Platform — public corporate experience, enterprise CMS and platform API.",
+  "engines": {
+    "node": ">=20.11.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.12.3",
+  "scripts": {
+    "build": "pnpm -r --filter \"./packages/**\" build && pnpm -r --filter \"./apps/**\" build",
+    "build:packages": "pnpm -r --filter \"./packages/**\" build",
+    "dev": "pnpm -r --parallel dev",
+    "dev:web": "pnpm --filter @cheezious/corporate-web dev",
+    "dev:cms": "pnpm --filter @cheezious/cms dev",
+    "dev:api": "pnpm --filter @cheezious/api dev",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css,yml,yaml}\"",
+    "test": "pnpm -r test",
+    "test:unit": "pnpm -r test:unit",
+    "test:e2e": "pnpm --filter @cheezious/corporate-web test:e2e",
+    "db:generate": "pnpm --filter @cheezious/database generate",
+    "db:migrate": "pnpm --filter @cheezious/database migrate",
+    "db:migrate:deploy": "pnpm --filter @cheezious/database migrate:deploy",
+    "db:push": "pnpm --filter @cheezious/database push",
+    "db:seed": "pnpm --filter @cheezious/database seed",
+    "db:reset": "pnpm --filter @cheezious/database reset",
+    "db:studio": "pnpm --filter @cheezious/database studio",
+    "ci": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
+    "clean": "pnpm -r exec rm -rf dist .next node_modules/.cache && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.18.1",
+    "@typescript-eslint/parser": "^8.18.1",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "prettier": "^3.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

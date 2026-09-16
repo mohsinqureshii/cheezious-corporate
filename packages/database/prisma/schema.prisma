@@ -1,0 +1,2735 @@
+// =============================================================================
+// Cheezious Corporate Digital Platform — data model
+//
+// Conventions used throughout:
+//   • cuid() primary keys, `createdAt` / `updatedAt` on every mutable table.
+//   • Authorship columns (`createdById`, `updatedById`, `publishedById`) are kept
+//     on content so the CMS can always answer "who changed this, and when".
+//   • Localisation uses a `translationGroupId`: every locale variant of the same
+//     logical content shares one group id, which keeps slugs, SEO and blocks
+//     fully localisable instead of forcing a shared English slug.
+//   • Versioned content never carries a `published` boolean. It carries a
+//     ContentStatus and a pointer to the ContentVersion the public site serves,
+//     so editing a published page cannot change production until it is published.
+//   • Soft deletion (`deletedAt`) is used wherever an accidental delete would
+//     destroy institutional history.
+// =============================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum Locale {
+  en
+  ur
+}
+
+/// Editorial workflow. Mirrors @cheezious/permissions `ContentStatus`.
+enum ContentStatus {
+  DRAFT
+  IN_REVIEW
+  CHANGES_REQUESTED
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+  UNPUBLISHED
+  ARCHIVED
+}
+
+enum TranslationStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  READY
+  PUBLISHED
+  OUTDATED
+}
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  DISABLED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  RESTORE
+  PUBLISH
+  UNPUBLISH
+  SCHEDULE
+  CANCEL_SCHEDULE
+  APPROVE
+  REQUEST_CHANGES
+  SUBMIT_FOR_REVIEW
+  ARCHIVE
+  LOGIN
+  LOGIN_FAILED
+  LOGOUT
+  PASSWORD_RESET_REQUESTED
+  PASSWORD_RESET_COMPLETED
+  ROLE_ASSIGNED
+  ROLE_REVOKED
+  PERMISSION_CHANGED
+  SETTINGS_CHANGED
+  MEDIA_UPLOADED
+  MEDIA_DELETED
+  EXPORT
+  STATUS_CHANGED
+}
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  AUDIO
+  OTHER
+}
+
+/// Controls whether an asset may be served from the public media centre.
+enum MediaVisibility {
+  PUBLIC_DOWNLOAD
+  CMS_ONLY
+  RESTRICTED
+}
+
+enum PageType {
+  STANDARD
+  LANDING
+  SECTION_INDEX
+  EDITORIAL
+  DOCUMENT_CENTRE
+  CONTACT
+  SYSTEM
+}
+
+enum NavigationLocation {
+  PRIMARY
+  FOOTER
+  UTILITY
+  LEGAL
+  MOBILE_ONLY
+}
+
+enum NavigationItemKind {
+  PAGE
+  EXTERNAL
+  GROUP
+  FEATURED
+}
+
+enum JobStatus {
+  DRAFT
+  OPEN
+  PAUSED
+  CLOSED
+  ARCHIVED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  TEMPORARY
+  APPRENTICESHIP
+}
+
+enum WorkplaceType {
+  ON_SITE
+  HYBRID
+  REMOTE
+}
+
+enum ApplicationStatus {
+  NEW
+  REVIEWING
+  SHORTLISTED
+  INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+  WITHDRAWN
+}
+
+enum SupplierSubmissionStatus {
+  NEW
+  REVIEWING
+  QUALIFIED
+  CONTACTED
+  APPROVED
+  REJECTED
+  ARCHIVED
+}
+
+enum PropertySubmissionStatus {
+  NEW
+  REVIEWING
+  INTERESTING
+  SITE_VISIT
+  ACCEPTED
+  REJECTED
+  ARCHIVED
+}
+
+enum PartnershipSubmissionStatus {
+  NEW
+  REVIEWING
+  IN_DISCUSSION
+  ACCEPTED
+  DECLINED
+  ARCHIVED
+}
+
+enum ContactSubmissionStatus {
+  NEW
+  IN_PROGRESS
+  ANSWERED
+  CLOSED
+  SPAM
+}
+
+enum ContactCategoryKey {
+  CUSTOMER
+  CORPORATE
+  MEDIA
+  CAREERS
+  SUPPLIERS
+  REAL_ESTATE
+  PARTNERSHIPS
+  OTHER
+}
+
+enum PropertyType {
+  HIGH_STREET
+  SHOPPING_MALL
+  STANDALONE
+  FOOD_COURT
+  DRIVE_THROUGH
+  KIOSK
+  COMMERCIAL_PLAZA
+  OTHER
+}
+
+enum OwnershipType {
+  OWNER
+  AUTHORISED_AGENT
+  DEVELOPER
+  OTHER
+}
+
+enum FormFieldType {
+  TEXT
+  TEXTAREA
+  EMAIL
+  PHONE
+  NUMBER
+  SELECT
+  MULTISELECT
+  RADIO
+  CHECKBOX
+  DATE
+  FILE
+  CONSENT
+  HIDDEN
+}
+
+enum ReportType {
+  COMPANY_PROFILE
+  FACT_SHEET
+  IMPACT_REPORT
+  FOOD_SAFETY_OVERVIEW
+  SUPPLIER_CODE
+  POLICY
+  PRESENTATION
+  OTHER
+}
+
+enum PublishingJobKind {
+  PUBLISH
+  UNPUBLISH
+  REINDEX
+  MEDIA_VARIANTS
+  CONTENT_HEALTH_SCAN
+  EXPORT
+  NOTIFICATION
+}
+
+enum PublishingJobStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum NotificationKind {
+  SUBMITTED_FOR_REVIEW
+  CHANGES_REQUESTED
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+  PUBLISH_FAILED
+  TRANSLATION_OUTDATED
+  SUBMISSION_ASSIGNED
+  MENTION
+}
+
+enum SearchDocumentType {
+  PAGE
+  STORY
+  NEWS
+  PRESS_RELEASE
+  PERSON
+  EMPLOYEE_STORY
+  JOB
+  REPORT
+  POLICY
+  INGREDIENT
+  AWARD
+  LOCATION
+}
+
+enum ContentHealthIssueType {
+  MISSING_SEO_TITLE
+  MISSING_META_DESCRIPTION
+  MISSING_OG_IMAGE
+  MISSING_ALT_TEXT
+  BROKEN_INTERNAL_LINK
+  MISSING_TRANSLATION
+  OUTDATED_TRANSLATION
+  EMPTY_REQUIRED_BLOCK
+  UNPUBLISHED_LINKED_CONTENT
+  ORPHAN_PAGE
+  INVALID_REDIRECT
+  PAST_REVIEW_DATE
+  UNPUBLISHED_CHANGES
+}
+
+enum ContentHealthSeverity {
+  INFO
+  WARNING
+  ERROR
+}
+
+// =============================================================================
+// IDENTITY, ACCESS CONTROL AND AUDIT
+// =============================================================================
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String
+  jobTitle     String?
+  passwordHash String?
+  status       UserStatus @default(INVITED)
+  avatarId     String?
+
+  lastLoginAt      DateTime?
+  lastLoginIp      String?
+  failedLoginCount Int       @default(0)
+  lockedUntil      DateTime?
+  passwordChangedAt DateTime?
+  mustChangePassword Boolean  @default(false)
+
+  /// Placeholder for a future SSO subject claim. Kept here so adding an identity
+  /// provider later does not require a data migration.
+  ssoSubject String? @unique
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  invitedById String?
+  invitedBy   User?   @relation("UserInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  invitees    User[]  @relation("UserInvitedBy")
+
+  avatar MediaAsset? @relation("UserAvatar", fields: [avatarId], references: [id], onDelete: SetNull)
+
+  roles          UserRole[]
+  sessions       Session[]
+  passwordResets PasswordReset[]
+  loginAttempts  LoginAttempt[]
+  auditLogs      AuditLog[]
+  activityLogs   ActivityLog[]
+  notifications  Notification[]
+
+  contentVersionsCreated ContentVersion[] @relation("ContentVersionAuthor")
+
+  pagesCreated   Page[] @relation("PageCreatedBy")
+  pagesUpdated   Page[] @relation("PageUpdatedBy")
+  pagesPublished Page[] @relation("PagePublishedBy")
+
+  storiesCreated Story[] @relation("StoryCreatedBy")
+  storiesUpdated Story[] @relation("StoryUpdatedBy")
+
+  pressReleasesCreated PressRelease[] @relation("PressReleaseCreatedBy")
+  jobsCreated          Job[]          @relation("JobCreatedBy")
+  jobsOwned            Job[]          @relation("JobHiringManager")
+
+  applicationsAssigned      JobApplication[]      @relation("ApplicationAssignee")
+  supplierSubmissionsOwned  SupplierSubmission[]  @relation("SupplierAssignee")
+  propertySubmissionsOwned  PropertySubmission[]  @relation("PropertyAssignee")
+  partnershipSubmissionsOwned PartnershipSubmission[] @relation("PartnershipAssignee")
+  contactSubmissionsOwned   ContactSubmission[]   @relation("ContactAssignee")
+
+  mediaUploaded MediaAsset[] @relation("MediaUploadedBy")
+  submissionNotes SubmissionNote[]
+  contentOwnerships Page[] @relation("PageContentOwner")
+
+  @@index([status])
+  @@index([deletedAt])
+  @@map("users")
+}
+
+model Role {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  name        String
+  description String?
+  /// System roles cannot be deleted; SUPER_ADMIN additionally cannot lose permissions.
+  isSystem    Boolean @default(false)
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users       UserRole[]
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  description String
+  group       String
+  isHighRisk  Boolean @default(false)
+
+  roles RolePermission[]
+
+  @@index([group])
+  @@map("permissions")
+}
+
+model UserRole {
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+  assignedById String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  grantedAt    DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  /// SHA-256 of the session token. The raw token is never stored.
+  tokenHash    String   @unique
+  userId       String
+  userAgent    String?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+  lastActiveAt DateTime @default(now())
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  revokedReason String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model PasswordReset {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  ipAddress String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_resets")
+}
+
+model LoginAttempt {
+  id         String   @id @default(cuid())
+  email      String
+  userId     String?
+  successful Boolean
+  ipAddress  String?
+  userAgent  String?
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([email, createdAt])
+  @@index([ipAddress, createdAt])
+  @@map("login_attempts")
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  actorId    String?
+  actorEmail String?
+  action     AuditAction
+  entityType String
+  entityId   String?
+  entityLabel String?
+  summary    String?
+  /// Field-level before/after, already filtered of secrets and personal data.
+  changes    Json?
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime    @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+
+/// Lightweight "what happened recently" feed for the CMS dashboard. Unlike the
+/// audit log this is prunable and carries no compliance obligation.
+model ActivityLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  verb       String
+  entityType String
+  entityId   String?
+  entityLabel String?
+  href       String?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  userId     String
+  kind       NotificationKind
+  title      String
+  body       String?
+  href       String?
+  entityType String?
+  entityId   String?
+  readAt     DateTime?
+  createdAt  DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
+}
+
+// =============================================================================
+// SETTINGS, FEATURE FLAGS, LOCALES
+// =============================================================================
+
+/// Localised, editorially-owned site settings (boilerplate, contact details,
+/// social links). One row per key per locale.
+model SiteSetting {
+  id          String   @id @default(cuid())
+  key         String
+  locale      Locale
+  value       Json
+  label       String
+  description String?
+  group       String   @default("general")
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@unique([key, locale])
+  @@index([group])
+  @@map("site_settings")
+}
+
+/// Non-localised platform configuration (locale-independent operational values).
+model GlobalSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Json
+  label       String
+  description String?
+  group       String   @default("general")
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@map("global_settings")
+}
+
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  label       String
+  description String?
+  enabled     Boolean  @default(false)
+  /// Optional structured payload, e.g. a percentage rollout or an allow-list.
+  config      Json?
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@map("feature_flags")
+}
+
+model LocaleConfig {
+  id         String  @id @default(cuid())
+  code       Locale  @unique
+  label      String
+  nativeLabel String
+  direction  String  @default("ltr")
+  isDefault  Boolean @default(false)
+  isEnabled  Boolean @default(true)
+  sortOrder  Int     @default(0)
+
+  @@map("locale_configs")
+}
+
+// =============================================================================
+// VERSIONING
+//
+// One polymorphic version table backs history for every versioned content type.
+// `data` holds a complete snapshot, so restoring is a pure function of history
+// and restoring never destroys the record it restores from — it appends.
+// =============================================================================
+
+model ContentVersion {
+  id            String        @id @default(cuid())
+  entityType    String
+  entityId      String
+  versionNumber Int
+  /// Complete snapshot of the content at this version, including blocks and SEO.
+  data          Json
+  /// Status the content held when this version was written.
+  status        ContentStatus
+  note          String?
+  /// Set when this version was created by restoring an earlier one.
+  restoredFromVersionId String?
+  createdById   String?
+  createdAt     DateTime      @default(now())
+
+  createdBy User? @relation("ContentVersionAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+
+  publishedPages         Page[]         @relation("PagePublishedVersion")
+  publishedStories       Story[]        @relation("StoryPublishedVersion")
+  publishedPressReleases PressRelease[] @relation("PressReleasePublishedVersion")
+  publishedJobs          Job[]          @relation("JobPublishedVersion")
+  publishedPolicies      Policy[]       @relation("PolicyPublishedVersion")
+  publishedPeople        Person[]       @relation("PersonPublishedVersion")
+
+  @@unique([entityType, entityId, versionNumber])
+  @@index([entityType, entityId, createdAt])
+  @@index([createdById])
+  @@map("content_versions")
+}
+
+/// Records every workflow transition so "who approved this and when" is answerable
+/// without reconstructing it from the audit log.
+model WorkflowEvent {
+  id         String        @id @default(cuid())
+  entityType String
+  entityId   String
+  action     String
+  fromStatus ContentStatus
+  toStatus   ContentStatus
+  note       String?
+  actorId    String?
+  actorName  String?
+  createdAt  DateTime      @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@map("workflow_events")
+}
+
+// =============================================================================
+// PAGES AND PAGE COMPOSITION
+// =============================================================================
+
+/// A block type available to editors. Stored in the database so the CMS can
+/// enable, disable, relabel and restrict blocks without a deployment, while the
+/// block's *schema* and renderer live in code (@cheezious/page-builder).
+model BlockDefinition {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  name        String
+  description String?
+  category    String
+  icon        String?
+  /// JSON Schema mirror of the Zod schema, used to drive the generic editor UI.
+  schema      Json
+  /// Values applied when an editor inserts a fresh block.
+  defaults    Json?
+  isEnabled   Boolean @default(true)
+  /// Blocks only usable on specific page types; empty means "anywhere".
+  allowedPageTypes PageType[] @default([])
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  blocks PageBlock[]
+
+  @@index([category, sortOrder])
+  @@map("block_definitions")
+}
+
+model Page {
+  id     String @id @default(cuid())
+  /// Locale variants of the same logical page share this id.
+  translationGroupId String
+  locale Locale
+  /// Full site path without the locale prefix, e.g. `/company/leadership`.
+  path   String
+  /// Final path segment. Kept separately so the CMS can rename a leaf safely.
+  slug   String
+
+  title    String
+  /// Short label used in navigation and breadcrumbs when the title is long.
+  navLabel String?
+  summary  String?
+  type     PageType @default(STANDARD)
+
+  status            ContentStatus     @default(DRAFT)
+  translationStatus TranslationStatus @default(NOT_STARTED)
+
+  /// Version served to the public. Null means nothing has ever been published.
+  publishedVersionId String?         @unique
+  publishedVersion   ContentVersion? @relation("PagePublishedVersion", fields: [publishedVersionId], references: [id], onDelete: SetNull)
+  /// True when the working copy differs from the published version.
+  hasUnpublishedChanges Boolean @default(false)
+
+  publishedAt   DateTime?
+  scheduledFor  DateTime?
+  unpublishAt   DateTime?
+  firstPublishedAt DateTime?
+
+  /// Editorial freshness: the CMS flags pages past their review date.
+  reviewDate     DateTime?
+  contentOwnerId String?
+  contentOwner   User?    @relation("PageContentOwner", fields: [contentOwnerId], references: [id], onDelete: SetNull)
+
+  /// Hidden from navigation and sitemap but still reachable by direct URL.
+  excludeFromSearch Boolean @default(false)
+  excludeFromSitemap Boolean @default(false)
+
+  parentId String?
+  parent   Page?   @relation("PageHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children Page[]  @relation("PageHierarchy")
+
+  sortOrder Int @default(0)
+
+  createdById String?
+  createdBy   User?   @relation("PageCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById String?
+  updatedBy   User?   @relation("PageUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  publishedById String?
+  publishedBy   User?  @relation("PagePublishedBy", fields: [publishedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  blocks       PageBlock[]
+  seo          PageSeo?
+  slugHistory  SlugHistory[]
+  navigationItems NavigationItem[]
+
+  @@unique([locale, path])
+  @@unique([translationGroupId, locale])
+  @@index([status, locale])
+  @@index([scheduledFor])
+  @@index([parentId, sortOrder])
+  @@index([deletedAt])
+  @@index([reviewDate])
+  @@map("pages")
+}
+
+model PageBlock {
+  id     String @id @default(cuid())
+  pageId String
+  page   Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  definitionId String
+  definition   BlockDefinition @relation(fields: [definitionId], references: [id], onDelete: Restrict)
+  /// Denormalised block key so rendering does not require a join.
+  blockKey String
+
+  /// Block props, validated against the block's Zod schema before write.
+  data Json
+
+  sortOrder Int     @default(0)
+  isHidden  Boolean @default(false)
+  /// Editor-facing label shown in the block list when a block is collapsed.
+  label     String?
+  /// Optional anchor so blocks can be linked to directly (#our-approach).
+  anchor    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pageId, sortOrder])
+  @@index([blockKey])
+  @@map("page_blocks")
+}
+
+model PageSeo {
+  id     String @id @default(cuid())
+  pageId String @unique
+  page   Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  title          String?
+  description    String?
+  canonicalUrl   String?
+  noindex        Boolean @default(false)
+  nofollow       Boolean @default(false)
+  ogTitle        String?
+  ogDescription  String?
+  ogImageId      String?
+  ogImage        MediaAsset? @relation("PageOgImage", fields: [ogImageId], references: [id], onDelete: SetNull)
+  twitterCard    String? @default("summary_large_image")
+  /// Editor-supplied JSON-LD merged with the generated structured data.
+  structuredData Json?
+  keywords       String[] @default([])
+  /// Sitemap hints. Defaults are derived per page type when not set.
+  changeFrequency String?
+  priority        Float?
+
+  updatedAt DateTime @updatedAt
+
+  @@map("page_seo")
+}
+
+model SlugHistory {
+  id       String @id @default(cuid())
+  pageId   String?
+  page     Page?  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  entityType String
+  entityId   String
+  locale   Locale
+  oldPath  String
+  newPath  String
+  createdAt DateTime @default(now())
+  createdById String?
+
+  @@index([entityType, entityId])
+  @@index([locale, oldPath])
+  @@map("slug_history")
+}
+
+model Redirect {
+  id          String   @id @default(cuid())
+  source      String
+  destination String
+  statusCode  Int      @default(301)
+  locale      Locale?
+  isEnabled   Boolean  @default(true)
+  /// Set when the redirect was generated automatically by a slug change.
+  isAutomatic Boolean  @default(false)
+  note        String?
+  hitCount    Int      @default(0)
+  lastHitAt   DateTime?
+
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([source, locale])
+  @@index([isEnabled])
+  @@map("redirects")
+}
+
+// =============================================================================
+// NAVIGATION
+// =============================================================================
+
+model Navigation {
+  id        String             @id @default(cuid())
+  key       String
+  label     String
+  location  NavigationLocation
+  locale    Locale
+  isEnabled Boolean            @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items NavigationItem[]
+
+  @@unique([key, locale])
+  @@index([location, locale])
+  @@map("navigations")
+}
+
+model NavigationItem {
+  id           String             @id @default(cuid())
+  navigationId String
+  navigation   Navigation         @relation(fields: [navigationId], references: [id], onDelete: Cascade)
+
+  kind  NavigationItemKind @default(PAGE)
+  label String
+  /// Short descriptor shown beneath the label inside the mega menu.
+  descriptor String?
+
+  /// Internal target. Referencing the page by id keeps the link intact when a
+  /// slug changes — the URL is resolved at render time, never stored.
+  pageId String?
+  page   Page?   @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  /// External or non-page target (e.g. the consumer ordering site).
+  externalUrl String?
+  opensInNewTab Boolean @default(false)
+
+  /// Mega-menu featured content.
+  featuredStoryId String?
+  featuredStory   Story?  @relation("NavFeaturedStory", fields: [featuredStoryId], references: [id], onDelete: SetNull)
+  featuredImageId String?
+  featuredImage   MediaAsset? @relation("NavFeaturedImage", fields: [featuredImageId], references: [id], onDelete: SetNull)
+  featuredEyebrow String?
+  featuredHeadline String?
+
+  /// Emphasised call to action within a mega-menu column.
+  isCallToAction Boolean @default(false)
+
+  parentId String?
+  parent   NavigationItem?  @relation("NavigationTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children NavigationItem[] @relation("NavigationTree")
+
+  sortOrder Int     @default(0)
+  isVisible Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([navigationId, parentId, sortOrder])
+  @@map("navigation_items")
+}
+
+model FooterConfiguration {
+  id     String @id @default(cuid())
+  locale Locale @unique
+
+  /// CMS-managed copyright, legal links and social handles.
+  copyrightTemplate String  @default("Cheezious © {year}")
+  showLocaleSwitch  Boolean @default(true)
+  socialLinks       Json    @default("[]")
+  legalLinks        Json    @default("[]")
+  regionLabel       String  @default("Pakistan")
+  note              String?
+
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@map("footer_configurations")
+}
+
+// =============================================================================
+// MEDIA / DIGITAL ASSET MANAGEMENT
+// =============================================================================
+
+model MediaFolder {
+  id       String  @id @default(cuid())
+  name     String
+  slug     String
+  parentId String?
+  parent   MediaFolder?  @relation("MediaFolderTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children MediaFolder[] @relation("MediaFolderTree")
+  /// Materialised path (`/brand/logos`) so folder listings need no recursion.
+  path     String
+
+  description String?
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assets MediaAsset[]
+
+  @@unique([parentId, slug])
+  @@index([path])
+  @@map("media_folders")
+}
+
+model MediaAsset {
+  id       String    @id @default(cuid())
+  kind     MediaKind
+  folderId String?
+  folder   MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
+  /// Storage key within the configured driver (local disk or S3-compatible).
+  storageKey   String  @unique
+  originalName String
+  mimeType     String
+  byteSize     Int
+  checksum     String?
+
+  width    Int?
+  height   Int?
+  duration Int?
+  /// Dominant colour used as an image placeholder before load.
+  placeholderColor String?
+  blurDataUrl      String?
+
+  /// Editorially meaningful metadata.
+  title       String
+  altText     String?
+  caption     String?
+  credit      String?
+  copyright   String?
+  usageNotes  String?
+  /// Normalised 0–1 focal point honoured by responsive crops.
+  focalX Float @default(0.5)
+  focalY Float @default(0.5)
+
+  visibility MediaVisibility @default(CMS_ONLY)
+  /// Marks an asset as part of the downloadable brand/press kit.
+  isBrandAsset Boolean @default(false)
+  isPressAsset Boolean @default(false)
+
+  uploadedById String?
+  uploadedBy   User?   @relation("MediaUploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  tags     MediaTagOnAsset[]
+  variants MediaVariant[]
+  usages   MediaUsage[]
+
+  pageOgImages       PageSeo[]        @relation("PageOgImage")
+  navFeaturedImages  NavigationItem[] @relation("NavFeaturedImage")
+  userAvatars        User[]           @relation("UserAvatar")
+  personPortraits    Person[]         @relation("PersonPortrait")
+  personHeroes       Person[]         @relation("PersonHero")
+  storyHeroes        Story[]          @relation("StoryHero")
+  storyThumbnails    Story[]          @relation("StoryThumbnail")
+  pressReleaseImages PressRelease[]   @relation("PressReleaseImage")
+  pressReleaseAttachments PressReleaseAsset[]
+  reportCovers       Report[]         @relation("ReportCover")
+  reportFiles        ReportFile[]
+  policyDocuments    Policy[]         @relation("PolicyDocument")
+  policyVersionFiles PolicyVersion[]  @relation("PolicyVersionFile")
+  awardImages        Award[]          @relation("AwardImage")
+  timelineMedia      TimelineEvent[]  @relation("TimelineMedia")
+  ingredientImages   Ingredient[]     @relation("IngredientImage")
+  impactStoryImages  ImpactStory[]    @relation("ImpactStoryImage")
+  employeeStoryPortraits EmployeeStory[] @relation("EmployeeStoryPortrait")
+  employeeStoryHeroes    EmployeeStory[] @relation("EmployeeStoryHero")
+  mediaCoverageLogos MediaCoverage[]  @relation("MediaCoverageLogo")
+  cityImages         City[]           @relation("CityImage")
+  applicationFiles   JobApplicationFile[]
+  supplierAttachments SupplierAttachment[]
+  propertyAttachments PropertyAttachment[]
+  formSubmissionFiles FormSubmissionFile[]
+
+  @@index([kind, createdAt])
+  @@index([folderId])
+  @@index([visibility])
+  @@index([deletedAt])
+  @@map("media_assets")
+}
+
+model MediaTag {
+  id    String @id @default(cuid())
+  name  String @unique
+  slug  String @unique
+  createdAt DateTime @default(now())
+
+  assets MediaTagOnAsset[]
+
+  @@map("media_tags")
+}
+
+model MediaTagOnAsset {
+  assetId String
+  tagId   String
+
+  asset MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  tag   MediaTag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([assetId, tagId])
+  @@index([tagId])
+  @@map("media_tags_on_assets")
+}
+
+/// Derived renditions (responsive widths, thumbnails, preview images).
+model MediaVariant {
+  id      String @id @default(cuid())
+  assetId String
+  asset   MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  label      String
+  storageKey String @unique
+  mimeType   String
+  width      Int?
+  height     Int?
+  byteSize   Int
+
+  createdAt DateTime @default(now())
+
+  @@unique([assetId, label])
+  @@map("media_variants")
+}
+
+/// Reverse index of where an asset is used. Populated on content save so the CMS
+/// can warn "used in 7 places" before a delete.
+model MediaUsage {
+  id      String @id @default(cuid())
+  assetId String
+  asset   MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  entityType String
+  entityId   String
+  entityLabel String?
+  field      String?
+  href       String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([assetId, entityType, entityId, field])
+  @@index([entityType, entityId])
+  @@map("media_usages")
+}
+
+// =============================================================================
+// PEOPLE, LEADERSHIP AND ORGANISATION
+// =============================================================================
+
+model Department {
+  id     String @id @default(cuid())
+  key    String @unique
+  name   String
+  slug   String @unique
+  summary String?
+  description String?
+  sortOrder Int  @default(0)
+  isCareerVisible Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teams  Team[]
+  people Person[]
+  jobs   Job[]
+
+  @@map("departments")
+}
+
+model Team {
+  id           String     @id @default(cuid())
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  name         String
+  slug         String
+  summary      String?
+  sortOrder    Int        @default(0)
+
+  jobs Job[]
+
+  @@unique([departmentId, slug])
+  @@map("teams")
+}
+
+model LeadershipGroup {
+  id        String @id @default(cuid())
+  key       String @unique
+  name      String
+  slug      String @unique
+  summary   String?
+  sortOrder Int    @default(0)
+  isPublished Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  people Person[]
+
+  @@map("leadership_groups")
+}
+
+model Person {
+  id                 String @id @default(cuid())
+  translationGroupId String
+  locale             Locale
+
+  name  String
+  slug  String
+  role  String
+  /// Optional longer role description used on the profile page.
+  roleDetail String?
+
+  leadershipGroupId String?
+  leadershipGroup   LeadershipGroup? @relation(fields: [leadershipGroupId], references: [id], onDelete: SetNull)
+  departmentId      String?
+  department        Department?      @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  portraitId String?
+  portrait   MediaAsset? @relation("PersonPortrait", fields: [portraitId], references: [id], onDelete: SetNull)
+  heroImageId String?
+  heroImage   MediaAsset? @relation("PersonHero", fields: [heroImageId], references: [id], onDelete: SetNull)
+
+  shortBio        String?
+  fullBio         String?
+  responsibilities String?
+  careerBackground String?
+  quote           String?
+  quoteAttribution String?
+  /// Only rendered when explicitly approved for publication.
+  linkedinUrl String?
+
+  isFeatured Boolean @default(false)
+  sortOrder  Int     @default(0)
+
+  status            ContentStatus     @default(DRAFT)
+  translationStatus TranslationStatus @default(NOT_STARTED)
+  publishedVersionId String?          @unique
+  publishedVersion   ContentVersion?  @relation("PersonPublishedVersion", fields: [publishedVersionId], references: [id], onDelete: SetNull)
+  hasUnpublishedChanges Boolean @default(false)
+  publishedAt  DateTime?
+  scheduledFor DateTime?
+  reviewDate   DateTime?
+
+  seoTitle       String?
+  seoDescription String?
+
+  createdById String?
+  updatedById String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  employeeStories EmployeeStory[]
+  storyLinks      StoryPerson[]
+  mediaContacts   MediaContact[]
+
+  @@unique([locale, slug])
+  @@unique([translationGroupId, locale])
+  @@index([leadershipGroupId, sortOrder])
+  @@index([status, locale])
+  @@map("people")
+}
+
+// =============================================================================
+// EDITORIAL CONTENT — STORIES, NEWS, PRESS RELEASES, COVERAGE
+// =============================================================================
+
+model StoryCategory {
+  id        String @id @default(cuid())
+  key       String @unique
+  name      String
+  slug      String @unique
+  summary   String?
+  /// Newsroom families: company, expansion, people, food, technology, community…
+  family    String @default("company")
+  sortOrder Int    @default(0)
+
+  stories Story[]
+
+  @@map("story_categories")
+}
+
+model StoryTag {
+  id   String @id @default(cuid())
+  name String @unique
+  slug String @unique
+
+  stories StoryTagOnStory[]
+
+  @@map("story_tags")
+}
+
+/// Unified editorial record covering company news, corporate stories and people
+/// stories. `kind` distinguishes them; the newsroom filters on it. Press releases
+/// are modelled separately because they carry legal/PR-specific structure.
+model Story {
+  id                 String @id @default(cuid())
+  translationGroupId String
+  locale             Locale
+
+  kind    String @default("STORY") // STORY | NEWS | PEOPLE_STORY | EXPANSION
+  title   String
+  slug    String
+  excerpt String?
+  /// Sanitised rich text.
+  body    String?
+  /// Optional block composition for long-form editorial stories.
+  useBlocks Boolean @default(false)
+
+  categoryId String?
+  category   StoryCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  heroImageId String?
+  heroImage   MediaAsset? @relation("StoryHero", fields: [heroImageId], references: [id], onDelete: SetNull)
+  thumbnailId String?
+  thumbnail   MediaAsset? @relation("StoryThumbnail", fields: [thumbnailId], references: [id], onDelete: SetNull)
+
+  authorName String?
+  authorId   String?
+
+  isFeatured Boolean @default(false)
+  readingMinutes Int?
+
+  status            ContentStatus     @default(DRAFT)
+  translationStatus TranslationStatus @default(NOT_STARTED)
+  publishedVersionId String?          @unique
+  publishedVersion   ContentVersion?  @relation("StoryPublishedVersion", fields: [publishedVersionId], references: [id], onDelete: SetNull)
+  hasUnpublishedChanges Boolean @default(false)
+
+  publishedAt  DateTime?
+  scheduledFor DateTime?
+  unpublishAt  DateTime?
+  reviewDate   DateTime?
+
+  seoTitle       String?
+  seoDescription String?
+  ogImageId      String?
+  noindex        Boolean @default(false)
+
+  createdById String?
+  createdBy   User?   @relation("StoryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById String?
+  updatedBy   User?   @relation("StoryUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  tags         StoryTagOnStory[]
+  people       StoryPerson[]
+  navFeatured  NavigationItem[]  @relation("NavFeaturedStory")
+  relatedFrom  StoryRelation[]   @relation("StoryRelationFrom")
+  relatedTo    StoryRelation[]   @relation("StoryRelationTo")
+
+  @@unique([locale, slug])
+  @@unique([translationGroupId, locale])
+  @@index([kind, status, publishedAt])
+  @@index([categoryId, publishedAt])
+  @@index([isFeatured, publishedAt])
+  @@index([scheduledFor])
+  @@map("stories")
+}
+
+model StoryTagOnStory {
+  storyId String
+  tagId   String
+
+  story Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  tag   StoryTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([storyId, tagId])
+  @@index([tagId])
+  @@map("story_tags_on_stories")
+}
+
+/// Relates a story to the people it features, so a leadership profile can list
+/// "related stories" without duplicating content.
+model StoryPerson {
+  storyId  String
+  personId String
+  role     String?
+
+  story  Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@id([storyId, personId])
+  @@index([personId])
+  @@map("story_people")
+}
+
+model StoryRelation {
+  fromId String
+  toId   String
+  sortOrder Int @default(0)
+
+  from Story @relation("StoryRelationFrom", fields: [fromId], references: [id], onDelete: Cascade)
+  to   Story @relation("StoryRelationTo", fields: [toId], references: [id], onDelete: Cascade)
+
+  @@id([fromId, toId])
+  @@index([toId])
+  @@map("story_relations")
+}
+
+model PressReleaseCategory {
+  id        String @id @default(cuid())
+  key       String @unique
+  name      String
+  slug      String @unique
+  sortOrder Int    @default(0)
+
+  pressReleases PressRelease[]
+
+  @@map("press_release_categories")
+}
+
+model PressRelease {
+  id                 String @id @default(cuid())
+  translationGroupId String
+  locale             Locale
+
+  headline String
+  slug     String
+  summary  String?
+  body     String?
+  /// Dateline city, e.g. "Islamabad, Pakistan".
+  dateline String?
+
+  categoryId String?
+  category   PressReleaseCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  imageId String?
+  image   MediaAsset? @relation("PressReleaseImage", fields: [imageId], references: [id], onDelete: SetNull)
+
+  mediaContactId String?
+  mediaContact   MediaContact? @relation(fields: [mediaContactId], references: [id], onDelete: SetNull)
+
+  isFeatured Boolean @default(false)
+
+  status            ContentStatus     @default(DRAFT)
+  translationStatus TranslationStatus @default(NOT_STARTED)
+  publishedVersionId String?          @unique
+  publishedVersion   ContentVersion?  @relation("PressReleasePublishedVersion", fields: [publishedVersionId], references: [id], onDelete: SetNull)
+  hasUnpublishedChanges Boolean @default(false)
+
+  publishedAt  DateTime?
+  scheduledFor DateTime?
+  reviewDate   DateTime?
+
+  seoTitle       String?
+  seoDescription String?
+  noindex        Boolean @default(false)
+
+  createdById String?
+  createdBy   User?   @relation("PressReleaseCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  attachments PressReleaseAsset[]
+
+  @@unique([locale, slug])
+  @@unique([translationGroupId, locale])
+  @@index([status, publishedAt])
+  @@index([scheduledFor])
+  @@map("press_releases")
+}
+
+model PressReleaseAsset {
+  id             String @id @default(cuid())
+  pressReleaseId String
+  assetId        String
+  label          String?
+  sortOrder      Int     @default(0)
+
+  pressRelease PressRelease @relation(fields: [pressReleaseId], references: [id], onDelete: Cascade)
+  asset        MediaAsset   @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@unique([pressReleaseId, assetId])
+  @@map("press_release_assets")
+}
+
+model MediaCoverage {
+  id        String   @id @default(cuid())
+  locale    Locale   @default(en)
+  title     String
+  outlet    String
+  url       String
+  publishedOn DateTime
+  summary   String?
+  logoId    String?
+  logo      MediaAsset? @relation("MediaCoverageLogo", fields: [logoId], references: [id], onDelete: SetNull)
+  isFeatured Boolean @default(false)
+  isPublished Boolean @default(false)
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([publishedOn])
+  @@map("media_coverage")
+}
+
+model MediaContact {
+  id       String  @id @default(cuid())
+  locale   Locale  @default(en)
+  name     String
+  role     String?
+  email    String
+  phone    String?
+  region   String?
+  topics   String[] @default([])
+  personId String?
+  person   Person?  @relation(fields: [personId], references: [id], onDelete: SetNull)
+  isPublished Boolean @default(false)
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pressReleases PressRelease[]
+
+  @@map("media_contacts")
+}
+
+// =============================================================================
+// COMPANY RECORDS — TIMELINE, AWARDS, FOOTPRINT, INGREDIENTS
+// =============================================================================
+
+model TimelineEvent {
+  id                 String @id @default(cuid())
+  translationGroupId String
+  locale             Locale
+
+  /// Year is required; a precise date is optional because early milestones are
+  /// often only known to the year.
+  year      Int
+  eventDate DateTime?
+  headline  String
+  description String?
+  category  String?
+  location  String?
+
+  mediaId String?
+  media   MediaAsset? @relation("TimelineMedia", fields: [mediaId], references: [id], onDelete: SetNull)
+
+  isFeatured Boolean @default(false)
+  isPublished Boolean @default(false)
+  sortOrder  Int     @default(0)
+  /// Marks seeded structural examples so they are never mistaken for fact.
+  isDemoContent Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([translationGroupId, locale])
+  @@index([year, sortOrder])
+  @@map("timeline_events")
+}
+
+model AwardCategory {
+  id        String  @id @default(cuid())
+  key       String  @unique
+  name      String
+  slug      String  @unique
+  sortOrder Int     @default(0)
+
+  awards Award[]
+}
+
+model Award {
+  id                 String @id @default(cuid())
+  translationGroupId String
+  locale             Locale
+
+  name         String
+  organisation String
+  year         Int
+  description  String?
+  externalUrl  String?
+
+  categoryId String?
+  category   AwardCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  imageId String?
+  image   MediaAsset? @relation("AwardImage", fields: [imageId], references: [id], onDelete: SetNull)
+
+  isFeatured  Boolean @default(false)
+  isPublished Boolean @default(false)
+  isDemoContent Boolean @default(false)
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([translationGroupId, locale])
+  @@index([year])
+  @@map("awards")
+}
+
+model Region {
+  id        String @id @default(cuid())
+  key       String @unique
+  name      String
+  slug      String @unique
+  /// Province / administrative region label.
+  kind      String @default("PROVINCE")
+  summary   String?
+  sortOrder Int    @default(0)
+  isPublished Boolean @default(false)
+
+  cities City[]
+
+  @@map("regions")
+}
+
+model City {
+  id       String @id @default(cuid())
+  regionId String
+  region   Region @relation(fields: [regionId], references: [id], onDelete: Cascade)
+
+  name String
+  slug String @unique
+  /// Approximate centroid for the corporate footprint map.
+  latitude  Float?
+  longitude Float?
+
+  summary String?
+  imageId String?
+  image   MediaAsset? @relation("CityImage", fields: [imageId], references: [id], onDelete: SetNull)
+
+  /// Footprint figures are nullable on purpose: nothing is rendered unless a
+  /// value has been entered and approved in the CMS.
+  restaurantCount   Int?
+  teamMemberCount   Int?
+  firstOpeningYear  Int?
+  facilityNote      String?
+
+  isPublished Boolean @default(false)
+  isDemoContent Boolean @default(false)
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  corporateLocations CorporateLocation[]
+  jobLocations       JobLocation[]
+
+  @@index([regionId, sortOrder])
+  @@map("cities")
+}
+
+/// Corporate premises (head office, regional office, distribution centre) as
+/// distinct from consumer restaurant locations.
+model CorporateLocation {
+  id     String @id @default(cuid())
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  name        String
+  kind        String  @default("OFFICE")
+  addressLine String?
+  summary     String?
+  isPublished Boolean @default(false)
+  sortOrder   Int     @default(0)
+
+  @@index([cityId])
+  @@map("corporate_locations")
+}
+
+model IngredientCategory {
+  id        String @id @default(cuid())
+  key       String @unique
+  name      String
+  slug      String @unique
+  summary   String?
+  sortOrder Int    @default(0)
+
+  ingredients Ingredient[]
+
+  @@map("ingredient_categories")
+}
+
+model Ingredient {
+  id                 String @id @default(cuid())
+  translationGroupId String
+  locale             Locale
+
+  name String
+  slug String
+
+  categoryId String?
+  category   IngredientCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  summary            String?
+  qualityInformation String?
+  sourcingInformation String?
+  /// Only rendered when explicitly supplied and approved.
+  allergenInformation String?
+
+  imageId String?
+  image   MediaAsset? @relation("IngredientImage", fields: [imageId], references: [id], onDelete: SetNull)
+
+  isPublished   Boolean @default(false)
+  isDemoContent Boolean @default(false)
+  sortOrder     Int     @default(0)
+
+  seoTitle       String?
+  seoDescription String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([locale, slug])
+  @@unique([translationGroupId, locale])
+  @@map("ingredients")
+}
+
+// =============================================================================
+// IMPACT
+// =============================================================================
+
+model ImpactPillar {
+  id                 String @id @default(cuid())
+  translationGroupId String
+  locale             Locale
+
+  key         String
+  name        String
+  slug        String
+  summary     String?
+  description String?
+  icon        String?
+  accentColor String?
+  sortOrder   Int     @default(0)
+  isPublished Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  metrics ImpactMetric[]
+  stories ImpactStory[]
+
+  @@unique([locale, slug])
+  @@unique([translationGroupId, locale])
+  @@map("impact_pillars")
+}
+
+model ImpactMetric {
+  id       String       @id @default(cuid())
+  pillarId String
+  pillar   ImpactPillar @relation(fields: [pillarId], references: [id], onDelete: Cascade)
+
+  key   String
+  name  String
+  unit  String?
+  /// Prefix/suffix let the CMS render "PKR 1.2M" or "12,000+" without code.
+  prefix String?
+  suffix String?
+
+  description String?
+  /// How the figure is calculated. Required before a metric may be published.
+  methodology String?
+  /// Internal-only provenance note. Never exposed through the public API.
+  internalSource String?
+
+  targetValue Float?
+  targetYear  Int?
+
+  /// A metric is only publishable once it carries an approved value.
+  isPublishable Boolean @default(false)
+  sortOrder     Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  values ImpactMetricValue[]
+
+  @@unique([pillarId, key])
+  @@map("impact_metrics")
+}
+
+model ImpactMetricValue {
+  id       String       @id @default(cuid())
+  metricId String
+  metric   ImpactMetric @relation(fields: [metricId], references: [id], onDelete: Cascade)
+
+  year  Int
+  value Float
+  note  String?
+  /// Demo values are rendered with an explicit placeholder treatment.
+  isDemoContent Boolean @default(false)
+  approvedById  String?
+  approvedAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([metricId, year])
+  @@index([year])
+  @@map("impact_metric_values")
+}
+
+model ImpactStory {
+  id                 String @id @default(cuid())
+  translationGroupId String
+  locale             Locale
+
+  pillarId String?
+  pillar   ImpactPillar? @relation(fields: [pillarId], references: [id], onDelete: SetNull)
+
+  title   String
+  slug    String
+  excerpt String?
+  body    String?
+
+  imageId String?
+  image   MediaAsset? @relation("ImpactStoryImage", fields: [imageId], references: [id], onDelete: SetNull)
+
+  location String?
+  year     Int?
+
+  isFeatured    Boolean @default(false)
+  isPublished   Boolean @default(false)
+  isDemoContent Boolean @default(false)
+  publishedAt   DateTime?
+
+  seoTitle       String?
+  seoDescription String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([locale, slug])
+  @@unique([translationGroupId, locale])
+  @@map("impact_stories")
+}
+
+// =============================================================================
+// REPORTS AND POLICIES
+// =============================================================================
+
+model ReportCategory {
+  id        String @id @default(cuid())
+  key       String @unique
+  name      String
+  slug      String @unique
+  summary   String?
+  sortOrder Int    @default(0)
+
+  reports Report[]
+
+  @@map("report_categories")
+}
+
+model Report {
+  id                 String @id @default(cuid())
+  translationGroupId String
+  locale             Locale
+
+  title       String
+  slug        String
+  year        Int
+  type        ReportType @default(OTHER)
+  description String?
+
+  categoryId String?
+  category   ReportCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  coverId String?
+  cover   MediaAsset? @relation("ReportCover", fields: [coverId], references: [id], onDelete: SetNull)
+
+  publicationDate DateTime?
+  isFeatured      Boolean   @default(false)
+  isPublished     Boolean   @default(false)
+  isDemoContent   Boolean   @default(false)
+  sortOrder       Int       @default(0)
+
+  seoTitle       String?
+  seoDescription String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  files ReportFile[]
+
+  @@unique([locale, slug])
+  @@unique([translationGroupId, locale])
+  @@index([year, type])
+  @@map("reports")
+}
+
+model ReportFile {
+  id       String @id @default(cuid())
+  reportId String
+  report   Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  assetId String
+  asset   MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  label     String
+  locale    Locale @default(en)
+  sortOrder Int    @default(0)
+
+  @@unique([reportId, assetId, locale])
+  @@map("report_files")
+}
+
+model PolicyCategory {
+  id        String @id @default(cuid())
+  key       String @unique
+  name      String
+  slug      String @unique
+  summary   String?
+  sortOrder Int    @default(0)
+
+  policies Policy[]
+
+  @@map("policy_categories")
+}
+
+model Policy {
+  id                 String @id @default(cuid())
+  translationGroupId String
+  locale             Locale
+
+  title   String
+  slug    String
+  summary String?
+  body    String?
+
+  categoryId String?
+  category   PolicyCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  documentId String?
+  document   MediaAsset? @relation("PolicyDocument", fields: [documentId], references: [id], onDelete: SetNull)
+
+  /// Semantic version string managed editorially, e.g. "2.1".
+  version       String  @default("1.0")
+  effectiveDate DateTime?
+  reviewDate    DateTime?
+  ownerLabel    String?
+
+  status            ContentStatus     @default(DRAFT)
+  translationStatus TranslationStatus @default(NOT_STARTED)
+  publishedVersionId String?          @unique
+  publishedVersion   ContentVersion?  @relation("PolicyPublishedVersion", fields: [publishedVersionId], references: [id], onDelete: SetNull)
+  hasUnpublishedChanges Boolean @default(false)
+  publishedAt  DateTime?
+  scheduledFor DateTime?
+
+  isDemoContent Boolean @default(false)
+
+  seoTitle       String?
+  seoDescription String?
+
+  createdById String?
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  versions PolicyVersion[]
+
+  @@unique([locale, slug])
+  @@unique([translationGroupId, locale])
+  @@index([categoryId])
+  @@map("policies")
+}
+
+/// Published policy versions are retained permanently so that "which version was
+/// in force on this date" remains answerable.
+model PolicyVersion {
+  id       String @id @default(cuid())
+  policyId String
+  policy   Policy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  version       String
+  effectiveDate DateTime?
+  supersededAt  DateTime?
+  summaryOfChanges String?
+
+  fileId String?
+  file   MediaAsset? @relation("PolicyVersionFile", fields: [fileId], references: [id], onDelete: SetNull)
+
+  bodySnapshot String?
+  createdById  String?
+  createdAt    DateTime @default(now())
+
+  @@unique([policyId, version])
+  @@map("policy_versions")
+}
+
+// =============================================================================
+// CAREERS
+// =============================================================================
+
+model CareerCategory {
+  id        String @id @default(cuid())
+  key       String @unique
+  name      String
+  slug      String @unique
+  summary   String?
+  description String?
+  sortOrder Int    @default(0)
+  isPublished Boolean @default(true)
+
+  jobs Job[]
+
+  @@map("career_categories")
+}
+
+model JobLocation {
+  id     String  @id @default(cuid())
+  name   String
+  slug   String  @unique
+  cityId String?
+  city   City?   @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  isRemote Boolean @default(false)
+  sortOrder Int   @default(0)
+
+  jobs Job[]
+
+  @@map("job_locations")
+}
+
+model Job {
+  id                 String @id @default(cuid())
+  translationGroupId String
+  locale             Locale
+
+  title String
+  slug  String
+
+  categoryId String?
+  category   CareerCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  departmentId String?
+  department   Department?   @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  teamId       String?
+  team         Team?         @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  locationId   String?
+  location     JobLocation?  @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  employmentType EmploymentType @default(FULL_TIME)
+  workplaceType  WorkplaceType  @default(ON_SITE)
+
+  summary                 String?
+  description             String?
+  responsibilities        String?
+  requirements            String?
+  preferredQualifications String?
+  benefits                String?
+
+  /// Compensation is optional and only rendered when both bounds are supplied,
+  /// so JobPosting structured data is never emitted with a half-filled range.
+  salaryMin      Int?
+  salaryMax      Int?
+  salaryCurrency String? @default("PKR")
+  salaryPeriod   String? @default("MONTH")
+
+  openingsCount Int?
+  applicationDeadline DateTime?
+
+  hiringManagerId String?
+  hiringManager   User?   @relation("JobHiringManager", fields: [hiringManagerId], references: [id], onDelete: SetNull)
+  /// Internal-only requisition reference. Never exposed publicly.
+  internalReference String?
+
+  /// Form definition driving the application. Falls back to the default
+  /// application form when unset.
+  formDefinitionId String?
+  formDefinition   FormDefinition? @relation(fields: [formDefinitionId], references: [id], onDelete: SetNull)
+
+  status JobStatus @default(DRAFT)
+  translationStatus TranslationStatus @default(NOT_STARTED)
+  publishedVersionId String?         @unique
+  publishedVersion   ContentVersion? @relation("JobPublishedVersion", fields: [publishedVersionId], references: [id], onDelete: SetNull)
+  hasUnpublishedChanges Boolean @default(false)
+
+  isFeatured  Boolean   @default(false)
+  postedAt    DateTime?
+  closedAt    DateTime?
+  scheduledFor DateTime?
+
+  seoTitle       String?
+  seoDescription String?
+  noindex        Boolean @default(false)
+
+  createdById String?
+  createdBy   User?   @relation("JobCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedById String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  applications JobApplication[]
+
+  @@unique([locale, slug])
+  @@unique([translationGroupId, locale])
+  @@index([status, postedAt])
+  @@index([categoryId, status])
+  @@index([departmentId, status])
+  @@index([locationId, status])
+  @@index([applicationDeadline])
+  @@map("jobs")
+}
+
+/// A job application. Contains personal data: reads are gated behind
+/// `applications.read` and the record is never exposed through any public API.
+model JobApplication {
+  id    String @id @default(cuid())
+  jobId String
+  job   Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  /// Human-friendly reference shown to the applicant on the confirmation screen.
+  reference String @unique
+
+  firstName String
+  lastName  String
+  email     String
+  phone     String
+  city      String?
+
+  linkedinUrl  String?
+  portfolioUrl String?
+  coverNote    String?
+  /// Answers to job-specific configurable fields.
+  answers      Json?
+
+  /// Explicit, recorded consent to process the application.
+  consentGivenAt DateTime
+  consentText    String
+
+  status       ApplicationStatus @default(NEW)
+  assigneeId   String?
+  assignee     User?             @relation("ApplicationAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  rating       Int?
+
+  source       String?
+  ipHash       String?
+  userAgent    String?
+
+  /// Retention: set when the record becomes eligible for deletion.
+  retentionUntil DateTime?
+  anonymisedAt   DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  files JobApplicationFile[]
+  notes SubmissionNote[]
+
+  @@index([jobId, status, createdAt])
+  @@index([status, createdAt])
+  @@index([email])
+  @@map("job_applications")
+}
+
+model JobApplicationFile {
+  id            String @id @default(cuid())
+  applicationId String
+  application   JobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  assetId String
+  asset   MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  kind      String @default("CV")
+  createdAt DateTime @default(now())
+
+  @@index([applicationId])
+  @@map("job_application_files")
+}
+
+model EmployeeStory {
+  id                 String @id @default(cuid())
+  translationGroupId String
+  locale             Locale
+
+  title   String
+  slug    String
+  excerpt String?
+  body    String?
+
+  personId String?
+  person   Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
+
+  /// Denormalised so a story can feature someone without a full Person record.
+  personName String?
+  roleLabel  String?
+  departmentLabel String?
+  locationLabel   String?
+
+  portraitId String?
+  portrait   MediaAsset? @relation("EmployeeStoryPortrait", fields: [portraitId], references: [id], onDelete: SetNull)
+  heroImageId String?
+  heroImage   MediaAsset? @relation("EmployeeStoryHero", fields: [heroImageId], references: [id], onDelete: SetNull)
+
+  quote String?
+  /// Ordered career milestones: [{ year, title, note }].
+  careerTimeline Json?
+
+  isFeatured    Boolean @default(false)
+  isPublished   Boolean @default(false)
+  isDemoContent Boolean @default(false)
+  publishedAt   DateTime?
+
+  seoTitle       String?
+  seoDescription String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([locale, slug])
+  @@unique([translationGroupId, locale])
+  @@index([isPublished, publishedAt])
+  @@map("employee_stories")
+}
+
+// =============================================================================
+// PARTNERS — SUPPLIERS, REAL ESTATE, PARTNERSHIPS
+// =============================================================================
+
+model SupplierCategory {
+  id        String @id @default(cuid())
+  key       String @unique
+  name      String
+  slug      String @unique
+  summary   String?
+  sortOrder Int    @default(0)
+  isActive  Boolean @default(true)
+
+  submissions SupplierSubmission[]
+
+  @@map("supplier_categories")
+}
+
+model SupplierSubmission {
+  id        String @id @default(cuid())
+  reference String @unique
+
+  companyName String
+  website     String?
+  contactName String
+  email       String
+  phone       String
+
+  categoryId String?
+  category   SupplierCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  productsServices String
+  citiesServed     String[] @default([])
+  certifications   String?
+  productionCapacity String?
+  companyProfile   String?
+  notes            String?
+
+  consentGivenAt DateTime
+  consentText    String
+
+  status     SupplierSubmissionStatus @default(NEW)
+  assigneeId String?
+  assignee   User?  @relation("SupplierAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  ipHash    String?
+  userAgent String?
+  retentionUntil DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  attachments SupplierAttachment[]
+  notesLog    SubmissionNote[]
+
+  @@index([status, createdAt])
+  @@index([categoryId, status])
+  @@map("supplier_submissions")
+}
+
+model SupplierAttachment {
+  id           String @id @default(cuid())
+  submissionId String
+  submission   SupplierSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  assetId      String
+  asset        MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  label        String?
+  createdAt    DateTime @default(now())
+
+  @@index([submissionId])
+  @@map("supplier_attachments")
+}
+
+model PropertySubmission {
+  id        String @id @default(cuid())
+  reference String @unique
+
+  contactName String
+  email       String
+  phone       String
+  company     String?
+
+  cityId  String?
+  cityName String
+  area    String?
+  address String
+  latitude  Float?
+  longitude Float?
+
+  propertyType     PropertyType @default(HIGH_STREET)
+  totalAreaSqft    Int?
+  groundFloorSqft  Int?
+  frontageFeet     Int?
+  parkingSpaces    Int?
+  driveThroughFeasible Boolean?
+  ownership        OwnershipType @default(OWNER)
+  expectedRent     String?
+  availableFrom    DateTime?
+  notes            String?
+
+  consentGivenAt DateTime
+  consentText    String
+
+  status     PropertySubmissionStatus @default(NEW)
+  assigneeId String?
+  assignee   User?  @relation("PropertyAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  ipHash    String?
+  userAgent String?
+  retentionUntil DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  attachments PropertyAttachment[]
+  notesLog    SubmissionNote[]
+
+  @@index([status, createdAt])
+  @@index([cityName, status])
+  @@map("property_submissions")
+}
+
+model PropertyAttachment {
+  id           String @id @default(cuid())
+  submissionId String
+  submission   PropertySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  assetId      String
+  asset        MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  kind         String  @default("PHOTO")
+  label        String?
+  createdAt    DateTime @default(now())
+
+  @@index([submissionId])
+  @@map("property_attachments")
+}
+
+model PartnershipCategory {
+  id        String @id @default(cuid())
+  key       String @unique
+  name      String
+  slug      String @unique
+  summary   String?
+  sortOrder Int    @default(0)
+  isActive  Boolean @default(true)
+
+  submissions PartnershipSubmission[]
+
+  @@map("partnership_categories")
+}
+
+model PartnershipSubmission {
+  id        String @id @default(cuid())
+  reference String @unique
+
+  organisationName String
+  website          String?
+  contactName      String
+  email            String
+  phone            String?
+  role             String?
+
+  categoryId String?
+  category   PartnershipCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  proposal String
+  notes    String?
+
+  consentGivenAt DateTime
+  consentText    String
+
+  status     PartnershipSubmissionStatus @default(NEW)
+  assigneeId String?
+  assignee   User?   @relation("PartnershipAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  ipHash    String?
+  userAgent String?
+  retentionUntil DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  notesLog SubmissionNote[]
+
+  @@index([status, createdAt])
+  @@map("partnership_submissions")
+}
+
+// =============================================================================
+// CONTACT AND FORMS
+// =============================================================================
+
+model ContactCategory {
+  id          String             @id @default(cuid())
+  key         ContactCategoryKey @unique
+  name        String
+  slug        String             @unique
+  description String?
+  /// Public instructions shown above the form ("for press enquiries, email …").
+  publicInstructions String?
+  /// Internal routing address. Never exposed through the public API.
+  routingEmail String?
+  formDefinitionId String?
+  formDefinition   FormDefinition? @relation(fields: [formDefinitionId], references: [id], onDelete: SetNull)
+  isEnabled   Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  submissions ContactSubmission[]
+
+  @@map("contact_categories")
+}
+
+model ContactSubmission {
+  id        String @id @default(cuid())
+  reference String @unique
+
+  categoryId String?
+  category   ContactCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  name    String
+  email   String
+  phone   String?
+  subject String?
+  message String
+  city    String?
+
+  consentGivenAt DateTime
+  consentText    String
+
+  status     ContactSubmissionStatus @default(NEW)
+  assigneeId String?
+  assignee   User?  @relation("ContactAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  ipHash    String?
+  userAgent String?
+  /// Populated by the spam heuristics; high scores are quarantined, not deleted.
+  spamScore Float @default(0)
+  retentionUntil DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  notesLog SubmissionNote[]
+
+  @@index([status, createdAt])
+  @@index([categoryId, status])
+  @@map("contact_submissions")
+}
+
+/// Internal notes attached to any submission queue. Always private.
+model SubmissionNote {
+  id       String @id @default(cuid())
+  authorId String?
+  author   User?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body     String
+
+  jobApplicationId String?
+  jobApplication   JobApplication? @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade)
+  supplierSubmissionId String?
+  supplierSubmission   SupplierSubmission? @relation(fields: [supplierSubmissionId], references: [id], onDelete: Cascade)
+  propertySubmissionId String?
+  propertySubmission   PropertySubmission? @relation(fields: [propertySubmissionId], references: [id], onDelete: Cascade)
+  partnershipSubmissionId String?
+  partnershipSubmission   PartnershipSubmission? @relation(fields: [partnershipSubmissionId], references: [id], onDelete: Cascade)
+  contactSubmissionId String?
+  contactSubmission   ContactSubmission? @relation(fields: [contactSubmissionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([jobApplicationId])
+  @@index([supplierSubmissionId])
+  @@index([propertySubmissionId])
+  @@index([contactSubmissionId])
+  @@map("submission_notes")
+}
+
+model FormDefinition {
+  id      String @id @default(cuid())
+  key     String @unique
+  name    String
+  slug    String @unique
+  purpose String?
+
+  /// Where submissions are routed internally.
+  recipientEmails String[] @default([])
+  successMessage  String   @default("Thank you. Your submission has been received.")
+  submitLabel     String   @default("Submit")
+  isEnabled       Boolean  @default(true)
+  /// Requires the honeypot + timing checks before accepting a submission.
+  spamProtection  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fields      FormField[]
+  submissions FormSubmission[]
+  jobs        Job[]
+  contactCategories ContactCategory[]
+
+  @@map("form_definitions")
+}
+
+model FormField {
+  id     String @id @default(cuid())
+  formId String
+  form   FormDefinition @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  type        FormFieldType
+  name        String
+  label       String
+  placeholder String?
+  helpText    String?
+  isRequired  Boolean @default(false)
+  /// Select/radio/checkbox choices: [{ value, label }].
+  options     Json?
+  /// Additional constraints: { minLength, maxLength, pattern, min, max, accept }.
+  validation  Json?
+  width       String  @default("full")
+  sortOrder   Int     @default(0)
+
+  @@unique([formId, name])
+  @@index([formId, sortOrder])
+  @@map("form_fields")
+}
+
+model FormSubmission {
+  id     String @id @default(cuid())
+  formId String
+  form   FormDefinition @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  reference String @unique
+  data      Json
+  status    ContactSubmissionStatus @default(NEW)
+
+  ipHash    String?
+  userAgent String?
+  spamScore Float @default(0)
+  retentionUntil DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  files FormSubmissionFile[]
+
+  @@index([formId, status, createdAt])
+  @@map("form_submissions")
+}
+
+model FormSubmissionFile {
+  id           String @id @default(cuid())
+  submissionId String
+  submission   FormSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  assetId      String
+  asset        MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  fieldName    String
+  createdAt    DateTime @default(now())
+
+  @@index([submissionId])
+  @@map("form_submission_files")
+}
+
+// =============================================================================
+// SEARCH, CONTENT HEALTH, JOBS AND INTEGRATIONS
+// =============================================================================
+
+/// Denormalised search index. Backed by PostgreSQL full-text search today; the
+/// shape deliberately matches what an external engine would need, so swapping in
+/// OpenSearch later is an adapter change rather than a schema migration.
+model SearchDocument {
+  id     String @id @default(cuid())
+  type   SearchDocumentType
+  locale Locale
+
+  entityId String
+  title    String
+  summary  String?
+  /// Flattened body text used for matching.
+  body     String
+  url      String
+  /// Free-form facets surfaced as search filters.
+  section  String?
+  category String?
+  tags     String[] @default([])
+
+  publishedAt DateTime?
+  boost       Float    @default(1)
+
+  /// Weighted tsvector maintained by a database trigger (see the
+  /// `search_and_indexes` migration). Prisma cannot express tsvector natively;
+  /// declaring it here keeps `prisma migrate` from treating it as drift.
+  searchVector Unsupported("tsvector")?
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@unique([type, entityId, locale])
+  @@index([locale, type])
+  @@index([publishedAt])
+  /// GIN index backing ranked full-text matching. Declared here (rather than only
+  /// in SQL) so `prisma migrate dev` tracks it instead of proposing to drop it.
+  @@index([searchVector(ops: raw("tsvector_ops"))], map: "search_documents_vector_idx", type: Gin)
+  /// Trigram index for fuzzy title matching ("leadrship" -> "Leadership").
+  @@index([title(ops: raw("gin_trgm_ops"))], map: "search_documents_title_trgm_idx", type: Gin)
+  @@map("search_documents")
+}
+
+model ContentHealthIssue {
+  id       String                 @id @default(cuid())
+  type     ContentHealthIssueType
+  severity ContentHealthSeverity  @default(WARNING)
+
+  entityType String
+  entityId   String
+  entityLabel String
+  locale     Locale
+  /// Field or block the issue was detected on.
+  field      String?
+  detail     String?
+  href       String?
+
+  /// Set when an editor deliberately accepts the issue (with a reason).
+  dismissedAt   DateTime?
+  dismissedById String?
+  dismissReason String?
+
+  detectedAt DateTime @default(now())
+  resolvedAt DateTime?
+
+  @@unique([type, entityType, entityId, locale, field])
+  @@index([type, resolvedAt])
+  @@index([entityType, entityId])
+  @@map("content_health_issues")
+}
+
+model PublishingJob {
+  id     String              @id @default(cuid())
+  kind   PublishingJobKind
+  status PublishingJobStatus @default(PENDING)
+
+  entityType String?
+  entityId   String?
+  payload    Json?
+
+  runAt       DateTime  @default(now())
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  lastError   String?
+  /// Prevents a scheduled publish from being enqueued twice.
+  idempotencyKey String? @unique
+
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, runAt])
+  @@index([entityType, entityId])
+  @@map("publishing_jobs")
+}
+
+model Integration {
+  id       String  @id @default(cuid())
+  key      String  @unique
+  name     String
+  provider String
+  isEnabled Boolean @default(false)
+  /// Non-secret configuration only. Credentials live in environment variables.
+  config   Json?
+  lastSyncAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  webhooks Webhook[]
+
+  @@map("integrations")
+}
+
+model Webhook {
+  id            String  @id @default(cuid())
+  integrationId String?
+  integration   Integration? @relation(fields: [integrationId], references: [id], onDelete: SetNull)
+
+  name   String
+  url    String
+  events String[] @default([])
+  /// HMAC signing secret reference. The value itself is stored encrypted at rest
+  /// by the application layer, never in plaintext.
+  secretRef String?
+  isEnabled Boolean @default(true)
+
+  lastDeliveryAt     DateTime?
+  lastDeliveryStatus Int?
+  failureCount       Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("webhooks")
+}
+
+/// Short-lived tokens granting preview access to unpublished content.
+model PreviewToken {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  entityType String
+  entityId   String
+  locale     Locale
+  createdById String?
+  expiresAt  DateTime
+  usedCount  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@index([expiresAt])
+  @@map("preview_tokens")
+}

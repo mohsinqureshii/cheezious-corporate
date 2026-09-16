@@ -48,6 +48,31 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.3)
 
+  packages/auth:
+    dependencies:
+      '@cheezious/config':
+        specifier: workspace:*
+        version: link:../config
+      '@cheezious/database':
+        specifier: workspace:*
+        version: link:../database
+      '@cheezious/permissions':
+        specifier: workspace:*
+        version: link:../permissions
+      argon2:
+        specifier: ^0.41.1
+        version: 0.41.1
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.3)
+
   packages/config:
     dependencies:
       dotenv:
@@ -147,6 +172,12 @@ importers:
 
   packages/page-builder:
     dependencies:
+      '@cheezious/utilities':
+        specifier: workspace:*
+        version: link:../utilities
+      '@cheezious/validation':
+        specifier: workspace:*
+        version: link:../validation
       zod:
         specifier: ^3.24.1
         version: 3.25.76

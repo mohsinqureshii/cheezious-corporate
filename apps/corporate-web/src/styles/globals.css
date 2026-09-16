@@ -1,0 +1,293 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Global styles.
+ *
+ * Three things are handled here that cannot live in Tailwind config: the
+ * baseline typography of editor-authored rich text, right-to-left support for
+ * Urdu, and the reduced-motion contract.
+ */
+
+@layer base {
+  :root {
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-urdu: 'Noto Nastaliq Urdu', serif;
+
+    /* Header height is read by scroll-padding and by sticky offsets, so an
+       anchor link never lands underneath the fixed header. */
+    --header-height: 4.5rem;
+  }
+
+  @media (min-width: 1024px) {
+    :root {
+      --header-height: 5.25rem;
+    }
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--header-height) + 1.5rem);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-paper text-ink font-sans text-body-md antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+  }
+
+  /* Urdu is set in Nastaliq, which needs materially more line height than a
+     Latin grotesque — at the same leading it is genuinely hard to read. */
+  [lang='ur'],
+  [dir='rtl'] {
+    @apply font-urdu;
+    line-height: 2.1;
+  }
+
+  /* Focus is always visible and always on the brand colour, so keyboard users
+     can see where they are on both light and dark surfaces. */
+  :focus-visible {
+    outline: 2px solid theme('colors.brand.DEFAULT');
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* Remove the outline only where a component provides its own clear indicator. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  ::selection {
+    background-color: theme('colors.brand.DEFAULT');
+    color: theme('colors.ink.DEFAULT');
+  }
+
+  /* Headings inherit balance so short headlines do not leave one orphaned word. */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Images are block-level and never overflow their container. */
+  img,
+  video,
+  svg {
+    @apply block max-w-full;
+  }
+}
+
+@layer components {
+  /**
+   * Layout containers.
+   *
+   * `gutter` is fluid, so the side margin grows with the viewport instead of
+   * jumping at breakpoints, and never drops below 16px on a phone.
+   */
+  .container-standard {
+    @apply mx-auto w-full max-w-standard px-gutter;
+  }
+
+  .container-wide {
+    @apply mx-auto w-full max-w-wide px-gutter;
+  }
+
+  .container-narrow {
+    @apply mx-auto w-full max-w-narrow px-gutter;
+  }
+
+  .container-prose {
+    @apply mx-auto w-full max-w-prose px-gutter;
+  }
+
+  /** The 12-column grid, collapsing to a single column on small screens. */
+  .grid-corporate {
+    @apply grid grid-cols-4 gap-x-gutter gap-y-8 md:grid-cols-8 lg:grid-cols-corporate;
+  }
+
+  /**
+   * Editor-authored rich text.
+   *
+   * Styled here rather than with a typography plugin so the rules match the
+   * design system exactly and stay legible in both text directions.
+   */
+  .rich-text {
+    @apply text-body-md text-ink-soft;
+  }
+
+  .rich-text > * + * {
+    @apply mt-[1.1em];
+  }
+
+  .rich-text h2 {
+    @apply text-heading-lg text-ink mt-[1.8em] mb-[0.6em];
+  }
+
+  .rich-text h3 {
+    @apply text-heading-md text-ink mt-[1.6em] mb-[0.5em];
+  }
+
+  .rich-text h4 {
+    @apply text-heading-sm text-ink mt-[1.4em] mb-[0.4em];
+  }
+
+  .rich-text a {
+    @apply text-ink underline decoration-brand decoration-2 underline-offset-4
+           transition-colors duration-quick hover:decoration-ink;
+  }
+
+  .rich-text strong {
+    @apply font-semibold text-ink;
+  }
+
+  .rich-text ul,
+  .rich-text ol {
+    @apply space-y-2 ps-6;
+  }
+
+  .rich-text ul {
+    @apply list-disc marker:text-brand-deep;
+  }
+
+  .rich-text ol {
+    @apply list-decimal marker:text-ink-muted;
+  }
+
+  .rich-text blockquote {
+    @apply border-s-2 border-brand ps-6 text-body-lg italic text-ink;
+  }
+
+  .rich-text table {
+    @apply w-full border-collapse text-body-sm;
+  }
+
+  .rich-text th {
+    @apply border-b border-ink-line py-3 text-start font-semibold text-ink;
+  }
+
+  .rich-text td {
+    @apply border-b border-ink-line py-3 align-top;
+  }
+
+  .rich-text hr {
+    @apply my-[2.5em] border-ink-line;
+  }
+
+  /**
+   * Skip link.
+   *
+   * Visually hidden until focused, at which point it becomes the first thing a
+   * keyboard user sees — the standard way past a large mega menu.
+   */
+  .skip-link {
+    @apply sr-only z-skipLink;
+  }
+
+  .skip-link:focus {
+    @apply not-sr-only fixed start-4 top-4 rounded bg-ink px-5 py-3
+           text-body-sm font-semibold text-paper shadow-dialog;
+  }
+
+  /** Eyebrow label above a section heading. */
+  .eyebrow {
+    @apply text-eyebrow uppercase text-ink-muted;
+  }
+
+  /**
+   * Hairline rule used to separate editorial sections.
+   * Deliberately thin and low-contrast: structure, not decoration.
+   */
+  .rule {
+    @apply border-0 border-t border-ink-line;
+  }
+}
+
+@layer utilities {
+  /** Hide scrollbars on horizontally scrolling rails without losing scrollability. */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /** Clamp text to a fixed number of lines in card layouts. */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+/**
+ * Reduced motion.
+ *
+ * Honoured as an instruction, not a hint. Every animation is reduced to a
+ * near-instant state change, and smooth scrolling is disabled, because for
+ * someone with a vestibular disorder large scroll-linked motion causes real
+ * symptoms. Content remains fully visible: nothing depends on an animation
+ * having run.
+ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/** Print: strip navigation and interface chrome from articles and documents. */
+@media print {
+  .no-print,
+  header nav,
+  footer {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+    font-size: 11pt;
+  }
+
+  /* Expose link targets, which are otherwise lost on paper. */
+  .rich-text a::after {
+    content: ' (' attr(href) ')';
+    font-size: 9pt;
+    color: #555;
+  }
+
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  figure,
+  blockquote,
+  table {
+    break-inside: avoid;
+  }
+}

@@ -200,6 +200,79 @@ export function publicRoutes(): Router {
   );
 
   // ---------------------------------------------------------------------------
+  // Batch reference resolution
+  //
+  // Blocks store ids rather than URLs or copies of images. These endpoints let
+  // the renderer resolve every reference on a page in one request instead of one
+  // per reference, which is the difference between a page costing one round trip
+  // and costing twelve.
+  // ---------------------------------------------------------------------------
+
+  router.get(
+    '/media/batch',
+    asyncHandler(async (req, res) => {
+      const { ids } = z.object({ ids: z.string().max(4000) }).parse(req.query);
+      const assetIds = ids.split(',').map((id) => id.trim()).filter(Boolean).slice(0, 100);
+
+      if (assetIds.length === 0) {
+        res.json({ assets: [] });
+        return;
+      }
+
+      const assets = await req.ctx.prisma.mediaAsset.findMany({
+        where: {
+          id: { in: assetIds },
+          deletedAt: null,
+          // Restricted assets hold applicant CVs and supplier documents. They
+          // are never resolvable through a public endpoint, whatever id is asked
+          // for — the filter is here, not in the caller.
+          visibility: { in: ['PUBLIC_DOWNLOAD', 'CMS_ONLY'] },
+        },
+        select: {
+          id: true,
+          storageKey: true,
+          altText: true,
+          caption: true,
+          credit: true,
+          width: true,
+          height: true,
+          focalX: true,
+          focalY: true,
+          blurDataUrl: true,
+          placeholderColor: true,
+        },
+      });
+
+      setPublicCache(res, 600);
+      res.json({ assets });
+    }),
+  );
+
+  router.get(
+    '/:locale/pages/batch',
+    asyncHandler(async (req, res) => {
+      const locale = parseLocale(req.params.locale);
+      const { ids } = z.object({ ids: z.string().max(4000) }).parse(req.query);
+      const pageIds = ids.split(',').map((id) => id.trim()).filter(Boolean).slice(0, 100);
+
+      if (pageIds.length === 0) {
+        res.json({ pages: [] });
+        return;
+      }
+
+      // Only published pages resolve, so a link to an unpublished page is
+      // dropped by the renderer rather than shipped as a dead link.
+      const pages = await req.ctx.prisma.page.findMany({
+        where: { id: { in: pageIds }, locale, status: 'PUBLISHED', deletedAt: null },
+        select: { id: true, path: true, title: true, navLabel: true },
+      });
+
+      setPublicCache(res, 600);
+      res.json({ pages });
+    }),
+  );
+
+  // ---------------------------------------------------------------------------
   // Search
   // ---------------------------------------------------------------------------
 

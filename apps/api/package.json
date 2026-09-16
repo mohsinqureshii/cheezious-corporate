@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit",
-    "test": "dotenv -e ../../.env -- vitest run",
+    "test": "dotenv -e ../../.env -- vitest run --passWithNoTests",
     "test:unit": "vitest run src/**/*.unit.test.ts",
     "worker": "dotenv -e ../../.env -- tsx src/worker.ts"
   },

@@ -5,6 +5,8 @@ import path from 'node:path';
 import type { PrismaClient } from '@prisma/client';
 import sharp from 'sharp';
 
+import { resolveStorageRoot } from './lib/storage-root';
+
 /**
  * Placeholder photography.
  *
@@ -119,7 +121,9 @@ function escapeXml(value: string): string {
  * assets so blocks can reference them like any other image.
  */
 export async function seedMedia(prisma: PrismaClient, actorId: string): Promise<Map<string, string>> {
-  const storageRoot = process.env.STORAGE_LOCAL_ROOT ?? './.storage';
+  // Anchored to the repository root so the seed, the API and the worker all
+  // agree on where files live regardless of which directory they run from.
+  const storageRoot = resolveStorageRoot(process.env.STORAGE_LOCAL_ROOT ?? './.storage');
   const assetIdByKey = new Map<string, string>();
 
   const folders = new Map(
@@ -174,6 +178,25 @@ export async function seedMedia(prisma: PrismaClient, actorId: string): Promise<
     });
 
     assetIdByKey.set(spec.key, asset.id);
+  }
+
+  // Point the site-wide social sharing image at the generated default, so links
+  // to any page share with a preview rather than a blank card. Editors replace
+  // the asset in the CMS; the setting keeps pointing at whatever is there.
+  const defaultOgKey = 'media/placeholders/og-default.jpg';
+  for (const locale of ['en', 'ur'] as const) {
+    await prisma.siteSetting.upsert({
+      where: { key_locale: { key: 'seo.defaultOgImageKey', locale } },
+      create: {
+        key: 'seo.defaultOgImageKey',
+        locale,
+        group: 'seo',
+        label: 'Default social sharing image',
+        description: 'Used when a page has no image of its own. 1200x630 recommended.',
+        value: defaultOgKey,
+      },
+      update: {},
+    });
   }
 
   return assetIdByKey;

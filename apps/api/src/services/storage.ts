@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -227,6 +228,31 @@ export class S3StorageDriver implements StorageDriver {
   }
 }
 
+/**
+ * Resolve the local storage root.
+ *
+ * A relative path in `.env` is anchored to the repository root rather than to
+ * the current working directory, because the API, the seed and the worker all
+ * run from different directories and must agree on where files live. Without
+ * this, the seed writes into one `.storage` and the API reads from another.
+ */
+export function resolveStorageRoot(configured: string): string {
+  if (path.isAbsolute(configured)) return configured;
+
+  let directory = process.cwd();
+  for (let depth = 0; depth < 8; depth += 1) {
+    if (existsSync(path.join(directory, 'pnpm-workspace.yaml'))) {
+      return path.resolve(directory, configured);
+    }
+    const parent = path.dirname(directory);
+    if (parent === directory) break;
+    directory = parent;
+  }
+
+  // Outside a workspace checkout, fall back to the working directory.
+  return path.resolve(process.cwd(), configured);
+}
+
 export function createStorageDriver(env: ApiEnv): StorageDriver {
   if (env.STORAGE_DRIVER === 's3') {
     const missing = (['S3_ENDPOINT', 'S3_REGION', 'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'] as const)
@@ -246,7 +272,7 @@ export function createStorageDriver(env: ApiEnv): StorageDriver {
     });
   }
 
-  return new LocalStorageDriver(env.STORAGE_LOCAL_ROOT, env.STORAGE_PUBLIC_BASE_URL);
+  return new LocalStorageDriver(resolveStorageRoot(env.STORAGE_LOCAL_ROOT), env.STORAGE_PUBLIC_BASE_URL);
 }
 
 /** Storage prefixes. Applicant files are separated from public media by prefix. */

@@ -14,6 +14,7 @@ import {
 } from './middleware';
 import { authRoutes } from './modules/auth.routes';
 import { careersRoutes } from './modules/careers.routes';
+import { mediaRoutes } from './modules/media.routes';
 import { publicRoutes } from './modules/public.routes';
 import { publicContentRoutes } from './modules/public-content.routes';
 import { submissionsRoutes } from './modules/submissions.routes';
@@ -107,6 +108,10 @@ export function createApp(ctx: AppContext): Express {
   app.use('/api/public', publicContentRoutes());
   app.use('/api/public', careersRoutes());
   app.use('/api/submit', submissionsRoutes());
+
+  // File delivery for the local storage driver. Mounted outside /api because
+  // these are assets, not API responses, and are cached very differently.
+  app.use('/files', mediaRoutes());
 
   app.use(notFoundHandler());
   app.use(errorHandler());

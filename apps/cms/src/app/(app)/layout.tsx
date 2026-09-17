@@ -35,7 +35,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         badges={badges}
       />
 
-      <div className="pt-header lg:ps-sidebar">
+      {/* The shell never scrolls sideways: the sidebar is fixed and the content
+          area owns its own overflow, so a wide table scrolls inside its panel
+          rather than dragging the whole page with it. */}
+      <div className="overflow-x-hidden pt-header lg:ps-sidebar">
         <main
           id="cms-main"
           tabIndex={-1}

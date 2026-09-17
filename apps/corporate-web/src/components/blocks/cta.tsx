@@ -8,6 +8,7 @@ import type { BlockContext } from './heroes';
 import {
   ActionLink,
   BlockImage,
+  ItemHeading,
   resolveLink,
   Section,
   SectionHeader,
@@ -160,7 +161,9 @@ export function ContactDirectory({ data, context }: { data: BlockData; context: 
 
           return (
             <li key={index} className="border-t border-ink-line pt-5">
-              <h3 className="text-heading-sm text-ink">{String(entry.title ?? '')}</h3>
+              <ItemHeading block={data} className="text-heading-sm text-ink">
+                {String(entry.title ?? '')}
+              </ItemHeading>
               {entry.description ? (
                 <p className="mt-2 text-body-sm text-ink-soft">{String(entry.description)}</p>
               ) : null}

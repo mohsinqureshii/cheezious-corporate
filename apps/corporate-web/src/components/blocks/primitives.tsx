@@ -385,6 +385,35 @@ export function PlaceholderBadge({ tone = 'light' }: { tone?: Tone }) {
   );
 }
 
+/**
+ * The heading level an item inside a block should use.
+ *
+ * A block that carries its own section heading renders that as an `h2`, so its
+ * items are `h3`. A block with no heading of its own sits directly beneath the
+ * page's `h1`, and its items have to be `h2` — otherwise the document skips a
+ * level, which is how a screen-reader user loses the outline of a page.
+ *
+ * The editor chooses whether a block has a heading, so the level cannot be
+ * fixed at build time; it follows the content.
+ */
+export function itemHeadingLevel(data: { heading?: unknown; eyebrow?: unknown }): 'h2' | 'h3' {
+  const hasSectionHeading = typeof data.heading === 'string' && data.heading.trim().length > 0;
+  return hasSectionHeading ? 'h3' : 'h2';
+}
+
+export interface ItemHeadingProps {
+  /** The block's own data, so the level follows whether it has a heading. */
+  block: { heading?: unknown; eyebrow?: unknown };
+  className?: string;
+  children: ReactNode;
+}
+
+/** An item's title inside a block, at whichever level keeps the outline intact. */
+export function ItemHeading({ block, className, children }: ItemHeadingProps) {
+  const Tag = itemHeadingLevel(block);
+  return <Tag className={className}>{children}</Tag>;
+}
+
 /** Sanitised editor HTML. The API sanitises on write, so this is already safe. */
 export function RichText({ html, className }: { html: string; className?: string }) {
   return (

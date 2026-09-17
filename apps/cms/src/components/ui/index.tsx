@@ -231,7 +231,11 @@ export function DataTable<T extends { id: string }>({
   const allSelected = rows.length > 0 && selectedIds.length === rows.length;
 
   return (
-    <div className="scrollbar-thin overflow-x-auto">
+    // `relative` matters: the visually-hidden spans inside cells are
+    // absolutely positioned, and without a positioned ancestor their
+    // containing block is the page — so they escape this container's clip and
+    // make the whole document scroll sideways by the width of the table.
+    <div className="scrollbar-thin relative overflow-x-auto">
       <table className="data-table">
         {/* Every table is captioned for screen readers; sighted users get the
             page heading instead. */}

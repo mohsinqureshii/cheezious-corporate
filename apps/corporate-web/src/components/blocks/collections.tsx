@@ -7,6 +7,7 @@ import type { BlockContext } from './heroes';
 import {
   ActionLink,
   BlockImage,
+  ItemHeading,
   PlaceholderBadge,
   resolveLink,
   Section,
@@ -196,14 +197,14 @@ export function StoryFeature({
               </time>
             ) : null}
           </div>
-          <h3 className="mt-3 text-display-sm text-ink">
+          <ItemHeading block={data} className="mt-3 text-display-sm text-ink">
             <Link
               href={href}
               className="text-ink no-underline transition-colors duration-quick group-hover:text-brand-deep"
             >
               {story.title}
             </Link>
-          </h3>
+          </ItemHeading>
           {story.excerpt ? (
             <p className="mt-5 text-body-lg text-ink-soft">{story.excerpt}</p>
           ) : null}

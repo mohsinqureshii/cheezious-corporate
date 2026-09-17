@@ -66,6 +66,35 @@ export const employeeStoryFeature = baseBlock.extend({
   showCareerTimeline: z.boolean().default(true),
 });
 
+/**
+ * Impact stories as cards.
+ *
+ * Filtered by pillar rather than by category, because that is how the impact
+ * section is organised: a story belongs to People, Planet or Community, and a
+ * reader arriving at a pillar expects to see its work and nothing else.
+ */
+export const impactStoryGrid = baseBlock.extend({
+  ...collectionSource.shape,
+  pillarSlug: z.string().max(80).optional(),
+  columns: z.enum(['2', '3']).default('3'),
+  showExcerpt: z.boolean().default(true),
+  viewAllLink: linkRef.optional(),
+});
+
+/**
+ * Employee stories as cards.
+ *
+ * The feature block shows one story at scale; this shows the set. A careers
+ * section with a single colleague's story reads as the exception that was found;
+ * several read as how the place works.
+ */
+export const employeeStoryGrid = baseBlock.extend({
+  ...collectionSource.shape,
+  columns: z.enum(['2', '3']).default('3'),
+  showExcerpt: z.boolean().default(true),
+  viewAllLink: linkRef.optional(),
+});
+
 export const reportGrid = baseBlock.extend({
   ...collectionSource.shape,
   type: z.string().optional(),

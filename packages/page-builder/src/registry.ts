@@ -415,6 +415,22 @@ export const BLOCK_SPECS: BlockDefinitionSpec[] = [
     collections.employeeStoryFeature,
   ),
   spec(
+    'EmployeeStoryGrid',
+    'Employee story grid',
+    'Employee stories as cards.',
+    'people',
+    'UsersRound',
+    collections.employeeStoryGrid,
+  ),
+  spec(
+    'ImpactStoryGrid',
+    'Impact story grid',
+    'Impact stories as cards, optionally limited to one pillar.',
+    'collections',
+    'Sprout',
+    collections.impactStoryGrid,
+  ),
+  spec(
     'ReportGrid',
     'Report grid',
     'Reports and publications as cards.',

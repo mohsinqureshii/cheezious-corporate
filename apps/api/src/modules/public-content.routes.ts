@@ -475,7 +475,14 @@ export function publicContentRoutes(): Router {
       if (!story) throw ApiError.notFound('Story');
 
       setPublicCache(res);
-      res.json({ story });
+      res.json({
+        story,
+        alternates: await localeAlternates(
+          req.ctx.prisma,
+          'employeeStory',
+          story.translationGroupId,
+        ),
+      });
     }),
   );
 
@@ -766,12 +773,21 @@ export function publicContentRoutes(): Router {
 
       const story = await req.ctx.prisma.impactStory.findFirst({
         where: { locale, slug: req.params.slug, isPublished: true },
-        select: { ...impactStoryListSelect, body: true, seoTitle: true, seoDescription: true },
+        select: {
+          ...impactStoryListSelect,
+          body: true,
+          seoTitle: true,
+          seoDescription: true,
+          translationGroupId: true,
+        },
       });
       if (!story) throw ApiError.notFound('Story');
 
       setPublicCache(res);
-      res.json({ story });
+      res.json({
+        story,
+        alternates: await localeAlternates(req.ctx.prisma, 'impactStory', story.translationGroupId),
+      });
     }),
   );
 
@@ -825,6 +841,55 @@ export function publicContentRoutes(): Router {
           years: [...new Set(facets.map((f) => f.year))].sort((a, b) => b - a),
           types: [...new Set(facets.map((f) => f.type))],
         },
+      });
+    }),
+  );
+
+  /**
+   * One report.
+   *
+   * Registered after the listing, and reached by slug. A report is a document
+   * with a page around it rather than an article: the page exists so the
+   * document has an address that can be linked, shared and indexed, which a
+   * direct link to a PDF in object storage cannot be.
+   */
+  router.get(
+    '/:locale/reports/:slug',
+    asyncHandler(async (req, res) => {
+      const locale = parseLocale(req.params.locale);
+
+      const report = await req.ctx.prisma.report.findFirst({
+        where: { locale, slug: req.params.slug, isPublished: true },
+        select: {
+          ...reportListSelect,
+          seoTitle: true,
+          seoDescription: true,
+          translationGroupId: true,
+          updatedAt: true,
+        },
+      });
+      if (!report) throw ApiError.notFound('Report');
+
+      // Other publications in the same category, so a report is not a dead end.
+      // Excluding itself matters: a "related" list that includes the thing you
+      // are already reading looks like a bug, because it is one.
+      const related = await req.ctx.prisma.report.findMany({
+        where: {
+          locale,
+          isPublished: true,
+          id: { not: report.id },
+          ...(report.category ? { category: { slug: report.category.slug } } : {}),
+        },
+        orderBy: [{ year: 'desc' }, { sortOrder: 'asc' }],
+        take: 3,
+        select: reportListSelect,
+      });
+
+      setPublicCache(res, 300);
+      res.json({
+        report,
+        related,
+        alternates: await localeAlternates(req.ctx.prisma, 'report', report.translationGroupId),
       });
     }),
   );
@@ -1005,25 +1070,38 @@ const policyListSelect = {
   },
 } satisfies Prisma.PolicySelect;
 
-/** Published locale variants of a record, used for hreflang. */
+/**
+ * Published locale variants of a record, used for hreflang.
+ *
+ * Two families, because the platform has two notions of published. Editorial
+ * content runs the workflow and is published when its status says so; reports,
+ * impact stories and employee stories carry a boolean. Conflating them would
+ * advertise an unpublished translation as an alternate.
+ */
 async function localeAlternates(
   prisma: PrismaClient,
-  entity: 'story' | 'pressRelease' | 'person' | 'policy',
+  entity:
+    'story' | 'pressRelease' | 'person' | 'policy' | 'report' | 'impactStory' | 'employeeStory',
   translationGroupId: string,
 ): Promise<Record<string, string>> {
-  const common = { translationGroupId, deletedAt: null, status: 'PUBLISHED' as const };
+  const workflow = { translationGroupId, deletedAt: null, status: 'PUBLISHED' as const };
+  const flagged = { translationGroupId, isPublished: true };
+  const select = { locale: true, slug: true } as const;
 
   const rows =
     entity === 'story'
-      ? await prisma.story.findMany({ where: common, select: { locale: true, slug: true } })
+      ? await prisma.story.findMany({ where: workflow, select })
       : entity === 'pressRelease'
-        ? await prisma.pressRelease.findMany({
-            where: common,
-            select: { locale: true, slug: true },
-          })
+        ? await prisma.pressRelease.findMany({ where: workflow, select })
         : entity === 'person'
-          ? await prisma.person.findMany({ where: common, select: { locale: true, slug: true } })
-          : await prisma.policy.findMany({ where: common, select: { locale: true, slug: true } });
+          ? await prisma.person.findMany({ where: workflow, select })
+          : entity === 'policy'
+            ? await prisma.policy.findMany({ where: workflow, select })
+            : entity === 'report'
+              ? await prisma.report.findMany({ where: flagged, select })
+              : entity === 'impactStory'
+                ? await prisma.impactStory.findMany({ where: flagged, select })
+                : await prisma.employeeStory.findMany({ where: flagged, select });
 
   return Object.fromEntries(rows.map((row) => [row.locale, row.slug]));
 }

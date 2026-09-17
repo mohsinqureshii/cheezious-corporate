@@ -129,20 +129,32 @@ export function StoryGrid({
   );
 }
 
-/** A single story at full editorial scale. */
+/**
+ * A single story at full editorial scale.
+ *
+ * Shared by the newsroom and by employee stories, which are the same object at
+ * this size. They differ in where they live, so the section is a prop: reusing
+ * this for an employee story without it sent every one of them to a newsroom
+ * address that does not exist.
+ */
 export function StoryFeature({
   data,
   context,
   story,
+  section = 'newsroom',
 }: {
   data: BlockData;
   context: BlockContext;
   story?: StorySummary | null;
+  section?: 'newsroom' | 'people';
 }) {
   const tone = (data.tone as Tone) ?? 'light';
   if (!story) return null;
 
-  const href = `/${context.locale}/company/newsroom/stories/${story.slug}`;
+  const href =
+    section === 'people'
+      ? `/${context.locale}/company/people/stories/${story.slug}`
+      : `/${context.locale}/company/newsroom/stories/${story.slug}`;
   const isOverlay = data.layout === 'overlay';
 
   if (isOverlay && story.heroImage) {
@@ -575,6 +587,175 @@ export function CareerPath({
   );
 }
 
+/**
+ * Employee stories.
+ *
+ * The role, not the person's name, leads the card. A reader scanning a careers
+ * page is looking for someone whose job they can imagine having; the name
+ * matters once they are reading the story, not before.
+ */
+export function EmployeeStoryGrid({
+  data,
+  context,
+  stories = [],
+}: {
+  data: BlockData;
+  context: BlockContext;
+  stories?: Array<{
+    id: string;
+    title: string;
+    slug: string;
+    excerpt?: string | null;
+    personName?: string | null;
+    roleLabel?: string | null;
+    locationLabel?: string | null;
+    isDemoContent?: boolean;
+    portrait?: MediaImage | null;
+  }>;
+}) {
+  const tone = (data.tone as Tone) ?? 'light';
+  if (stories.length === 0) return null;
+
+  const columns = (data.columns as string) ?? '3';
+  const viewAll = resolveLink(data.viewAllLink as never, context.locale, context.pathById);
+
+  return (
+    <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+        action={viewAll ? <ActionLink link={viewAll} variant="ghost" tone={tone} /> : undefined}
+      />
+      <ul
+        className={[
+          'grid gap-x-gutter gap-y-10',
+          columns === '2' ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3',
+        ].join(' ')}
+      >
+        {stories.map((story) => (
+          <li key={story.id} className="group">
+            <Link
+              href={`/${context.locale}/company/people/stories/${story.slug}`}
+              className="block no-underline"
+            >
+              <div className="overflow-hidden">
+                <BlockImage
+                  image={story.portrait ?? null}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  aspectRatio="4:5"
+                  reveal={false}
+                  className="transition-transform duration-slow ease-editorial group-hover:scale-[1.03]"
+                />
+              </div>
+              <p className="eyebrow mt-5">
+                {[story.roleLabel, story.locationLabel].filter(Boolean).join(' · ')}
+              </p>
+              <ItemHeading
+                block={data}
+                className="mt-2.5 text-heading-md text-ink transition-colors duration-quick group-hover:text-brand-deep"
+              >
+                {story.title}
+                {story.isDemoContent ? <PlaceholderBadge tone={tone} /> : null}
+              </ItemHeading>
+              {data.showExcerpt !== false && story.excerpt ? (
+                <p className="mt-2 line-clamp-3 text-body-sm text-ink-muted">{story.excerpt}</p>
+              ) : null}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  );
+}
+
+/**
+ * Impact stories.
+ *
+ * The pillar leads each card, because it is the organising idea of the section
+ * and the thing a reader is scanning for. The year is shown beside it rather
+ * than omitted: an impact claim without a date reads as a claim about now, and
+ * quietly becoming one is how a page stops being true.
+ */
+export function ImpactStoryGrid({
+  data,
+  context,
+  stories = [],
+}: {
+  data: BlockData;
+  context: BlockContext;
+  stories?: Array<{
+    id: string;
+    title: string;
+    slug: string;
+    excerpt?: string | null;
+    year?: number | null;
+    location?: string | null;
+    isDemoContent?: boolean;
+    image?: MediaImage | null;
+    pillar?: { name: string; slug: string } | null;
+  }>;
+}) {
+  const tone = (data.tone as Tone) ?? 'light';
+  if (stories.length === 0) return null;
+
+  const columns = (data.columns as string) ?? '3';
+  const viewAll = resolveLink(data.viewAllLink as never, context.locale, context.pathById);
+
+  return (
+    <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+        action={viewAll ? <ActionLink link={viewAll} variant="ghost" tone={tone} /> : undefined}
+      />
+      <ul
+        className={[
+          'grid gap-x-gutter gap-y-10',
+          columns === '2' ? 'sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3',
+        ].join(' ')}
+      >
+        {stories.map((story) => (
+          <li key={story.id} className="group">
+            <Link
+              href={`/${context.locale}/company/impact/stories/${story.slug}`}
+              className="block no-underline"
+            >
+              <div className="overflow-hidden">
+                <BlockImage
+                  image={story.image ?? null}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  aspectRatio="3:2"
+                  reveal={false}
+                  className="transition-transform duration-slow ease-editorial group-hover:scale-[1.03]"
+                />
+              </div>
+              <p className="eyebrow mt-5">
+                {[story.pillar?.name, story.year ? String(story.year) : null]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+              <ItemHeading
+                block={data}
+                className="mt-2.5 text-heading-md text-ink transition-colors duration-quick group-hover:text-brand-deep"
+              >
+                {story.title}
+                {story.isDemoContent ? <PlaceholderBadge tone={tone} /> : null}
+              </ItemHeading>
+              {data.showExcerpt !== false && story.excerpt ? (
+                <p className="mt-2 line-clamp-3 text-body-sm text-ink-muted">{story.excerpt}</p>
+              ) : null}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Section>
+  );
+}
+
 /** Reports and publications. Presented as a document centre, not a file listing. */
 export function ReportGrid({
   data,
@@ -626,7 +807,7 @@ export function ReportGrid({
         {reports.map((report) => (
           <li key={report.id} className="group">
             <Link
-              href={`/${context.locale}/company/resources/publications`}
+              href={`/${context.locale}/company/resources/publications/${report.slug}`}
               className="block no-underline"
             >
               {/* Document covers are portrait, matching the page they represent. */}

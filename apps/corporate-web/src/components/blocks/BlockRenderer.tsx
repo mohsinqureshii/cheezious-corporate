@@ -4,6 +4,7 @@ import { Fragment, type ReactNode } from 'react';
 import {
   getCareerCategories,
   getEmployeeStories,
+  getImpactStories,
   getFootprint,
   getImpact,
   getJobs,
@@ -19,6 +20,8 @@ import {
 
 import {
   CareerPath,
+  EmployeeStoryGrid,
+  ImpactStoryGrid,
   JobCategories,
   LeadershipGrid,
   PolicyList,
@@ -101,6 +104,8 @@ interface ResolvedData {
   jobs?: Awaited<ReturnType<typeof getJobs>>;
   careerCategories?: Awaited<ReturnType<typeof getCareerCategories>>['categories'];
   employeeStories?: Awaited<ReturnType<typeof getEmployeeStories>>['items'];
+  impactStories?: Awaited<ReturnType<typeof getImpactStories>>['items'];
+  employeeStoryList?: Awaited<ReturnType<typeof getEmployeeStories>>['items'];
 }
 
 /**
@@ -186,6 +191,23 @@ async function resolveBlockData(blocks: PageBlock[], locale: Locale): Promise<Re
     );
   }
 
+  if (keys.has('ImpactStoryGrid')) {
+    tasks.push(
+      safely('ImpactStoryGrid', async () => {
+        // The pillar filter is a block setting rather than a query parameter:
+        // the page decides what it is about, not the visitor.
+        const pillar = blocks.find((block) => block.blockKey === 'ImpactStoryGrid')?.data
+          ?.pillarSlug;
+        data.impactStories = (
+          await getImpactStories(locale, {
+            pageSize: 12,
+            ...(typeof pillar === 'string' && pillar ? { pillar } : {}),
+          })
+        ).items;
+      }),
+    );
+  }
+
   if (keys.has('ReportGrid') || keys.has('DocumentLibrary')) {
     tasks.push(
       safely('ReportGrid', async () => {
@@ -220,6 +242,14 @@ async function resolveBlockData(blocks: PageBlock[], locale: Locale): Promise<Re
     tasks.push(
       safely('JobCategories', async () => {
         data.careerCategories = (await getCareerCategories(locale)).categories;
+      }),
+    );
+  }
+
+  if (keys.has('EmployeeStoryGrid')) {
+    tasks.push(
+      safely('EmployeeStoryGrid', async () => {
+        data.employeeStoryList = (await getEmployeeStories(locale, { pageSize: 12 })).items;
       }),
     );
   }
@@ -360,6 +390,10 @@ function renderBlock(
     case 'LeadershipGrid':
     case 'PeopleGrid':
       return <LeadershipGrid {...props} groups={data.leadership ?? []} />;
+    case 'EmployeeStoryGrid':
+      return <EmployeeStoryGrid {...props} stories={(data.employeeStoryList ?? []) as never} />;
+    case 'ImpactStoryGrid':
+      return <ImpactStoryGrid {...props} stories={(data.impactStories ?? []) as never} />;
     case 'ReportGrid':
     case 'DocumentLibrary':
       return <ReportGrid {...props} reports={(data.reports ?? []) as never} />;
@@ -376,7 +410,13 @@ function renderBlock(
     case 'CareerPath':
       return <CareerPath {...props} />;
     case 'EmployeeStoryFeature':
-      return <StoryFeature {...props} story={(data.employeeStories?.[0] ?? null) as never} />;
+      return (
+        <StoryFeature
+          {...props}
+          section="people"
+          story={(data.employeeStories?.[0] ?? null) as never}
+        />
+      );
 
     // --- Calls to action ----------------------------------------------------
     case 'CTAEditorial':

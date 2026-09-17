@@ -809,7 +809,20 @@ export const SITE_MAP: PageSeedSpec[] = [
     type: 'SECTION_INDEX',
     blocks: [
       { key: 'HeroMinimal', data: { eyebrow: 'Our people', headline: 'Employee stories' } },
-      { key: 'StoryGrid', data: { kinds: ['PEOPLE_STORY'], limit: 12, columns: '3' } },
+      { key: 'EmployeeStoryGrid', data: { limit: 12, columns: '3' } },
+      // Newsroom pieces about colleagues are a different record from an employee
+      // story, and both belong here — the first is what a colleague said about
+      // their career, the second is what the company published about them.
+      {
+        key: 'StoryGrid',
+        data: {
+          heading: 'From the newsroom',
+          kinds: ['PEOPLE_STORY'],
+          limit: 6,
+          columns: '3',
+          tone: 'muted',
+        },
+      },
     ],
   },
   editorialPage(
@@ -1040,8 +1053,8 @@ export const SITE_MAP: PageSeedSpec[] = [
         data: { heading: 'Where we are', showTargets: true, columns: '3', tone: 'muted' },
       },
       {
-        key: 'StoryGrid',
-        data: { heading: 'Impact stories', kinds: ['STORY'], limit: 3, columns: '3' },
+        key: 'ImpactStoryGrid',
+        data: { heading: 'Impact stories', limit: 3, columns: '3' },
       },
       { key: 'ReportGrid', data: { heading: 'Reporting', limit: 3, columns: '3', tone: 'muted' } },
     ],
@@ -1073,7 +1086,7 @@ export const SITE_MAP: PageSeedSpec[] = [
     type: 'SECTION_INDEX',
     blocks: [
       { key: 'HeroMinimal', data: { eyebrow: 'Impact', headline: 'Impact stories' } },
-      { key: 'StoryGrid', data: { limit: 12, columns: '3' } },
+      { key: 'ImpactStoryGrid', data: { limit: 12, columns: '3' } },
     ],
   },
 

@@ -139,7 +139,19 @@ export function publicRoutes(): Router {
       const locale = parseLocale(req.params.locale);
       const published = { locale, deletedAt: null, status: 'PUBLISHED' } as const;
 
-      const [pages, stories, pressReleases, people, policies, jobs] = await Promise.all([
+      const flagged = { locale, isPublished: true } as const;
+
+      const [
+        pages,
+        stories,
+        pressReleases,
+        people,
+        policies,
+        jobs,
+        reports,
+        impactStories,
+        employeeStories,
+      ] = await Promise.all([
         req.ctx.prisma.page.findMany({
           // A page marked noindex has no business in a sitemap: the two
           // instructions contradict each other, and a crawler asked to fetch a
@@ -185,10 +197,45 @@ export function publicRoutes(): Router {
           select: { slug: true, updatedAt: true, postedAt: true, translationGroupId: true },
           orderBy: { postedAt: 'desc' },
         }),
+        // These three carry a published flag rather than running the workflow;
+        // see the note on `localeAlternates`. They have public detail pages, so
+        // they belong here.
+        req.ctx.prisma.report.findMany({
+          where: flagged,
+          // A report has no `publishedAt`; `publicationDate` is the document's
+          // own date, which is what a sitemap should report.
+          select: {
+            slug: true,
+            updatedAt: true,
+            publicationDate: true,
+            translationGroupId: true,
+          },
+          orderBy: [{ year: 'desc' }, { sortOrder: 'asc' }],
+        }),
+        req.ctx.prisma.impactStory.findMany({
+          where: flagged,
+          select: { slug: true, updatedAt: true, publishedAt: true, translationGroupId: true },
+          orderBy: { publishedAt: 'desc' },
+        }),
+        req.ctx.prisma.employeeStory.findMany({
+          where: flagged,
+          select: { slug: true, updatedAt: true, publishedAt: true, translationGroupId: true },
+          orderBy: { publishedAt: 'desc' },
+        }),
       ]);
 
       setPublicCache(res, 900);
-      res.json({ pages, stories, pressReleases, people, policies, jobs });
+      res.json({
+        pages,
+        stories,
+        pressReleases,
+        people,
+        policies,
+        jobs,
+        reports,
+        impactStories,
+        employeeStories,
+      });
     }),
   );
 

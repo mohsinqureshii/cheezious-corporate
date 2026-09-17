@@ -30,6 +30,9 @@ const PATHS = {
   people: (locale: string, slug: string) => `/${locale}/company/leadership/${slug}`,
   policies: (locale: string, slug: string) => `/${locale}/company/governance/policies/${slug}`,
   jobs: (locale: string, slug: string) => `/${locale}/careers/jobs/${slug}`,
+  reports: (locale: string, slug: string) => `/${locale}/company/resources/publications/${slug}`,
+  impactStories: (locale: string, slug: string) => `/${locale}/company/impact/stories/${slug}`,
+  employeeStories: (locale: string, slug: string) => `/${locale}/company/people/stories/${slug}`,
 } as const;
 
 const DEFAULTS = {
@@ -38,6 +41,9 @@ const DEFAULTS = {
   people: SITEMAP_DEFAULTS.person,
   policies: SITEMAP_DEFAULTS.policy,
   jobs: SITEMAP_DEFAULTS.job,
+  reports: SITEMAP_DEFAULTS.report,
+  impactStories: SITEMAP_DEFAULTS.article,
+  employeeStories: SITEMAP_DEFAULTS.article,
 } as const;
 
 type Collection = keyof typeof PATHS;
@@ -111,7 +117,12 @@ export async function GET(): Promise<Response> {
         entries.push({
           path: PATHS[collection](locale, record.slug),
           locale,
-          lastModified: record.updatedAt ?? record.publishedAt ?? record.postedAt ?? null,
+          lastModified:
+            record.updatedAt ??
+            record.publishedAt ??
+            record.postedAt ??
+            record.publicationDate ??
+            null,
           changeFrequency: defaults.changeFrequency,
           priority: defaults.priority,
           alternates: alternates.get(record.translationGroupId),

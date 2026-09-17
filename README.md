@@ -84,6 +84,30 @@ The API integration tests run against the database in `DATABASE_URL`. They
 create their own users and content, prefixed and cleaned up afterwards, so they
 are safe against a development database — but not against one you care about.
 
+End-to-end tests are separate, because they need the whole stack running rather
+than just a database:
+
+```bash
+# Once: create the account the suite signs in as. Set E2E_EMAIL and
+# E2E_PASSWORD in .env first — there is no default, deliberately.
+pnpm --filter @cheezious/api e2e:account
+
+pnpm --filter @cheezious/corporate-web test:e2e
+```
+
+Start the API, the worker, the public site and the CMS first. The suite drives a
+real browser against them and asserts the seams the integration tests cannot
+reach: that a draft is genuinely absent from the public site, that publishing
+puts it there, that a submission never leaks out of its queue, and that the
+layout survives a phone. Chromium is already installed and Playwright is
+configured to find it — do not run `playwright install`. Set
+`PLAYWRIGHT_CHROMIUM_PATH` if your Chromium lives somewhere unusual.
+
+The sign-in route is rate limited, as it should be, and a full run spends four
+of the ten attempts a fifteen-minute window allows. Two runs back to back are
+fine; four are not, and the failure reads as a broken login rather than as the
+rate limit doing its job.
+
 ---
 
 ## The rule that governs the seed

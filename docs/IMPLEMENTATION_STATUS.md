@@ -17,6 +17,11 @@ something is partial or missing, it says so.
 - 167 tests across seven packages: 59 API integration tests against a real
   database, plus unit tests for SEO (32), validation (22), utilities (22),
   page-builder (19), auth (19) and permissions (16).
+- 30 Playwright end-to-end tests (`pnpm test:e2e` in `apps/corporate-web`) that
+  drive a real browser against a running stack: the publishing round trip,
+  permission boundaries, the submission queues, responsive layout at five
+  widths, and the accessibility properties that are cheap to regress — heading
+  order, skip link, image alternatives, zoom, and right-to-left rendering.
 - PostgreSQL 16 + Prisma 6: 91 models, 29 enums, two migrations, zero schema
   drift. Full-text search via a trigger-maintained `tsvector` with GIN and
   trigram indexes.
@@ -61,6 +66,12 @@ something is partial or missing, it says so.
 - Site structure: navigation with broken-link detection and cycle prevention,
   per-language footer, redirects with loop detection, forms, translation status,
   content health and integrations.
+- On-publish cache invalidation: publishing, unpublishing, renaming or deleting
+  anything asks the public site to revalidate the tags and paths it affects,
+  authenticated with a shared secret and compared in constant time. A rename
+  invalidates the old address as well as the new one. The call is fire-and-
+  forget with a short timeout: a public site that is down must not be able to
+  fail a publish, and time-based ISR remains the backstop.
 
 ### Background worker
 
@@ -120,10 +131,6 @@ reviewers can check.
 honours them uncacheably. The CMS has the button; a side-by-side preview pane in
 the editor does not exist.
 
-**On-publish revalidation.** The public site uses time-based ISR, so a publish is
-live within the revalidation window rather than instantly. `REVALIDATE_SECRET` is
-defined but no publish hook calls the revalidation endpoint yet.
-
 **Notifications.** In-app notifications work end to end. There is no mail
 transport, so a password-reset link is logged rather than emailed — which is fine
 in development and must be wired before launch.
@@ -139,12 +146,9 @@ the handlers are not implemented.
 
 ## Not started
 
-- **End-to-end tests.** `pnpm test:e2e` is wired to Playwright, and no specs
-  exist. The integration suite covers the API thoroughly; nothing drives a real
-  browser.
-- **A visual-regression or accessibility test run.** Accessibility has been
-  handled by construction and reviewed by hand — labels, focus order, contrast,
-  logical properties, zoom — but nothing automated asserts it.
+- **Visual-regression testing.** The end-to-end suite asserts structure and
+  behaviour, not pixels. Nothing would catch a layout that is wrong but
+  well-formed.
 - **Reports, impact stories and employee stories detail routes** on the public
   site. The API serves them and the CMS manages them; the public routes do not
   exist, so nothing links to them.
@@ -190,26 +194,32 @@ quietly left.
 
 ## The next exact implementation step
 
-**Write the Playwright end-to-end specs, starting with the publishing round
-trip.**
+**Build the three missing public detail routes: reports, impact stories and
+employee stories.**
 
-The single highest-value spec, because it crosses every seam the integration
-tests cannot:
+They are the last places where the platform manages content nothing can read.
+The API already serves all three, the CMS already edits them, and the listing
+blocks already render summaries — the summaries just have nowhere to link to.
 
-1. Sign in to the CMS as the seeded administrator and change the password.
-2. Create a page, add two blocks, save.
-3. Confirm the public site still 404s that path — the draft is not live.
-4. Submit for review, approve, publish.
-5. Confirm the public site serves it, with a title, a description and a canonical
-   URL.
-6. Edit the page and save. Confirm the public site still serves the **old** text
-   and the CMS shows unpublished changes.
-7. Publish again. Confirm the new text is live.
+1. Add `apps/corporate-web/src/app/[locale]/impact/reports/[slug]/page.tsx`,
+   `.../company/newsroom/impact-stories/[slug]/page.tsx` and
+   `.../careers/stories/[slug]/page.tsx`. Follow
+   `.../company/newsroom/stories/[slug]/page.tsx`: it is the closest existing
+   shape, including `generateStaticParams`, `generateMetadata` via
+   `buildRouteSeo`, and the `notFound()` on an unpublished record.
+2. Add each collection to `PATHS` and `DEFAULTS` in
+   `src/app/sitemap.xml/route.ts`, and to the public sitemap endpoint in
+   `apps/api/src/modules/public.routes.ts` so the records are actually returned.
+3. Give reports an `Article` JSON-LD document and impact stories the same; use
+   the builders in `@cheezious/seo`, which return `null` rather than emit
+   incomplete markup.
+4. Point the listing blocks at the new routes. `ReportGrid` in
+   `collections.tsx` currently sends every card to the publications listing
+   regardless of which report was clicked; the story blocks have no detail
+   target at all.
+5. Add a case to `e2e/publishing.spec.ts` covering one of them end to end, and
+   extend the `revalidation` service's `collection()` call sites so publishing a
+   report invalidates its own path as well as the listing.
 
-Put it in `apps/corporate-web/e2e/publishing.spec.ts`, run it against the dev
-stack with `pnpm test:e2e`. Chromium is already available and Playwright is
-configured to find it; do not run `playwright install`.
-
-After that, in order: the supplier submission round trip (public form to CMS
-queue to CSV export), and a permissions spec that signs in as an author and
-asserts the Publish control is absent and the API refuses it.
+Reports are the one to do first: they are linked from the governance section and
+are the most conspicuous dead end.

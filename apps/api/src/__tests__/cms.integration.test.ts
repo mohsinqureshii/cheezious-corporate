@@ -83,6 +83,11 @@ afterAll(async () => {
   await ctx.prisma.redirect.deleteMany({ where: { source: { startsWith: `/${TEST_PREFIX}` } } });
   await ctx.prisma.contentVersion.deleteMany({ where: { entityType: 'page', entityId: { in: [] } } });
   await ctx.prisma.page.deleteMany({ where: { path: { startsWith: `/${TEST_PREFIX}` } } });
+  await ctx.prisma.contentVersion.deleteMany({
+    where: { entityType: { in: ['story', 'job'] }, data: { path: ['title'], string_starts_with: TEST_PREFIX } },
+  });
+  await ctx.prisma.job.deleteMany({ where: { title: { startsWith: TEST_PREFIX } } });
+  await ctx.prisma.story.deleteMany({ where: { title: { startsWith: TEST_PREFIX } } });
   await ctx.prisma.auditLog.deleteMany({ where: { actorEmail: { startsWith: TEST_PREFIX } } });
   await ctx.prisma.loginAttempt.deleteMany({ where: { email: { startsWith: TEST_PREFIX } } });
   await ctx.prisma.user.deleteMany({ where: { email: { startsWith: TEST_PREFIX } } });
@@ -713,5 +718,157 @@ describe('account self-service', () => {
     // another user's session id exists.
     expect(response.status).toBe(404);
     expect((await request(app).get('/api/auth/me').set('Cookie', theirCookie)).status).toBe(200);
+  });
+});
+
+describe('structured content collections', () => {
+  it('lets an author create a story but not publish it', async () => {
+    const authorEmail = await createUser('collections-author', 'AUTHOR');
+    const cookie = await signIn(authorEmail);
+
+    const created = await request(app)
+      .post('/api/cms/content/stories')
+      .set('Cookie', cookie)
+      .send({ locale: 'en', title: `${TEST_PREFIX} author story`, excerpt: 'Drafted by an author.' });
+
+    expect(created.status).toBe(201);
+    expect(created.body.item.status).toBe('DRAFT');
+
+    const published = await request(app)
+      .post(`/api/cms/content/stories/${created.body.item.id}/transition`)
+      .set('Cookie', cookie)
+      .send({ action: 'PUBLISH' });
+
+    expect(published.status).toBe(403);
+
+    // And it is still a draft afterwards, not half-transitioned.
+    const after = await request(app)
+      .get(`/api/cms/content/stories/${created.body.item.id}`)
+      .set('Cookie', cookie);
+    expect(after.body.item.status).toBe('DRAFT');
+  });
+
+  it('keeps Procurement out of people and HR out of suppliers', async () => {
+    const procurement = await signIn(await createUser('collections-procurement', 'PROCUREMENT_MANAGER'));
+    const hr = await signIn(await createUser('collections-hr', 'HR_MANAGER'));
+
+    expect((await request(app).get('/api/cms/content/people').set('Cookie', procurement)).status).toBe(403);
+    expect((await request(app).get('/api/cms/submissions/suppliers').set('Cookie', hr)).status).toBe(403);
+
+    // Each can still reach their own queue.
+    expect((await request(app).get('/api/cms/submissions/suppliers').set('Cookie', procurement)).status).toBe(200);
+    expect((await request(app).get('/api/cms/submissions/applications').set('Cookie', hr)).status).toBe(200);
+  });
+
+  it('sanitises rich text on the way in', async () => {
+    const cookie = await signIn(await createUser('collections-sanitise', 'EDITOR'));
+
+    const created = await request(app)
+      .post('/api/cms/content/stories')
+      .set('Cookie', cookie)
+      .send({
+        locale: 'en',
+        title: `${TEST_PREFIX} sanitise`,
+        body: '<p onclick="steal()">Safe <script>alert(1)</script><a href="javascript:void(0)">link</a></p>',
+      });
+
+    expect(created.status).toBe(201);
+    const body = created.body.item.body as string;
+    expect(body).not.toContain('<script');
+    expect(body).not.toContain('onclick');
+    expect(body).not.toContain('javascript:');
+    expect(body).toContain('Safe');
+  });
+
+  it('separates the working copy from what the public site serves', async () => {
+    const cookie = await signIn(await createUser('collections-separation', 'CORPORATE_COMMUNICATIONS'));
+
+    const created = await request(app)
+      .post('/api/cms/content/stories')
+      .set('Cookie', cookie)
+      .send({ locale: 'en', title: `${TEST_PREFIX} separation`, excerpt: 'As published.' });
+    const id = created.body.item.id as string;
+
+    await request(app).post(`/api/cms/content/stories/${id}/transition`).set('Cookie', cookie).send({ action: 'PUBLISH' });
+
+    await request(app)
+      .patch(`/api/cms/content/stories/${id}`)
+      .set('Cookie', cookie)
+      .send({ excerpt: 'Edited after publication and not yet live.' });
+
+    const after = await request(app).get(`/api/cms/content/stories/${id}`).set('Cookie', cookie);
+    expect(after.body.item.hasUnpublishedChanges).toBe(true);
+
+    // The published snapshot still holds the original text.
+    const version = await ctx.prisma.contentVersion.findFirst({
+      where: { id: after.body.item.publishedVersionId as string },
+    });
+    expect((version?.data as { excerpt?: string })?.excerpt).toBe('As published.');
+  });
+
+  it('refuses to delete published content until it is unpublished', async () => {
+    const cookie = await signIn(await createUser('collections-delete', 'CORPORATE_COMMUNICATIONS'));
+
+    const created = await request(app)
+      .post('/api/cms/content/stories')
+      .set('Cookie', cookie)
+      .send({ locale: 'en', title: `${TEST_PREFIX} delete guard` });
+    const id = created.body.item.id as string;
+
+    await request(app).post(`/api/cms/content/stories/${id}/transition`).set('Cookie', cookie).send({ action: 'PUBLISH' });
+
+    expect((await request(app).delete(`/api/cms/content/stories/${id}`).set('Cookie', cookie)).status).toBe(409);
+
+    await request(app).post(`/api/cms/content/stories/${id}/transition`).set('Cookie', cookie).send({ action: 'UNPUBLISH' });
+    expect((await request(app).delete(`/api/cms/content/stories/${id}`).set('Cookie', cookie)).status).toBe(204);
+  });
+
+  it('treats opening a job as a publishing act', async () => {
+    const editorCookie = await signIn(await createUser('collections-job-editor', 'HR_MANAGER'));
+
+    const created = await request(app)
+      .post('/api/cms/content/jobs')
+      .set('Cookie', editorCookie)
+      .send({ locale: 'en', title: `${TEST_PREFIX} guarded job` });
+    expect(created.status).toBe(201);
+    expect(created.body.item.status).toBe('DRAFT');
+
+    const opened = await request(app)
+      .patch(`/api/cms/content/jobs/${created.body.item.id}`)
+      .set('Cookie', editorCookie)
+      .send({ status: 'OPEN' });
+
+    // HR can write the posting; whether it goes live is a separate right.
+    const hrMayPublish = (await request(app).get('/api/auth/me').set('Cookie', editorCookie)).body.user
+      .permissions.includes('careers.publish');
+    expect(opened.status).toBe(hrMayPublish ? 200 : 403);
+  });
+
+  it('rejects unknown fields rather than silently ignoring them', async () => {
+    const cookie = await signIn(await createUser('collections-strict', 'EDITOR'));
+
+    const response = await request(app)
+      .post('/api/cms/content/stories')
+      .set('Cookie', cookie)
+      .send({ locale: 'en', title: `${TEST_PREFIX} strict`, status: 'PUBLISHED' });
+
+    // `status` is not a writable field: it moves only through the workflow.
+    expect(response.status).toBe(422);
+  });
+
+  it('derives a unique slug per locale rather than failing on a collision', async () => {
+    const cookie = await signIn(await createUser('collections-slug', 'EDITOR'));
+
+    const first = await request(app)
+      .post('/api/cms/content/stories')
+      .set('Cookie', cookie)
+      .send({ locale: 'en', title: `${TEST_PREFIX} same title` });
+    const second = await request(app)
+      .post('/api/cms/content/stories')
+      .set('Cookie', cookie)
+      .send({ locale: 'en', title: `${TEST_PREFIX} same title` });
+
+    expect(first.body.item.slug).not.toBe(second.body.item.slug);
+    expect(second.body.item.slug.endsWith('-2')).toBe(true);
   });
 });

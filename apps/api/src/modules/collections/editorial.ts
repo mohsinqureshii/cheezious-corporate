@@ -1,0 +1,514 @@
+import type { Permission } from '@cheezious/permissions';
+import { z } from 'zod';
+
+import type { CollectionConfig, FieldSpec } from './types';
+
+/**
+ * Editorial collections and the field fragments every collection shares.
+ *
+ * These are documents: they have an author, a reviewer, a publication moment
+ * and a history. Each one runs the full editorial workflow.
+ */
+
+// ---------------------------------------------------------------------------
+// Shared field fragments
+// ---------------------------------------------------------------------------
+
+const LOCALE_OPTIONS = [
+  { value: 'en', label: 'English' },
+  { value: 'ur', label: 'Urdu' },
+];
+
+export const localeField: FieldSpec = {
+  name: 'locale',
+  label: 'Language',
+  type: 'select',
+  options: LOCALE_OPTIONS,
+  required: true,
+  group: 'details',
+  inList: true,
+};
+
+export const seoFields: FieldSpec[] = [
+  {
+    name: 'seoTitle',
+    label: 'SEO title',
+    type: 'text',
+    max: 200,
+    group: 'seo',
+    help: 'Defaults to the title when left empty. Around 60 characters shows in full.',
+  },
+  {
+    name: 'seoDescription',
+    label: 'Meta description',
+    type: 'textarea',
+    max: 400,
+    group: 'seo',
+    help: 'Defaults to the summary. Aim for 70–160 characters.',
+  },
+];
+
+export const auditBase = ['status', 'publishedAt', 'scheduledFor'];
+
+/** Editorial collections share the same base columns in the list view. */
+/**
+ * Columns every editorial list shows.
+ *
+ * `updatedBy` is deliberately absent: only some of these models carry a
+ * relation to the user who last touched them, and a list that silently omits
+ * the column for half the collections is worse than one that shows the time
+ * everywhere and the name where it exists.
+ */
+const editorialListSelect = {
+  id: true,
+  locale: true,
+  status: true,
+  hasUnpublishedChanges: true,
+  publishedAt: true,
+  scheduledFor: true,
+  updatedAt: true,
+};
+
+export const audienceSchema = {
+  locale: z.enum(['en', 'ur']).default('en'),
+  translationOfGroupId: z.string().uuid().optional(),
+};
+
+// ---------------------------------------------------------------------------
+// Stories and news — one table, two editorial desks
+// ---------------------------------------------------------------------------
+
+const storyFields: FieldSpec[] = [
+  { name: 'title', label: 'Title', type: 'text', required: true, max: 200, group: 'content', inList: true },
+  { name: 'slug', label: 'URL slug', type: 'slug', max: 200, group: 'content', help: 'Derived from the title. Changing it after publication breaks existing links.' },
+  { name: 'excerpt', label: 'Standfirst', type: 'textarea', max: 600, group: 'content', help: 'One or two sentences, used in listings and search results.' },
+  { name: 'body', label: 'Body', type: 'richtext', group: 'content' },
+  localeField,
+  { name: 'categoryId', label: 'Category', type: 'reference', collection: 'story-categories', group: 'details' },
+  { name: 'heroImageId', label: 'Hero image', type: 'media', group: 'details' },
+  { name: 'thumbnailId', label: 'Thumbnail', type: 'media', group: 'details', help: 'Used in listings where the hero would be cropped badly.' },
+  { name: 'authorName', label: 'Byline', type: 'text', max: 120, group: 'details' },
+  { name: 'readingMinutes', label: 'Reading time (minutes)', type: 'number', group: 'details' },
+  { name: 'isFeatured', label: 'Feature this', type: 'boolean', group: 'publishing', help: 'Featured items appear at the top of their listing.' },
+  { name: 'reviewDate', label: 'Review by', type: 'date', group: 'publishing', help: 'Flagged in content health once this date passes.' },
+  ...seoFields,
+];
+
+const storyWritable = {
+  title: z.string().min(1).max(200),
+  slug: z.string().max(200).optional(),
+  excerpt: z.string().max(600).nullish(),
+  body: z.string().max(200_000).nullish(),
+  categoryId: z.string().cuid().nullish(),
+  heroImageId: z.string().cuid().nullish(),
+  thumbnailId: z.string().cuid().nullish(),
+  authorName: z.string().max(120).nullish(),
+  readingMinutes: z.number().int().min(1).max(600).nullish(),
+  isFeatured: z.boolean().optional(),
+  reviewDate: z.coerce.date().nullish(),
+  seoTitle: z.string().max(200).nullish(),
+  seoDescription: z.string().max(400).nullish(),
+};
+
+function storyCollection(options: {
+  path: string;
+  kind: string;
+  label: string;
+  labelPlural: string;
+  prefix: 'stories' | 'news';
+}): CollectionConfig {
+  return {
+    path: options.path,
+    model: 'story',
+    entityType: options.prefix === 'news' ? 'news' : 'story',
+    permissionPrefix: options.prefix,
+    permissions: {
+      read: `${options.prefix}.read` as Permission,
+      create: `${options.prefix}.create` as Permission,
+      update: `${options.prefix}.update` as Permission,
+      delete: `${options.prefix}.delete` as Permission,
+      publish: `${options.prefix}.publish` as Permission,
+    },
+    label: options.label,
+    labelPlural: options.labelPlural,
+    labelField: 'title',
+    slugField: 'slug',
+    localized: true,
+    workflow: true,
+    softDelete: true,
+    hasPublishedAt: true,
+    hasCreatedBy: true,
+    hasUpdatedBy: true,
+    fixedWhere: { kind: options.kind },
+    searchFields: ['title', 'excerpt', 'slug'],
+    sortableFields: ['updatedAt', 'publishedAt', 'title'],
+    defaultSort: 'updatedAt',
+    richTextFields: ['body'],
+    versionedFields: [
+      'title', 'slug', 'excerpt', 'body', 'categoryId', 'heroImageId', 'thumbnailId',
+      'authorName', 'readingMinutes', 'isFeatured', 'seoTitle', 'seoDescription', 'locale',
+    ],
+    auditedFields: [...auditBase, 'title', 'slug', 'categoryId', 'isFeatured'],
+    listSelect: {
+      ...editorialListSelect, title: true, slug: true, isFeatured: true,
+      category: { select: { id: true, name: true } },
+      updatedBy: { select: { id: true, name: true } },
+    },
+    createSchema: z.object({ ...audienceSchema, ...storyWritable }).strict(),
+    updateSchema: z.object(storyWritable).partial().strict(),
+    fields: storyFields,
+  };
+}
+
+// ---------------------------------------------------------------------------
+
+const pressReleaseWritable = {
+  headline: z.string().min(1).max(250),
+  slug: z.string().max(200).optional(),
+  summary: z.string().max(800).nullish(),
+  body: z.string().max(200_000).nullish(),
+  dateline: z.string().max(160).nullish(),
+  categoryId: z.string().cuid().nullish(),
+  imageId: z.string().cuid().nullish(),
+  mediaContactId: z.string().cuid().nullish(),
+  isFeatured: z.boolean().optional(),
+  reviewDate: z.coerce.date().nullish(),
+  noindex: z.boolean().optional(),
+  seoTitle: z.string().max(200).nullish(),
+  seoDescription: z.string().max(400).nullish(),
+};
+
+const personWritable = {
+  name: z.string().min(1).max(160),
+  slug: z.string().max(200).optional(),
+  role: z.string().min(1).max(200),
+  roleDetail: z.string().max(400).nullish(),
+  leadershipGroupId: z.string().cuid().nullish(),
+  departmentId: z.string().cuid().nullish(),
+  portraitId: z.string().cuid().nullish(),
+  heroImageId: z.string().cuid().nullish(),
+  shortBio: z.string().max(2000).nullish(),
+  fullBio: z.string().max(50_000).nullish(),
+  responsibilities: z.string().max(20_000).nullish(),
+  careerBackground: z.string().max(20_000).nullish(),
+  quote: z.string().max(1000).nullish(),
+  quoteAttribution: z.string().max(200).nullish(),
+  linkedinUrl: z.string().url().max(400).nullish().or(z.literal('')),
+  isFeatured: z.boolean().optional(),
+  sortOrder: z.number().int().min(0).max(100_000).optional(),
+  reviewDate: z.coerce.date().nullish(),
+  seoTitle: z.string().max(200).nullish(),
+  seoDescription: z.string().max(400).nullish(),
+};
+
+const policyWritable = {
+  title: z.string().min(1).max(200),
+  slug: z.string().max(200).optional(),
+  summary: z.string().max(1000).nullish(),
+  body: z.string().max(200_000).nullish(),
+  categoryId: z.string().cuid().nullish(),
+  documentId: z.string().cuid().nullish(),
+  version: z.string().max(20).optional(),
+  effectiveDate: z.coerce.date().nullish(),
+  reviewDate: z.coerce.date().nullish(),
+  ownerLabel: z.string().max(200).nullish(),
+  seoTitle: z.string().max(200).nullish(),
+  seoDescription: z.string().max(400).nullish(),
+};
+
+const jobWritable = {
+  title: z.string().min(1).max(200),
+  slug: z.string().max(200).optional(),
+  categoryId: z.string().cuid().nullish(),
+  departmentId: z.string().cuid().nullish(),
+  teamId: z.string().cuid().nullish(),
+  locationId: z.string().cuid().nullish(),
+  employmentType: z.enum(['FULL_TIME', 'PART_TIME', 'CONTRACT', 'INTERNSHIP', 'TEMPORARY', 'APPRENTICESHIP']).optional(),
+  workplaceType: z.enum(['ON_SITE', 'HYBRID', 'REMOTE']).optional(),
+  summary: z.string().max(1200).nullish(),
+  description: z.string().max(60_000).nullish(),
+  responsibilities: z.string().max(30_000).nullish(),
+  requirements: z.string().max(30_000).nullish(),
+  preferredQualifications: z.string().max(30_000).nullish(),
+  benefits: z.string().max(30_000).nullish(),
+  salaryMin: z.number().int().min(0).nullish(),
+  salaryMax: z.number().int().min(0).nullish(),
+  salaryCurrency: z.string().max(8).nullish(),
+  salaryPeriod: z.string().max(16).nullish(),
+  openingsCount: z.number().int().min(1).max(10_000).nullish(),
+  applicationDeadline: z.coerce.date().nullish(),
+  hiringManagerId: z.string().cuid().nullish(),
+  internalReference: z.string().max(80).nullish(),
+  isFeatured: z.boolean().optional(),
+  noindex: z.boolean().optional(),
+  status: z.enum(['DRAFT', 'OPEN', 'PAUSED', 'CLOSED', 'ARCHIVED']).optional(),
+  seoTitle: z.string().max(200).nullish(),
+  seoDescription: z.string().max(400).nullish(),
+};
+
+// ---------------------------------------------------------------------------
+
+export const EDITORIAL_COLLECTIONS: CollectionConfig[] = [
+  storyCollection({ path: 'stories', kind: 'STORY', label: 'Story', labelPlural: 'Stories', prefix: 'stories' }),
+  storyCollection({ path: 'news', kind: 'NEWS', label: 'News article', labelPlural: 'News', prefix: 'news' }),
+
+  {
+    path: 'press-releases',
+    model: 'pressRelease',
+    entityType: 'pressRelease',
+    permissionPrefix: 'pressReleases',
+    permissions: {
+      read: 'pressReleases.read',
+      create: 'pressReleases.create',
+      update: 'pressReleases.update',
+      delete: 'pressReleases.delete',
+      publish: 'pressReleases.publish',
+    },
+    label: 'Press release',
+    labelPlural: 'Press releases',
+    labelField: 'headline',
+    slugField: 'slug',
+    localized: true,
+    workflow: true,
+    softDelete: true,
+    hasPublishedAt: true,
+    hasCreatedBy: true,
+    hasUpdatedBy: false,
+    searchFields: ['headline', 'summary', 'slug'],
+    sortableFields: ['updatedAt', 'publishedAt', 'headline'],
+    defaultSort: 'updatedAt',
+    richTextFields: ['body'],
+    versionedFields: ['headline', 'slug', 'summary', 'body', 'dateline', 'categoryId', 'imageId', 'mediaContactId', 'isFeatured', 'noindex', 'seoTitle', 'seoDescription', 'locale'],
+    auditedFields: [...auditBase, 'headline', 'slug', 'categoryId'],
+    listSelect: {
+      id: true, locale: true, status: true, hasUnpublishedChanges: true, publishedAt: true,
+      scheduledFor: true, updatedAt: true, headline: true, slug: true, isFeatured: true,
+      category: { select: { id: true, name: true } },
+    },
+    createSchema: z.object({ ...audienceSchema, ...pressReleaseWritable }).strict(),
+    updateSchema: z.object(pressReleaseWritable).partial().strict(),
+    fields: [
+      { name: 'headline', label: 'Headline', type: 'text', required: true, max: 250, group: 'content', inList: true },
+      { name: 'slug', label: 'URL slug', type: 'slug', max: 200, group: 'content' },
+      { name: 'dateline', label: 'Dateline', type: 'text', max: 160, group: 'content', help: 'Where and when the release was issued, as it should be printed.' },
+      { name: 'summary', label: 'Summary', type: 'textarea', max: 800, group: 'content' },
+      { name: 'body', label: 'Body', type: 'richtext', group: 'content' },
+      localeField,
+      { name: 'categoryId', label: 'Category', type: 'reference', collection: 'press-release-categories', group: 'details' },
+      { name: 'imageId', label: 'Image', type: 'media', group: 'details' },
+      { name: 'isFeatured', label: 'Feature this', type: 'boolean', group: 'publishing' },
+      { name: 'reviewDate', label: 'Review by', type: 'date', group: 'publishing' },
+      { name: 'noindex', label: 'Hide from search engines', type: 'boolean', group: 'seo' },
+      ...seoFields,
+    ],
+  },
+
+  {
+    path: 'people',
+    model: 'person',
+    entityType: 'person',
+    permissionPrefix: 'people',
+    permissions: {
+      read: 'people.read',
+      create: 'people.manage',
+      update: 'people.manage',
+      delete: 'people.manage',
+      publish: 'people.publish',
+    },
+    label: 'Person',
+    labelPlural: 'People',
+    labelField: 'name',
+    slugField: 'slug',
+    localized: true,
+    workflow: true,
+    softDelete: true,
+    hasPublishedAt: true,
+    hasCreatedBy: true,
+    hasUpdatedBy: true,
+    searchFields: ['name', 'role', 'slug'],
+    sortableFields: ['sortOrder', 'updatedAt', 'name'],
+    defaultSort: 'sortOrder',
+    richTextFields: ['fullBio', 'responsibilities', 'careerBackground'],
+    versionedFields: ['name', 'slug', 'role', 'roleDetail', 'leadershipGroupId', 'departmentId', 'portraitId', 'heroImageId', 'shortBio', 'fullBio', 'responsibilities', 'careerBackground', 'quote', 'quoteAttribution', 'linkedinUrl', 'isFeatured', 'sortOrder', 'seoTitle', 'seoDescription', 'locale'],
+    auditedFields: [...auditBase, 'name', 'role', 'leadershipGroupId', 'sortOrder'],
+    listSelect: {
+      ...editorialListSelect, name: true, slug: true, role: true, sortOrder: true, isFeatured: true,
+      leadershipGroup: { select: { id: true, name: true } },
+    },
+    createSchema: z.object({ ...audienceSchema, ...personWritable }).strict(),
+    updateSchema: z.object(personWritable).partial().strict(),
+    fields: [
+      { name: 'name', label: 'Name', type: 'text', required: true, max: 160, group: 'content', inList: true },
+      { name: 'role', label: 'Role', type: 'text', required: true, max: 200, group: 'content', inList: true, help: 'The title as it should appear publicly.' },
+      { name: 'roleDetail', label: 'Role detail', type: 'text', max: 400, group: 'content' },
+      { name: 'slug', label: 'URL slug', type: 'slug', max: 200, group: 'content' },
+      { name: 'shortBio', label: 'Short biography', type: 'textarea', max: 2000, group: 'content', help: 'Only what the person has approved for publication.' },
+      { name: 'fullBio', label: 'Full biography', type: 'richtext', group: 'content' },
+      { name: 'responsibilities', label: 'Responsibilities', type: 'richtext', group: 'content' },
+      { name: 'careerBackground', label: 'Career background', type: 'richtext', group: 'content' },
+      { name: 'quote', label: 'Quote', type: 'textarea', max: 1000, group: 'content' },
+      { name: 'quoteAttribution', label: 'Quote attribution', type: 'text', max: 200, group: 'content' },
+      localeField,
+      { name: 'leadershipGroupId', label: 'Leadership group', type: 'reference', collection: 'leadership-groups', group: 'details' },
+      { name: 'departmentId', label: 'Department', type: 'reference', collection: 'departments', group: 'details' },
+      { name: 'portraitId', label: 'Portrait', type: 'media', group: 'details' },
+      { name: 'heroImageId', label: 'Hero image', type: 'media', group: 'details' },
+      { name: 'linkedinUrl', label: 'LinkedIn', type: 'url', max: 400, group: 'details' },
+      { name: 'isFeatured', label: 'Feature this', type: 'boolean', group: 'publishing' },
+      { name: 'sortOrder', label: 'Order', type: 'number', group: 'publishing', help: 'Lower numbers appear first.' },
+      { name: 'reviewDate', label: 'Review by', type: 'date', group: 'publishing' },
+      ...seoFields,
+    ],
+  },
+
+  {
+    path: 'policies',
+    model: 'policy',
+    entityType: 'policy',
+    permissionPrefix: 'policies',
+    permissions: {
+      read: 'policies.read',
+      create: 'policies.manage',
+      update: 'policies.manage',
+      delete: 'policies.manage',
+      publish: 'policies.manage',
+    },
+    label: 'Policy',
+    labelPlural: 'Policies',
+    labelField: 'title',
+    slugField: 'slug',
+    localized: true,
+    workflow: true,
+    softDelete: true,
+    hasPublishedAt: true,
+    hasCreatedBy: true,
+    hasUpdatedBy: true,
+    searchFields: ['title', 'summary', 'slug'],
+    sortableFields: ['updatedAt', 'publishedAt', 'title', 'effectiveDate'],
+    defaultSort: 'updatedAt',
+    richTextFields: ['body'],
+    versionedFields: ['title', 'slug', 'summary', 'body', 'categoryId', 'documentId', 'version', 'effectiveDate', 'ownerLabel', 'seoTitle', 'seoDescription', 'locale'],
+    auditedFields: [...auditBase, 'title', 'version', 'effectiveDate', 'ownerLabel'],
+    listSelect: {
+      ...editorialListSelect, title: true, slug: true, version: true, effectiveDate: true,
+      isDemoContent: true, category: { select: { id: true, name: true } },
+    },
+    createSchema: z.object({ ...audienceSchema, ...policyWritable }).strict(),
+    updateSchema: z.object(policyWritable).partial().strict(),
+    fields: [
+      { name: 'title', label: 'Title', type: 'text', required: true, max: 200, group: 'content', inList: true },
+      { name: 'slug', label: 'URL slug', type: 'slug', max: 200, group: 'content' },
+      { name: 'summary', label: 'Summary', type: 'textarea', max: 1000, group: 'content' },
+      { name: 'body', label: 'Policy text', type: 'richtext', group: 'content' },
+      localeField,
+      { name: 'categoryId', label: 'Category', type: 'reference', collection: 'policy-categories', group: 'details' },
+      { name: 'documentId', label: 'Signed document', type: 'media', group: 'details', help: 'The authoritative PDF, where one exists.' },
+      { name: 'version', label: 'Version', type: 'text', max: 20, group: 'details', inList: true },
+      { name: 'ownerLabel', label: 'Owned by', type: 'text', max: 200, group: 'details', help: 'The function accountable for this policy, not a named individual.' },
+      { name: 'effectiveDate', label: 'Effective from', type: 'date', group: 'publishing', inList: true },
+      { name: 'reviewDate', label: 'Review by', type: 'date', group: 'publishing' },
+      ...seoFields,
+    ],
+  },
+
+  {
+    path: 'jobs',
+    model: 'job',
+    entityType: 'job',
+    permissionPrefix: 'careers',
+    permissions: {
+      read: 'careers.read',
+      create: 'careers.manage',
+      update: 'careers.manage',
+      delete: 'careers.manage',
+      publish: 'careers.publish',
+    },
+    label: 'Job',
+    labelPlural: 'Jobs',
+    labelField: 'title',
+    slugField: 'slug',
+    localized: true,
+    // A job posting's lifecycle is a hiring lifecycle — open, paused, closed —
+    // not an editorial one, so it carries its own status rather than the
+    // editorial workflow. Opening a job is still a publish, and is guarded.
+    workflow: false,
+    softDelete: true,
+    hasPublishedAt: false,
+    hasCreatedBy: true,
+    hasUpdatedBy: true,
+    searchFields: ['title', 'summary', 'slug', 'internalReference'],
+    sortableFields: ['updatedAt', 'postedAt', 'title', 'applicationDeadline'],
+    defaultSort: 'updatedAt',
+    richTextFields: ['description', 'responsibilities', 'requirements', 'preferredQualifications', 'benefits'],
+    versionedFields: [],
+    auditedFields: ['status', 'title', 'departmentId', 'locationId', 'applicationDeadline', 'salaryMin', 'salaryMax'],
+    guardedFields: [{ field: 'status', values: ['OPEN'], permission: 'careers.publish' }],
+    listSelect: {
+      id: true, locale: true, title: true, slug: true, status: true, isFeatured: true,
+      postedAt: true, applicationDeadline: true, updatedAt: true,
+      department: { select: { id: true, name: true } },
+      location: { select: { id: true, name: true } },
+      _count: { select: { applications: true } },
+    },
+    createSchema: z.object({ ...audienceSchema, ...jobWritable }).strict(),
+    updateSchema: z.object(jobWritable).partial().strict(),
+    fields: [
+      { name: 'title', label: 'Job title', type: 'text', required: true, max: 200, group: 'content', inList: true },
+      { name: 'slug', label: 'URL slug', type: 'slug', max: 200, group: 'content' },
+      { name: 'summary', label: 'Summary', type: 'textarea', max: 1200, group: 'content', help: 'Shown in listings and used as the search description.' },
+      { name: 'description', label: 'About the role', type: 'richtext', group: 'content' },
+      { name: 'responsibilities', label: 'Responsibilities', type: 'richtext', group: 'content' },
+      { name: 'requirements', label: 'Requirements', type: 'richtext', group: 'content' },
+      { name: 'preferredQualifications', label: 'Preferred qualifications', type: 'richtext', group: 'content' },
+      { name: 'benefits', label: 'Benefits', type: 'richtext', group: 'content' },
+      localeField,
+      {
+        name: 'status', label: 'Status', type: 'select', group: 'publishing', inList: true,
+        options: [
+          { value: 'DRAFT', label: 'Draft' },
+          { value: 'OPEN', label: 'Open' },
+          { value: 'PAUSED', label: 'Paused' },
+          { value: 'CLOSED', label: 'Closed' },
+          { value: 'ARCHIVED', label: 'Archived' },
+        ],
+        help: 'Only Open is visible on the careers site. Opening a job requires publishing rights.',
+      },
+      { name: 'categoryId', label: 'Category', type: 'reference', collection: 'career-categories', group: 'details' },
+      { name: 'departmentId', label: 'Department', type: 'reference', collection: 'departments', group: 'details', inList: true },
+      { name: 'locationId', label: 'Location', type: 'reference', collection: 'job-locations', group: 'details', inList: true },
+      {
+        name: 'employmentType', label: 'Employment type', type: 'select', group: 'details',
+        options: [
+          { value: 'FULL_TIME', label: 'Full time' },
+          { value: 'PART_TIME', label: 'Part time' },
+          { value: 'CONTRACT', label: 'Contract' },
+          { value: 'INTERNSHIP', label: 'Internship' },
+          { value: 'TEMPORARY', label: 'Temporary' },
+          { value: 'APPRENTICESHIP', label: 'Apprenticeship' },
+        ],
+      },
+      {
+        name: 'workplaceType', label: 'Workplace', type: 'select', group: 'details',
+        options: [
+          { value: 'ON_SITE', label: 'On site' },
+          { value: 'HYBRID', label: 'Hybrid' },
+          { value: 'REMOTE', label: 'Remote' },
+        ],
+      },
+      { name: 'openingsCount', label: 'Openings', type: 'number', group: 'details' },
+      { name: 'salaryMin', label: 'Salary from', type: 'number', group: 'details', help: 'Leave both salary fields empty unless the range is approved for publication.' },
+      { name: 'salaryMax', label: 'Salary to', type: 'number', group: 'details' },
+      { name: 'salaryCurrency', label: 'Currency', type: 'text', max: 8, group: 'details' },
+      { name: 'salaryPeriod', label: 'Per', type: 'select', group: 'details', options: [
+        { value: 'HOUR', label: 'Hour' },
+        { value: 'MONTH', label: 'Month' },
+        { value: 'YEAR', label: 'Year' },
+      ] },
+      { name: 'applicationDeadline', label: 'Applications close', type: 'date', group: 'publishing', inList: true },
+      { name: 'internalReference', label: 'Internal reference', type: 'text', max: 80, group: 'details', help: 'Never shown publicly.' },
+      { name: 'isFeatured', label: 'Feature this', type: 'boolean', group: 'publishing' },
+      { name: 'noindex', label: 'Hide from search engines', type: 'boolean', group: 'seo' },
+      ...seoFields,
+    ],
+  },
+];

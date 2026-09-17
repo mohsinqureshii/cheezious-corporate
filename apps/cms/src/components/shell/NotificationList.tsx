@@ -53,7 +53,7 @@ export function NotificationList({ notifications: initial }: { notifications: No
     setBusy(true);
     const readAt = new Date().toISOString();
     try {
-      const response = await fetch(`${API_URL}/api/cms/notifications/read`, {
+      const response = await fetch(`${API_URL}/api/cms/system/notifications/read`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

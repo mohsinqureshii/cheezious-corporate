@@ -89,6 +89,20 @@ export interface CollectionConfig {
    * the display name so renaming a category cannot break a reference to it.
    */
   deriveKeyFromSlug?: boolean;
+  /**
+   * Cache tags on the public site that this collection's records appear under.
+   *
+   * Deliberately explicit rather than derived from `path`. The API names routes
+   * in kebab case and the public site names its fetches in camel case, so
+   * deriving one from the other silently invalidated tags nothing subscribed
+   * to — the publish succeeded and the page stayed stale until its revalidation
+   * window elapsed. One record can also feed several tags: an impact story and
+   * an impact metric both appear on pages fetched under `impact`.
+   *
+   * Defaults to `[path]` when omitted, which is correct wherever the two
+   * vocabularies happen to agree.
+   */
+  cacheTags?: string[];
   listSelect: Record<string, unknown>;
   detailSelect?: Record<string, unknown>;
   createSchema: z.ZodTypeAny;

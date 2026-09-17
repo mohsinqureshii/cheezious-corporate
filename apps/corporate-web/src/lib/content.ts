@@ -402,6 +402,17 @@ export async function getReports(
   });
 }
 
+export async function getReport(locale: Locale, slug: string) {
+  return apiFetchOptional<{
+    report: Record<string, unknown>;
+    related: Array<Record<string, unknown>>;
+    alternates: Record<string, string>;
+  }>(`/api/public/${locale}/reports/${encodeURIComponent(slug)}`, {
+    revalidate: 600,
+    tags: [CACHE_TAGS.collection('reports')],
+  });
+}
+
 export async function getPolicies(locale: Locale, params: { category?: string } = {}) {
   return apiFetch<{ categories: Array<Record<string, unknown>> }>(
     `/api/public/${locale}/policies`,
@@ -418,6 +429,8 @@ export interface SitemapEntryRecord {
   updatedAt: string | null;
   publishedAt?: string | null;
   postedAt?: string | null;
+  /** Reports date by publication rather than by a workflow timestamp. */
+  publicationDate?: string | null;
   translationGroupId: string;
 }
 
@@ -434,11 +447,17 @@ export interface SitemapPayload {
   people: SitemapEntryRecord[];
   policies: SitemapEntryRecord[];
   jobs: SitemapEntryRecord[];
+  reports: SitemapEntryRecord[];
+  impactStories: SitemapEntryRecord[];
+  employeeStories: SitemapEntryRecord[];
 }
 
 /** Everything with a public URL, uncapped, for the sitemap. */
 export async function getSitemap(locale: Locale): Promise<SitemapPayload> {
-  return apiFetch(`/api/public/${locale}/sitemap`, { revalidate: 900 });
+  return apiFetch(`/api/public/${locale}/sitemap`, {
+    revalidate: 900,
+    tags: [CACHE_TAGS.sitemap],
+  });
 }
 
 export async function getPolicy(locale: Locale, slug: string) {
@@ -452,6 +471,20 @@ export async function getEmployeeStory(locale: Locale, slug: string) {
   return apiFetchOptional<{ story: Record<string, unknown>; alternates: Record<string, string> }>(
     `/api/public/${locale}/employee-stories/${encodeURIComponent(slug)}`,
     { revalidate: 600, tags: [CACHE_TAGS.collection('employeeStories')] },
+  );
+}
+
+export async function getImpactStories(
+  locale: Locale,
+  params: { page?: number; pageSize?: number; pillar?: string } = {},
+) {
+  return apiFetch<{ items: Array<Record<string, unknown>>; total: number }>(
+    `/api/public/${locale}/impact/stories`,
+    {
+      searchParams: params as never,
+      revalidate: 600,
+      tags: [CACHE_TAGS.collection('impact')],
+    },
   );
 }
 

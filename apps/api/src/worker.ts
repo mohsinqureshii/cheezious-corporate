@@ -4,6 +4,7 @@ import { createLogger } from '@cheezious/logger';
 import { extractTextFromBlocks } from '@cheezious/page-builder';
 import { sanitizeHtml } from '@cheezious/validation';
 
+import { COLLECTIONS } from './modules/collections';
 import { RevalidationService } from './services/revalidation';
 import { SearchService } from './services/search';
 
@@ -464,10 +465,15 @@ async function syncSearch(entityType: string, entityId: string, status: string):
 async function revalidateFor(entityType: string, record: Record<string, unknown>): Promise<void> {
   const revalidation = new RevalidationService({ env, prisma, logger } as never);
 
+  // The tags come from the collection config rather than from the entity type:
+  // pluralising `story` gives `storys` and `person` gives `persons`, neither of
+  // which anything on the public site subscribes to.
+  const config = COLLECTIONS.find((candidate) => candidate.entityType === entityType);
+
   const target =
     entityType === 'page'
       ? revalidation.page((record.locale as 'en' | 'ur') ?? 'en', String(record.path ?? '/'))
-      : revalidation.collection(entityType === 'news' ? 'news' : `${entityType}s`);
+      : revalidation.collection(config?.cacheTags ?? config?.path ?? `${entityType}s`);
 
   await revalidation.revalidate(target);
 }

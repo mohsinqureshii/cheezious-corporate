@@ -276,7 +276,7 @@ function registerCollection(router: Router, config: CollectionConfig): void {
       // so this is the only point at which its change reaches the public site.
       if (config.publishFlag) {
         const revalidation = new RevalidationService(req.ctx);
-        await revalidation.revalidate(revalidation.collection(config.path));
+        await revalidation.revalidate(revalidation.collection(config.cacheTags ?? [config.path]));
       }
 
       res.json({ item: updated });
@@ -427,7 +427,7 @@ function registerCollection(router: Router, config: CollectionConfig): void {
       // back a publish. Without it the change appears when the revalidation
       // window elapses instead of immediately.
       const revalidation = new RevalidationService(req.ctx);
-      await revalidation.revalidate(revalidation.collection(config.path));
+      await revalidation.revalidate(revalidation.collection(config.cacheTags ?? [config.path]));
 
       res.json({ status: outcome.status, scheduledFor: outcome.scheduledFor ?? null });
     }),

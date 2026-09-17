@@ -26,6 +26,13 @@ export interface RevalidationTarget {
   paths?: string[];
 }
 
+/**
+ * The sitemap is a route handler with its own cache entry, not a page assembled
+ * from tagged fetches, so clearing the tag its data came from is not enough to
+ * make it re-render. It has to be named as a path.
+ */
+const SITEMAP_PATH = '/sitemap.xml';
+
 export class RevalidationService {
   constructor(private readonly ctx: AppContext) {}
 
@@ -42,13 +49,23 @@ export class RevalidationService {
         CACHE_TAGS.collection('pages'),
         CACHE_TAGS.sitemap,
       ],
-      paths,
+      paths: [...paths, SITEMAP_PATH],
     };
   }
 
-  /** A collection record: its own listing, and the sitemap. */
-  collection(name: string, paths: string[] = []): RevalidationTarget {
-    return { tags: [CACHE_TAGS.collection(name), CACHE_TAGS.sitemap], paths };
+  /**
+   * A collection record: its own listing, and the sitemap.
+   *
+   * `names` are the public site's tag names, which are not the API's route
+   * segments — see `cacheTags` on the collection config for why that distinction
+   * is worth the extra field.
+   */
+  collection(names: string | string[], paths: string[] = []): RevalidationTarget {
+    const list = Array.isArray(names) ? names : [names];
+    return {
+      tags: [...list.map((name) => CACHE_TAGS.collection(name)), CACHE_TAGS.sitemap],
+      paths: [...paths, SITEMAP_PATH],
+    };
   }
 
   /** Site-wide furniture. */

@@ -158,6 +158,7 @@ const storyWritable = {
 
 function storyCollection(options: {
   path: string;
+  cacheTags: string[];
   kind: string;
   label: string;
   labelPlural: string;
@@ -165,6 +166,7 @@ function storyCollection(options: {
 }): CollectionConfig {
   return {
     path: options.path,
+    cacheTags: options.cacheTags,
     model: 'story',
     entityType: options.prefix === 'news' ? 'news' : 'story',
     permissionPrefix: options.prefix,
@@ -313,6 +315,7 @@ const jobWritable = {
 export const EDITORIAL_COLLECTIONS: CollectionConfig[] = [
   storyCollection({
     path: 'stories',
+    cacheTags: ['stories'],
     kind: 'STORY',
     label: 'Story',
     labelPlural: 'Stories',
@@ -320,6 +323,7 @@ export const EDITORIAL_COLLECTIONS: CollectionConfig[] = [
   }),
   storyCollection({
     path: 'news',
+    cacheTags: ['stories'],
     kind: 'NEWS',
     label: 'News article',
     labelPlural: 'News',
@@ -328,6 +332,7 @@ export const EDITORIAL_COLLECTIONS: CollectionConfig[] = [
 
   {
     path: 'press-releases',
+    cacheTags: ['pressReleases'],
     model: 'pressRelease',
     entityType: 'pressRelease',
     permissionPrefix: 'pressReleases',
@@ -422,6 +427,7 @@ export const EDITORIAL_COLLECTIONS: CollectionConfig[] = [
 
   {
     path: 'people',
+    cacheTags: ['people'],
     model: 'person',
     entityType: 'person',
     permissionPrefix: 'people',
@@ -554,6 +560,7 @@ export const EDITORIAL_COLLECTIONS: CollectionConfig[] = [
 
   {
     path: 'policies',
+    cacheTags: ['policies'],
     model: 'policy',
     entityType: 'policy',
     permissionPrefix: 'policies',
@@ -655,6 +662,7 @@ export const EDITORIAL_COLLECTIONS: CollectionConfig[] = [
 
   {
     path: 'jobs',
+    cacheTags: ['jobs'],
     model: 'job',
     entityType: 'job',
     permissionPrefix: 'careers',

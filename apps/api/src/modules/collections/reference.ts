@@ -149,6 +149,7 @@ function taxonomyFieldsFor(shape: TaxonomyShape): FieldSpec[] {
 
 function taxonomy(options: {
   path: string;
+  cacheTags: string[];
   model: string;
   entityType: string;
   label: string;
@@ -162,6 +163,7 @@ function taxonomy(options: {
 
   return reference({
     path: options.path,
+    cacheTags: options.cacheTags,
     model: options.model,
     entityType: options.entityType,
     permissionPrefix: options.entityType,
@@ -315,6 +317,7 @@ const impactStoryWritable = {
 export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
   reference({
     path: 'timeline',
+    cacheTags: ['timeline'],
     model: 'timelineEvent',
     entityType: 'timelineEvent',
     permissionPrefix: 'timeline',
@@ -394,6 +397,7 @@ export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
 
   reference({
     path: 'awards',
+    cacheTags: ['awards'],
     model: 'award',
     entityType: 'award',
     permissionPrefix: 'awards',
@@ -489,6 +493,7 @@ export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
 
   reference({
     path: 'reports',
+    cacheTags: ['reports'],
     model: 'report',
     entityType: 'report',
     permissionPrefix: 'reports',
@@ -588,6 +593,7 @@ export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
 
   reference({
     path: 'employee-stories',
+    cacheTags: ['employeeStories'],
     model: 'employeeStory',
     entityType: 'employeeStory',
     permissionPrefix: 'employeeStories',
@@ -675,6 +681,7 @@ export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
 
   reference({
     path: 'impact-metrics',
+    cacheTags: ['impact'],
     model: 'impactMetric',
     entityType: 'impactMetric',
     permissionPrefix: 'impact',
@@ -772,6 +779,7 @@ export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
 
   reference({
     path: 'impact-stories',
+    cacheTags: ['impact'],
     model: 'impactStory',
     entityType: 'impactStory',
     permissionPrefix: 'impact',
@@ -849,6 +857,7 @@ export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
 
   taxonomy({
     path: 'departments',
+    cacheTags: ['jobs'],
     model: 'department',
     entityType: 'department',
     label: 'Department',
@@ -861,6 +870,7 @@ export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
 
   taxonomy({
     path: 'job-locations',
+    cacheTags: ['jobs'],
     model: 'jobLocation',
     entityType: 'jobLocation',
     label: 'Location',
@@ -873,6 +883,7 @@ export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
 
   reference({
     path: 'impact-pillars',
+    cacheTags: ['impact'],
     model: 'impactPillar',
     entityType: 'impactPillar',
     permissionPrefix: 'impact',
@@ -935,6 +946,7 @@ export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
 
   taxonomy({
     path: 'story-categories',
+    cacheTags: ['stories'],
     model: 'storyCategory',
     entityType: 'storyCategory',
     label: 'Story category',
@@ -946,6 +958,7 @@ export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
   }),
   taxonomy({
     path: 'press-release-categories',
+    cacheTags: ['pressReleases'],
     model: 'pressReleaseCategory',
     entityType: 'pressReleaseCategory',
     label: 'Press release category',
@@ -956,6 +969,7 @@ export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
   }),
   taxonomy({
     path: 'report-categories',
+    cacheTags: ['reports'],
     model: 'reportCategory',
     entityType: 'reportCategory',
     label: 'Report category',
@@ -967,6 +981,7 @@ export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
   }),
   taxonomy({
     path: 'policy-categories',
+    cacheTags: ['policies'],
     model: 'policyCategory',
     entityType: 'policyCategory',
     label: 'Policy category',
@@ -978,6 +993,7 @@ export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
   }),
   taxonomy({
     path: 'career-categories',
+    cacheTags: ['jobs'],
     model: 'careerCategory',
     entityType: 'careerCategory',
     label: 'Career category',
@@ -989,6 +1005,7 @@ export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
   }),
   taxonomy({
     path: 'award-categories',
+    cacheTags: ['awards'],
     model: 'awardCategory',
     entityType: 'awardCategory',
     label: 'Award category',
@@ -999,6 +1016,7 @@ export const REFERENCE_COLLECTIONS: CollectionConfig[] = [
   }),
   taxonomy({
     path: 'leadership-groups',
+    cacheTags: ['people'],
     model: 'leadershipGroup',
     entityType: 'leadershipGroup',
     label: 'Leadership group',

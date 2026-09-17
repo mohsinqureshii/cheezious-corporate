@@ -136,7 +136,14 @@ export function publicRoutes(): Router {
 
       const [pages, stories, pressReleases, people, policies, jobs] = await Promise.all([
         req.ctx.prisma.page.findMany({
-          where: { ...published, excludeFromSitemap: false },
+          // A page marked noindex has no business in a sitemap: the two
+          // instructions contradict each other, and a crawler asked to fetch a
+          // page it is then told to ignore spends budget for nothing.
+          where: {
+            ...published,
+            excludeFromSitemap: false,
+            OR: [{ seo: null }, { seo: { noindex: false } }],
+          },
           select: { path: true, type: true, updatedAt: true, publishedAt: true, translationGroupId: true },
           orderBy: { path: 'asc' },
         }),

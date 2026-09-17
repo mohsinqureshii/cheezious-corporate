@@ -1226,3 +1226,35 @@ describe('sitemap data', () => {
     expect(typeof response.body.settings['seo.defaultOgImageKey']).toBe('string');
   });
 });
+
+describe('bilingual site', () => {
+  it('serves the Urdu spine and pairs it with English for hreflang', async () => {
+    const response = await request(app).get('/api/public/ur/pages').query({ path: '/company' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.page.locale).toBe('ur');
+    // The pair shares a translation group, which is what lets each page declare
+    // the other as its alternate.
+    expect(response.body.page.alternates.en).toBe('/company');
+    expect(response.body.page.alternates.ur).toBe('/company');
+  });
+
+  it('keeps placeholder translations out of the sitemap', async () => {
+    // The Urdu spine is seeded noindex because it is a placeholder. A noindex
+    // page in a sitemap is two contradictory instructions to a crawler.
+    const response = await request(app).get('/api/public/ur/sitemap');
+
+    expect(response.status).toBe(200);
+    expect(response.body.pages).toHaveLength(0);
+  });
+
+  it('marks an untranslated page as such rather than pretending otherwise', async () => {
+    const urdu = await ctx.prisma.page.findFirst({
+      where: { locale: 'ur', path: '/company' },
+      select: { translationStatus: true, summary: true },
+    });
+
+    expect(urdu?.translationStatus).toBe('IN_PROGRESS');
+    expect(urdu?.summary).toContain('پلیس ہولڈر');
+  });
+});

@@ -1,6 +1,8 @@
 import { LOCALE_META, type Locale } from '@cheezious/config';
 import Link from 'next/link';
 
+import { LocaleSwitch } from '@/components/shell/LocaleSwitch';
+
 import type { FooterData, NavigationItem } from '@/lib/content';
 
 /**
@@ -132,20 +134,11 @@ export function Footer({ locale, data, consumerSiteUrl, labels }: FooterProps) {
                 <span aria-hidden="true" className="text-ink-line">
                   |
                 </span>
-                <div className="flex items-center gap-2 text-body-xs">
-                  <span className="font-semibold text-ink">{LOCALE_META[locale].nativeLabel}</span>
-                  <Link
-                    href={`/${otherLocale}/company`}
-                    lang={otherLocale}
-                    hrefLang={otherLocale}
-                    className={[
-                      'text-ink-muted no-underline transition-colors duration-quick hover:text-ink',
-                      otherLocale === 'ur' ? 'font-urdu' : '',
-                    ].join(' ')}
-                  >
-                    {LOCALE_META[otherLocale].nativeLabel}
-                  </Link>
-                </div>
+                <LocaleSwitch
+                  locale={locale}
+                  otherLocale={otherLocale}
+                  fallbackPath={`/${otherLocale}/company`}
+                />
               </>
             ) : null}
 

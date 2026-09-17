@@ -10,6 +10,7 @@ import { seedNavigation } from './navigation';
 import { seedPages } from './pages';
 import { seedSettings } from './settings';
 import { seedSubmissionsReference } from './submissions-reference';
+import { seedUrduSpine } from './urdu';
 
 /**
  * Seed.
@@ -65,6 +66,9 @@ async function main(): Promise<void> {
   console.log('  → corporate pages');
   await seedPages(prisma, adminUser.id, mediaByKey);
 
+  console.log('  → Urdu spine (structural pages, marked as awaiting translation)');
+  await seedUrduSpine(prisma, adminUser.id, mediaByKey);
+
   console.log('  → navigation, mega menu, footer');
   await seedNavigation(prisma);
 
@@ -79,7 +83,7 @@ async function main(): Promise<void> {
   console.log(`  ${pages} pages · ${stories} stories · ${jobs} jobs · ${people} people\n`);
   console.log('Sign in to the CMS with:');
   console.log(`  ${adminUser.email}`);
-  console.log(`  ${process.env.SEED_ADMIN_PASSWORD ?? 'ChangeMe!Admin123'}\n`);
+  console.log(`  ${process.env.SEED_ADMIN_PASSWORD ?? 'ChangeMe-First-Signin-2026'}\n`);
   console.log('All seeded statistics, milestones and biographies are demo placeholders.');
   console.log('Replace them with approved corporate data before publication.\n');
 }

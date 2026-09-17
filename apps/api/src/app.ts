@@ -77,7 +77,15 @@ export function createApp(ctx: AppContext): Express {
       // Credentials are required so the CMS session cookie is sent.
       credentials: true,
       methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id', 'x-internal-key'],
+      // `Cache-Control` is not CORS-safelisted, so a client sending it needs it
+      // named here or every one of its requests fails preflight.
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'Cache-Control',
+        'x-request-id',
+        'x-internal-key',
+      ],
       exposedHeaders: [
         'x-request-id',
         'x-ratelimit-limit',

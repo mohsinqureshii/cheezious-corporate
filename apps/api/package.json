@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "dotenv -e ../../.env -- vitest run --passWithNoTests",
     "test:unit": "vitest run src/**/*.unit.test.ts",
-    "worker": "dotenv -e ../../.env -- tsx src/worker.ts"
+    "worker": "dotenv -e ../../.env -- tsx src/worker.ts",
+    "e2e:account": "dotenv -e ../../.env -- tsx src/scripts/e2e-account.ts"
   },
   "dependencies": {
     "@cheezious/auth": "workspace:*",

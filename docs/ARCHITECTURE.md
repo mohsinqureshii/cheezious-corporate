@@ -73,7 +73,7 @@ one no-op — and publishes through the same code path a person's publish takes.
 
 ## The shared packages, and what each is for
 
-`packages/page-builder` is the one worth understanding. It defines 58 blocks,
+`packages/page-builder` is the one worth understanding. It defines 60 blocks,
 each with a Zod schema. That schema drives the CMS's editor form, the public
 renderer's props, the seed's validation and the API's write validation. A block
 gains a field by gaining it there, once.

@@ -18,7 +18,7 @@ landlord or a prospective partner arrives at, and it is written for them.
 | `apps/api`                               | The platform API and the background worker. Express, Prisma, PostgreSQL.                                                             |
 | `packages/database`                      | Prisma schema (91 models), migrations and the seed.                                                                                  |
 | `packages/permissions`                   | The permission catalogue, the eleven seeded roles and the editorial workflow state machine.                                          |
-| `packages/page-builder`                  | 58 block definitions with Zod schemas — the single source of truth for the CMS editor, the public renderer, the seed and validation. |
+| `packages/page-builder`                  | 60 block definitions with Zod schemas — the single source of truth for the CMS editor, the public renderer, the seed and validation. |
 | `packages/seo`                           | Metadata resolution, structured data and the sitemap renderer. Framework-agnostic and unit tested.                                   |
 | `packages/auth`                          | Password hashing, sessions, tokens, lockout and rate limiting.                                                                       |
 | `packages/validation`                    | Shared Zod primitives, HTML sanitisation and upload validation.                                                                      |

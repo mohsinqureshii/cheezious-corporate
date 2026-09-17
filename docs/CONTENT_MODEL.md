@@ -3,7 +3,7 @@
 ## Three shapes of content
 
 **Pages** are composed. A page is a path, some metadata and an ordered list of
-blocks, each block an instance of one of 58 definitions with its own schema.
+blocks, each block an instance of one of 60 definitions with its own schema.
 Roughly a hundred pages make up the corporate site, and none of their
 information architecture is in the file system — Corporate Communications adding
 a page is a publish, not a deployment.
@@ -93,8 +93,8 @@ script.
 
 ## Blocks
 
-58 definitions across nine categories: hero (4), editorial (10), media (5),
-people (5), data (13), collections (10), calls to action (7), careers (3) and
+60 definitions across nine categories: hero (4), editorial (10), media (5),
+people (6), data (13), collections (11), calls to action (7), careers (3) and
 utility (1).
 
 Each defines a Zod schema, a category, an icon and which page types may use it.

@@ -17,15 +17,16 @@ something is partial or missing, it says so.
 - 167 tests across seven packages: 59 API integration tests against a real
   database, plus unit tests for SEO (32), validation (22), utilities (22),
   page-builder (19), auth (19) and permissions (16).
-- 30 Playwright end-to-end tests (`pnpm test:e2e` in `apps/corporate-web`) that
+- 37 Playwright end-to-end tests (`pnpm test:e2e` in `apps/corporate-web`) that
   drive a real browser against a running stack: the publishing round trip,
   permission boundaries, the submission queues, responsive layout at five
-  widths, and the accessibility properties that are cheap to regress — heading
-  order, skip link, image alternatives, zoom, and right-to-left rendering.
+  widths, the publication and story detail pages, and the accessibility
+  properties that are cheap to regress — heading order, skip link, image
+  alternatives, zoom, and right-to-left rendering.
 - PostgreSQL 16 + Prisma 6: 91 models, 29 enums, two migrations, zero schema
   drift. Full-text search via a trigger-maintained `tsvector` with GIN and
   trigram indexes.
-- Idempotent seed: the permission catalogue, eleven roles, 58 block definitions,
+- Idempotent seed: the permission catalogue, eleven roles, 60 block definitions,
   settings, company reference data, demonstration editorial content, careers
   data, impact and publications, placeholder photography, 103 published English
   pages, an eight-page Urdu spine and the navigation.
@@ -45,7 +46,7 @@ something is partial or missing, it says so.
 
 ### Content engine
 
-- Pages with a 58-block composition system, driven by Zod schemas that are the
+- Pages with a 60-block composition system, driven by Zod schemas that are the
   single source of truth for the CMS editor, the public renderer, the seed and
   write validation.
 - Draft and published genuinely separate: the public site serves an immutable
@@ -94,6 +95,19 @@ something is partial or missing, it says so.
 - Public submission forms for suppliers, properties, partnerships and contact,
   each with consent capture, honeypot and timing checks, and retention dates.
 - Search, sitemap and robots.
+
+### Public detail routes
+
+- Publications at `/company/resources/publications/[slug]`, impact stories at
+  `/company/impact/stories/[slug]` and employee stories at
+  `/company/people/stories/[slug]`. Each carries its own metadata, hreflang
+  alternates, breadcrumbs and JSON-LD (`Report` for a publication, `Article` for
+  a story), and appears in the sitemap.
+- Two blocks added so the records are reachable rather than merely addressable:
+  `ImpactStoryGrid` and `EmployeeStoryGrid`. The impact section previously
+  listed newsroom stories under the heading "Impact stories", and the employee
+  stories index listed newsroom pieces about colleagues rather than the
+  employee-story records themselves.
 
 ### SEO
 
@@ -149,9 +163,6 @@ the handlers are not implemented.
 - **Visual-regression testing.** The end-to-end suite asserts structure and
   behaviour, not pixels. Nothing would catch a layout that is wrong but
   well-formed.
-- **Reports, impact stories and employee stories detail routes** on the public
-  site. The API serves them and the CMS manages them; the public routes do not
-  exist, so nothing links to them.
 - **Form builder editing.** The Forms screen shows what each form collects; it
   does not yet let anybody change it.
 - **Media variants.** The schema has `MediaVariant` and the worker has a
@@ -194,32 +205,31 @@ quietly left.
 
 ## The next exact implementation step
 
-**Build the three missing public detail routes: reports, impact stories and
-employee stories.**
+**Implement the two bulk actions the pages list already offers.**
 
-They are the last places where the platform manages content nothing can read.
-The API already serves all three, the CMS already edits them, and the listing
-blocks already render summaries — the summaries just have nowhere to link to.
+The pages list renders a selection checkbox per row and a bulk-action bar with
+Publish and Delete. Neither is wired, so the interface promises something it
+does not do — the worst kind of gap, because nothing about the screen says so.
 
-1. Add `apps/corporate-web/src/app/[locale]/impact/reports/[slug]/page.tsx`,
-   `.../company/newsroom/impact-stories/[slug]/page.tsx` and
-   `.../careers/stories/[slug]/page.tsx`. Follow
-   `.../company/newsroom/stories/[slug]/page.tsx`: it is the closest existing
-   shape, including `generateStaticParams`, `generateMetadata` via
-   `buildRouteSeo`, and the `notFound()` on an unpublished record.
-2. Add each collection to `PATHS` and `DEFAULTS` in
-   `src/app/sitemap.xml/route.ts`, and to the public sitemap endpoint in
-   `apps/api/src/modules/public.routes.ts` so the records are actually returned.
-3. Give reports an `Article` JSON-LD document and impact stories the same; use
-   the builders in `@cheezious/seo`, which return `null` rather than emit
-   incomplete markup.
-4. Point the listing blocks at the new routes. `ReportGrid` in
-   `collections.tsx` currently sends every card to the publications listing
-   regardless of which report was clicked; the story blocks have no detail
-   target at all.
-5. Add a case to `e2e/publishing.spec.ts` covering one of them end to end, and
-   extend the `revalidation` service's `collection()` call sites so publishing a
-   report invalidates its own path as well as the listing.
+1. Add `POST /api/cms/pages/bulk` in `apps/api/src/modules/cms-pages.routes.ts`,
+   taking `{ action: 'PUBLISH' | 'DELETE', ids: string[] }` with a hard cap on
+   `ids` (50 is plenty, and an unbounded bulk endpoint is a denial-of-service
+   waiting to be found).
+2. Run each id through the **existing** single-record path rather than a
+   `updateMany`: the workflow guard, the version snapshot, the audit entry and
+   the notification all have to happen per page, and a bulk write that skips
+   them is how a system quietly loses its history.
+3. Return a per-id result — `{ id, ok, reason? }` — rather than failing the
+   whole request on the first refusal. A selection of twelve pages where the
+   user may publish eleven should publish eleven and say why the twelfth did
+   not.
+4. Revalidate once at the end, with every affected path, instead of once per
+   page.
+5. Wire the bar in `apps/cms/src/components/content/PagesTable.tsx` to the new
+   endpoint, and show the per-id failures rather than a single toast.
+6. Add an integration test covering the mixed-permission case, which is the one
+   that matters and the one a `updateMany` implementation gets wrong.
 
-Reports are the one to do first: they are linked from the governance section and
-are the most conspicuous dead end.
+After that, the honest remaining list is: the form builder's editing screen,
+webhook dispatch, a mail transport, media variants, and Redis-backed rate
+limiting — none of which block anything else.

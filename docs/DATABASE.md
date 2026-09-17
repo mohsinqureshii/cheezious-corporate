@@ -70,7 +70,7 @@ reach existing roles automatically; see [Permissions](PERMISSIONS.md) for how to
 propagate one.
 
 What it creates: the permission catalogue and eleven roles, the first
-administrator, 58 block definitions, settings and locales, company reference
+administrator, 60 block definitions, settings and locales, company reference
 data, demonstration editorial content, careers data, impact and publications,
 submission reference data, placeholder photography, ~50 page specifications that
 expand to 103 published pages, an eight-page Urdu spine and the navigation.

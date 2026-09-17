@@ -16,6 +16,7 @@ import { authRoutes } from './modules/auth.routes';
 import { careersRoutes } from './modules/careers.routes';
 import { cmsDashboardRoutes } from './modules/cms-dashboard.routes';
 import { cmsContentRoutes } from './modules/cms-content.routes';
+import { cmsMediaRoutes } from './modules/cms-media.routes';
 import { cmsPagesRoutes } from './modules/cms-pages.routes';
 import { cmsSubmissionsRoutes } from './modules/cms-submissions.routes';
 import { cmsSystemRoutes } from './modules/cms-system.routes';
@@ -118,6 +119,7 @@ export function createApp(ctx: AppContext): Express {
   app.use('/api/cms/dashboard', cmsDashboardRoutes());
   app.use('/api/cms/pages', cmsPagesRoutes());
   app.use('/api/cms/content', cmsContentRoutes());
+  app.use('/api/cms/media', cmsMediaRoutes());
   app.use('/api/cms/submissions', cmsSubmissionsRoutes());
   app.use('/api/cms/system', cmsSystemRoutes());
 

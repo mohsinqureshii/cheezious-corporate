@@ -165,6 +165,50 @@
     @apply inline-flex items-center gap-02 rounded-full px-03 py-01 text-label-01 font-medium;
   }
 
+  /* --- Rich text preview -------------------------------------------------- */
+
+  /* Deliberately close to the public site's editorial typography rather than to
+     the CMS's own, so a preview is a preview and not a second opinion. */
+  .prose-cms {
+    @apply text-body-02 text-content-primary;
+  }
+
+  .prose-cms > * + * {
+    @apply mt-04;
+  }
+
+  .prose-cms h2 {
+    @apply text-heading-04 text-content-primary;
+  }
+
+  .prose-cms h3 {
+    @apply text-heading-compact text-content-primary;
+  }
+
+  .prose-cms ul {
+    @apply list-disc ps-06;
+  }
+
+  .prose-cms ol {
+    @apply list-decimal ps-06;
+  }
+
+  .prose-cms li + li {
+    @apply mt-01;
+  }
+
+  .prose-cms a {
+    @apply text-interactive underline underline-offset-2;
+  }
+
+  .prose-cms blockquote {
+    @apply border-s-[3px] border-border-strong ps-05 text-content-secondary;
+  }
+
+  .prose-cms strong {
+    @apply font-semibold;
+  }
+
   /* --- Layout ------------------------------------------------------------ */
 
   .page-header {

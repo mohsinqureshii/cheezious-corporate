@@ -872,3 +872,70 @@ describe('structured content collections', () => {
     expect(second.body.item.slug.endsWith('-2')).toBe(true);
   });
 });
+
+describe('media library', () => {
+  it('never lists files submitted by the public', async () => {
+    const cookie = await signIn(await createUser('media-librarian', 'EDITOR'));
+
+    // A file attached to a job application: personal data belonging to that
+    // application, not library material.
+    const asset = await ctx.prisma.mediaAsset.create({
+      data: {
+        kind: 'DOCUMENT',
+        storageKey: `private/applications/${TEST_PREFIX}-cv.pdf`,
+        originalName: `${TEST_PREFIX}-cv.pdf`,
+        mimeType: 'application/pdf',
+        byteSize: 1024,
+        title: `${TEST_PREFIX} applicant CV`,
+        visibility: 'RESTRICTED',
+      },
+      select: { id: true },
+    });
+
+    const list = await request(app)
+      .get('/api/cms/media')
+      .query({ q: TEST_PREFIX, pageSize: 100 })
+      .set('Cookie', cookie);
+
+    expect(list.status).toBe(200);
+    expect(list.body.items).toHaveLength(0);
+
+    // Nor is it reachable by id, which would otherwise make the filter cosmetic.
+    const direct = await request(app).get(`/api/cms/media/${asset.id}`).set('Cookie', cookie);
+    expect(direct.status).toBe(404);
+
+    await ctx.prisma.mediaAsset.delete({ where: { id: asset.id } });
+  });
+
+  it('refuses an upload whose bytes contradict its declared type', async () => {
+    const cookie = await signIn(await createUser('media-uploader', 'EDITOR'));
+
+    const response = await request(app)
+      .post('/api/cms/media')
+      .set('Cookie', cookie)
+      .attach('files', Buffer.from('#!/bin/sh\necho not an image\n'), {
+        filename: 'payload.png',
+        contentType: 'image/png',
+      });
+
+    expect(response.status).toBe(422);
+  });
+
+  it('does not let an editor without the permission flag brand assets', async () => {
+    const cookie = await signIn(await createUser('media-brand', 'AUTHOR'));
+
+    const asset = await ctx.prisma.mediaAsset.findFirst({
+      where: { deletedAt: null, storageKey: { startsWith: 'media/' } },
+      select: { id: true },
+    });
+    if (!asset) return;
+
+    const response = await request(app)
+      .patch(`/api/cms/media/${asset.id}`)
+      .set('Cookie', cookie)
+      .send({ isBrandAsset: true });
+
+    // Either the route refuses the whole request or the brand flag specifically.
+    expect([403]).toContain(response.status);
+  });
+});

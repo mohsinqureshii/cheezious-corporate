@@ -138,6 +138,71 @@ export function cmsSubmissionsRoutes(): Router {
     }),
   );
 
+  /**
+   * Export applications.
+   *
+   * Registered before `/applications/:id` for the same reason the factory's is:
+   * Express matches in order, and `/applications/export` would otherwise be read
+   * as an application whose id is "export".
+   *
+   * `applications.export` is a separate, higher-risk permission and the export is
+   * audited with its row count, because pulling a queue of applicants in bulk is
+   * a materially different act from reviewing one application.
+   */
+  router.get(
+    '/applications/export',
+    requirePermission('applications.export'),
+    asyncHandler(async (req, res) => {
+      const rows = await req.ctx.prisma.jobApplication.findMany({
+        where: { deletedAt: null },
+        orderBy: { createdAt: 'desc' },
+        take: 5000,
+        select: {
+          reference: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          city: true,
+          status: true,
+          rating: true,
+          createdAt: true,
+          job: { select: { title: true } },
+          assignee: { select: { name: true } },
+        },
+      });
+
+      await new AuditService(req.ctx.prisma).record(
+        { id: req.principal!.id, email: req.principal!.email, ipAddress: clientIp(req) },
+        {
+          action: 'EXPORT',
+          entityType: 'jobApplication',
+          summary: `Exported ${rows.length} job application(s)`,
+          metadata: { rowCount: rows.length },
+        },
+      );
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="applications-${Date.now()}.csv"`);
+      res.setHeader('Cache-Control', 'private, no-store');
+      res.send(
+        toCsv(rows as Array<Record<string, unknown>>, [
+          'reference',
+          'firstName',
+          'lastName',
+          'email',
+          'phone',
+          'city',
+          'status',
+          'rating',
+          'createdAt',
+          'job',
+          'assignee',
+        ]),
+      );
+    }),
+  );
+
   router.get(
     '/applications/:id',
     requirePermission('applications.read'),
@@ -550,6 +615,55 @@ function registerQueue(router: Router, config: QueueConfig): void {
     }),
   );
 
+  // Registered before the `:id` routes: Express matches in order, and
+  // `/suppliers/export` would otherwise be read as a submission whose id is
+  // "export" — which is a 404 nobody sees until they try to export.
+  /**
+   * CSV export.
+   *
+   * A separate, higher-risk permission: extracting a queue in bulk is a
+   * materially different act from reviewing one record, and it is audited as
+   * such with the row count.
+   */
+  if (config.exportPermission) {
+    router.get(
+      `${config.path}/export`,
+      requirePermission(config.exportPermission),
+      asyncHandler(async (req, res) => {
+        const model = req.ctx.prisma[config.model] as never as {
+          findMany: (args: unknown) => Promise<Array<Record<string, unknown>>>;
+        };
+
+        const rows = await model.findMany({
+          where: { deletedAt: null },
+          orderBy: { createdAt: 'desc' },
+          take: 5000,
+          select: config.listSelect,
+        });
+
+        await new AuditService(req.ctx.prisma).record(
+          { id: req.principal!.id, email: req.principal!.email, ipAddress: clientIp(req) },
+          {
+            action: 'EXPORT',
+            entityType: config.model,
+            summary: `Exported ${rows.length} ${config.label.toLowerCase()} record(s)`,
+            metadata: { rowCount: rows.length },
+          },
+        );
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="${config.model}-${Date.now()}.csv"`,
+        );
+        res.setHeader('Cache-Control', 'private, no-store');
+        // An empty queue still returns its column headers: a zero-byte download
+        // looks like a failure, and a file with headers and no rows is an
+        // answer.
+        res.send(toCsv(rows, Object.keys(config.listSelect)));
+      }),
+    );
+  }
   router.get(
     `${config.path}/:id`,
     requirePermission(config.readPermission),
@@ -716,50 +830,6 @@ function registerQueue(router: Router, config: QueueConfig): void {
       res.status(201).json({ note });
     }),
   );
-
-  /**
-   * CSV export.
-   *
-   * A separate, higher-risk permission: extracting a queue in bulk is a
-   * materially different act from reviewing one record, and it is audited as
-   * such with the row count.
-   */
-  if (config.exportPermission) {
-    router.get(
-      `${config.path}/export`,
-      requirePermission(config.exportPermission),
-      asyncHandler(async (req, res) => {
-        const model = req.ctx.prisma[config.model] as never as {
-          findMany: (args: unknown) => Promise<Array<Record<string, unknown>>>;
-        };
-
-        const rows = await model.findMany({
-          where: { deletedAt: null },
-          orderBy: { createdAt: 'desc' },
-          take: 5000,
-          select: config.listSelect,
-        });
-
-        await new AuditService(req.ctx.prisma).record(
-          { id: req.principal!.id, email: req.principal!.email, ipAddress: clientIp(req) },
-          {
-            action: 'EXPORT',
-            entityType: config.model,
-            summary: `Exported ${rows.length} ${config.label.toLowerCase()} record(s)`,
-            metadata: { rowCount: rows.length },
-          },
-        );
-
-        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-        res.setHeader(
-          'Content-Disposition',
-          `attachment; filename="${config.model}-${Date.now()}.csv"`,
-        );
-        res.setHeader('Cache-Control', 'private, no-store');
-        res.send(toCsv(rows));
-      }),
-    );
-  }
 }
 
 /**
@@ -769,8 +839,11 @@ function registerQueue(router: Router, config: QueueConfig): void {
  * without it, a spreadsheet interprets a submitted value as a formula, which is
  * a real attack against anyone who opens an exported file.
  */
-function toCsv(rows: Array<Record<string, unknown>>): string {
-  if (rows.length === 0) return '';
+function toCsv(rows: Array<Record<string, unknown>>, fallbackHeaders: string[] = []): string {
+  if (rows.length === 0) {
+    const headers = fallbackHeaders.filter((key) => key !== '_count');
+    return headers.length > 0 ? `\uFEFF${headers.join(',')}` : '';
+  }
 
   const flatten = (value: unknown): string => {
     if (value === null || value === undefined) return '';

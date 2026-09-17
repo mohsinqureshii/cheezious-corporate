@@ -1,5 +1,5 @@
 import { MemoryRateLimitStore, RateLimiter } from '@cheezious/auth';
-import { apiSchema, assertProductionSecrets, parseEnv, type ApiEnv } from '@cheezious/config';
+import { apiEnvSchema, assertProductionSecrets, parseEnv, type ApiEnv } from '@cheezious/config';
 import { prisma } from '@cheezious/database';
 import type { PrismaClient } from '@cheezious/database';
 import { createLogger, type Logger } from '@cheezious/logger';
@@ -22,7 +22,7 @@ export interface AppContext {
 let cached: AppContext | undefined;
 
 export function createContext(overrides: Partial<AppContext> = {}): AppContext {
-  const env = overrides.env ?? parseEnv(apiSchema);
+  const env = overrides.env ?? parseEnv(apiEnvSchema);
   assertProductionSecrets(env);
 
   const logger =

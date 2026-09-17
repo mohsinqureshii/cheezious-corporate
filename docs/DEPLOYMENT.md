@@ -65,6 +65,71 @@ Redis is **not** required. `REDIS_URL` is accepted and validated, and nothing
 reads it yet — the rate limiter's Redis store is not implemented. Provisioning
 Redis today buys nothing; see the status document.
 
+## How the API is built
+
+`tsc` alone cannot produce a runnable API, for two reasons that compound:
+
+- `apps/api` is an ES module compiled with `moduleResolution: bundler`, so its
+  relative imports are emitted without file extensions, and Node's ESM loader
+  refuses those.
+- The workspace packages deliberately ship TypeScript source
+  (`"exports": "./src/index.ts"`), which Node cannot load at all.
+
+In development `tsx` transpiles both on the fly. Nothing does that in a deploy,
+so `pnpm --filter @cheezious/api build` runs `esbuild.config.mjs` instead: it
+bundles `src/server.ts` and `src/worker.ts`, inlines the `@cheezious/*`
+packages, and leaves everything in `node_modules` external. Output is CommonJS
+with a `.cjs` extension, which is what tells Node how to read it inside a
+`"type": "module"` package.
+
+Because the bundle inlines the workspace packages, their runtime dependencies
+become the API's own — `@prisma/client`, `argon2`, `pino`, `pino-pretty` and
+`dotenv` are declared in `apps/api/package.json` for exactly that reason. Adding
+a dependency to a `@cheezious/*` package that the API bundles means declaring it
+there too, or the bundle will fail at startup with `MODULE_NOT_FOUND`.
+
+The Next.js apps need none of this: `next build` transpiles workspace packages
+itself.
+
+## Ports
+
+Every process binds `PORT` when the platform sets one — Railway, Fly, Heroku and
+Cloud Run all inject it. `API_PORT` remains the configured name and is used when
+`PORT` is absent; the public site and CMS fall back to 3000 and 3001.
+
+## Railway
+
+Five services: PostgreSQL, the API, the worker, the public site and the CMS. The
+four application services all deploy the same repository and differ only in
+their build and start commands, which live in `railway/*.json`. Point each
+service at its file under **Settings → Config-as-code**:
+
+| Service     | Config file           |
+| ----------- | --------------------- |
+| API         | `railway/api.json`    |
+| Worker      | `railway/worker.json` |
+| Public site | `railway/web.json`    |
+| CMS         | `railway/cms.json`    |
+
+Leave the root directory at the repository root. Setting it to `apps/api` breaks
+pnpm workspace resolution, because the lockfile and the `@cheezious/*` packages
+live above it.
+
+The API service carries `pnpm db:migrate:deploy` as its pre-deploy command, so
+migrations run once per release rather than from four services at once. Seeding
+is a one-off: run `pnpm db:seed` from the API service's shell against the empty
+database, and never again.
+
+Database variables, on every service that needs them:
+
+```
+DATABASE_URL        = ${{Postgres.DATABASE_URL}}
+DIRECT_DATABASE_URL = ${{Postgres.DATABASE_URL}}
+```
+
+Both point at the same place on purpose: Railway's PostgreSQL is not pooled, and
+the two differ only when it is.
+
 ## Releasing
 
 ```bash
@@ -76,12 +141,12 @@ pnpm build                 # packages, then applications
 Then restart the API, the worker, the public site and the CMS. Their production
 entry points are:
 
-| Process     | Start command                                  |
-| ----------- | ---------------------------------------------- |
-| API         | `pnpm --filter @cheezious/api start`           |
-| Worker      | `pnpm --filter @cheezious/api worker:start`    |
-| Public site | `pnpm --filter @cheezious/corporate-web start` |
-| CMS         | `pnpm --filter @cheezious/cms start`           |
+| Process     | Start command                                  | Runs              |
+| ----------- | ---------------------------------------------- | ----------------- |
+| API         | `pnpm --filter @cheezious/api start`           | `dist/server.cjs` |
+| Worker      | `pnpm --filter @cheezious/api worker:start`    | `dist/worker.cjs` |
+| Public site | `pnpm --filter @cheezious/corporate-web start` | `next start`      |
+| CMS         | `pnpm --filter @cheezious/cms start`           | `next start`      |
 
 The `dev` and `worker` scripts are for development only: they run TypeScript
 through `tsx` and read the root `.env`, neither of which belongs in a deploy.

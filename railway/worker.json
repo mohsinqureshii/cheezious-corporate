@@ -1,0 +1,12 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "RAILPACK",
+    "buildCommand": "pnpm build:packages && pnpm --filter @cheezious/api build",
+    "watchPatterns": ["apps/api/**", "packages/**", "pnpm-lock.yaml"]
+  },
+  "deploy": {
+    "startCommand": "pnpm --filter @cheezious/api worker:start",
+    "restartPolicyType": "ALWAYS"
+  }
+}

@@ -1,5 +1,5 @@
 import { MemoryRateLimitStore, RateLimiter, hashPassword } from '@cheezious/auth';
-import { apiSchema, parseEnv } from '@cheezious/config';
+import { apiEnvSchema, parseEnv } from '@cheezious/config';
 import { createPrismaClient } from '@cheezious/database';
 import { nullLogger } from '@cheezious/logger';
 import request from 'supertest';
@@ -66,7 +66,7 @@ async function createUser(suffix: string, roleKey: string): Promise<string> {
 }
 
 beforeAll(async () => {
-  const env = parseEnv(apiSchema);
+  const env = parseEnv(apiEnvSchema);
   rateLimitStore = new MemoryRateLimitStore();
   ctx = {
     env,

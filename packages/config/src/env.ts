@@ -42,6 +42,13 @@ export const databaseSchema = z.object({
 });
 
 export const apiSchema = runtimeSchema.merge(databaseSchema).extend({
+  /**
+   * Railway, Fly, Heroku and Cloud Run all inject `PORT` and expect the process
+   * to bind exactly that. `API_PORT` stays the name the rest of the codebase
+   * uses, and `PORT` wins wherever a platform sets it — see the transform at
+   * the bottom of this schema.
+   */
+  PORT: port.optional(),
   API_PORT: port.default(4000),
   API_HOST: z.string().default('0.0.0.0'),
   API_PUBLIC_URL: z.string().url().default('http://localhost:4000'),
@@ -82,7 +89,19 @@ export const apiSchema = runtimeSchema.merge(databaseSchema).extend({
   MAIL_FROM: z.string().default('Cheezious Corporate <no-reply@example.com>'),
 });
 
-export type ApiEnv = z.infer<typeof apiSchema>;
+/**
+ * The schema every API process boots through.
+ *
+ * The transform exists for one reason: a platform-injected `PORT` has to beat
+ * the configured `API_PORT`, and doing that here means it is true for the API,
+ * the worker and the tests at once rather than at each call site.
+ */
+export const apiEnvSchema = apiSchema.transform((env) => ({
+  ...env,
+  API_PORT: env.PORT ?? env.API_PORT,
+}));
+
+export type ApiEnv = z.infer<typeof apiEnvSchema>;
 
 export const publicWebSchema = z.object({
   NEXT_PUBLIC_SITE_URL: z.string().url().default('http://localhost:3000'),

@@ -1,4 +1,4 @@
-import { apiSchema, parseEnv } from '@cheezious/config';
+import { apiEnvSchema, parseEnv } from '@cheezious/config';
 import { createPrismaClient, type Prisma } from '@cheezious/database';
 import { createLogger } from '@cheezious/logger';
 import { extractTextFromBlocks } from '@cheezious/page-builder';
@@ -39,7 +39,7 @@ import { SearchService } from './services/search';
  *     wrong.
  */
 
-const env = parseEnv(apiSchema);
+const env = parseEnv(apiEnvSchema);
 const logger = createLogger({ name: 'cheezious-worker', level: env.LOG_LEVEL });
 const prisma = createPrismaClient();
 

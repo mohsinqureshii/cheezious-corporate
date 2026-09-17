@@ -114,8 +114,11 @@ Railway's Railpack reports "no start command detected" and refuses to build.
 | unset     | everything          | refuses, and says what to set   |
 
 `pnpm build` with no `SERVICE` still builds the whole workspace, so a
-developer's workflow is unchanged. `pnpm start` with no `SERVICE` fails with a
-readable message rather than starting something arbitrary.
+developer's workflow is unchanged. `pnpm start` with no `SERVICE` falls back to
+the platform's own name for the service — `RAILWAY_SERVICE_NAME` and its
+equivalents — so a service named `api`, `worker`, `web` or `cms` needs no
+variable at all. When neither is available it fails with a message naming the
+four values and where to set them, rather than starting something arbitrary.
 
 The wrapper forwards SIGTERM and SIGINT to the process it started. Without that,
 a deploy's shutdown signal stops at the wrapper and the service is killed

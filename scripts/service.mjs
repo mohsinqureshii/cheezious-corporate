@@ -28,9 +28,38 @@ const SERVICES = {
   cms: { pkg: '@cheezious/cms', start: 'start' },
 };
 
+/**
+ * Names a platform might already know this service by, so that naming the
+ * service correctly is enough and `SERVICE` is only needed when the two
+ * disagree. Railway sets `RAILWAY_SERVICE_NAME`; the others are common enough
+ * spellings of the same four things to be worth accepting.
+ */
+const ALIASES = {
+  api: 'api',
+  worker: 'worker',
+  jobs: 'worker',
+  web: 'web',
+  site: 'web',
+  'corporate-web': 'web',
+  'public-site': 'web',
+  cms: 'cms',
+  admin: 'cms',
+};
+
 const names = Object.keys(SERVICES).join(', ');
 const task = process.argv[2];
-const service = process.env.SERVICE?.trim();
+
+/** The platform's own name for this service, when it has one. */
+const platformName = (
+  process.env.RAILWAY_SERVICE_NAME ??
+  process.env.RENDER_SERVICE_NAME ??
+  process.env.FLY_PROCESS_GROUP ??
+  ''
+)
+  .trim()
+  .toLowerCase();
+
+const service = process.env.SERVICE?.trim() || ALIASES[platformName];
 
 function run(args) {
   return new Promise((resolve, reject) => {
@@ -72,8 +101,15 @@ if (task === 'build') {
 } else if (task === 'start') {
   if (!service) {
     fail(
-      `SERVICE is not set, and there is no single thing to start.\n` +
-        `Set it to one of: ${names}.`,
+      'SERVICE is not set, and there is no single thing to start — this ' +
+        'repository runs four.\n\n' +
+        `Set SERVICE to one of: ${names}.\n` +
+        'On Railway that is the service\u2019s Variables tab; the change takes ' +
+        'effect on the next deploy.\n\n' +
+        (platformName
+          ? `This service is named "${platformName}", which is not one of them. ` +
+            'Renaming it to one of those names would also work.'
+          : 'No platform service name was visible either, so there was nothing to infer it from.'),
     );
   }
   await run(['--filter', SERVICES[service].pkg, SERVICES[service].start]);

@@ -169,15 +169,80 @@ migrations run once per release rather than from four services at once. Seeding
 is a one-off: run `pnpm db:seed` from the API service's shell against the empty
 database, and never again.
 
-Database variables, on every service that needs them:
+### First deployment, step by step
 
-```
-DATABASE_URL        = ${{Postgres.DATABASE_URL}}
-DIRECT_DATABASE_URL = ${{Postgres.DATABASE_URL}}
-```
+1. **PostgreSQL.** Add Railway's PostgreSQL service. Nothing else to configure.
 
-Both point at the same place on purpose: Railway's PostgreSQL is not pooled, and
-the two differ only when it is.
+2. **The API service.** Deploy this repository, name the service `api` — other
+   services reference it by that name — and generate a public domain under
+   **Settings → Networking**.
+
+3. **Its variables.** Only five are genuinely required; everything else has a
+   working default:
+
+   ```
+   SERVICE=api
+   DATABASE_URL=${{Postgres.DATABASE_URL}}
+   DIRECT_DATABASE_URL=${{Postgres.DATABASE_URL}}
+   SESSION_SECRET=<openssl rand -base64 48>
+   PREVIEW_SECRET=<a different one>
+   REVALIDATE_SECRET=<a different one>
+   INTERNAL_API_KEY=<a different one>
+   ```
+
+   Both database URLs point at the same place on purpose: Railway's PostgreSQL
+   is not pooled, and the two differ only when it is. Four distinct secrets, not
+   one value repeated — the API refuses to start in production with a
+   placeholder, but it cannot tell that you reused a real one.
+
+4. **The other three services.** Deploy the same repository three more times as
+   `worker`, `web` and `cms`. Generate domains for `web` and `cms`; the worker
+   serves no HTTP and needs none.
+
+5. **Their variables.** The worker takes the same set as the API with
+   `SERVICE=worker`. Then:
+
+   ```
+   # web
+   SERVICE=web
+   NEXT_PUBLIC_API_URL=https://${{api.RAILWAY_PUBLIC_DOMAIN}}
+   NEXT_PUBLIC_SITE_URL=https://${{web.RAILWAY_PUBLIC_DOMAIN}}
+   NEXT_PUBLIC_SEO_NOINDEX=1
+
+   # cms
+   SERVICE=cms
+   NEXT_PUBLIC_CMS_API_URL=https://${{api.RAILWAY_PUBLIC_DOMAIN}}
+   NEXT_PUBLIC_SITE_URL=https://${{web.RAILWAY_PUBLIC_DOMAIN}}
+   ```
+
+6. **Close the loop on the API and worker**, now that the domains exist:
+
+   ```
+   API_PUBLIC_URL=https://${{api.RAILWAY_PUBLIC_DOMAIN}}
+   CORPORATE_WEB_URL=https://${{web.RAILWAY_PUBLIC_DOMAIN}}
+   CMS_URL=https://${{cms.RAILWAY_PUBLIC_DOMAIN}}
+   CORS_ALLOWED_ORIGINS=https://${{web.RAILWAY_PUBLIC_DOMAIN}},https://${{cms.RAILWAY_PUBLIC_DOMAIN}}
+   ```
+
+   `CORS_ALLOWED_ORIGINS` is the one that fails confusingly: get it wrong and
+   the browser refuses every call the CMS makes, which presents as a broken
+   sign-in rather than as a configuration error.
+
+7. **Deploy in order** — api, then worker, then web and cms. Wait for
+   `https://<api>/ready` to return 200 before the two Next.js apps build. They
+   prerender against it, and an unreachable API does not fail their build
+   loudly; see the section above.
+
+8. **Seed once.** Migrations run themselves. Seeding does not: open the API
+   service's shell and run `pnpm db:seed` against the empty database, once.
+
+9. **Check it.** `https://<api>/ready` returns 200; `https://<web>/en/company`
+   serves the corporate home page; `https://<cms>` redirects to `/sign-in`.
+   Sign in as the seeded administrator, which will immediately require a new
+   password. That is the intended behaviour, not a fault.
+
+Keep `NEXT_PUBLIC_SEO_NOINDEX=1` until approved content has replaced the
+placeholders. Everything the seed writes is demonstration data and says so.
 
 ## Releasing
 

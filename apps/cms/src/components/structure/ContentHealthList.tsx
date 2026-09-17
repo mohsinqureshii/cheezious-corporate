@@ -22,15 +22,18 @@ import type { ListMeta } from '@/lib/types';
  */
 
 const TYPE_LABELS: Record<string, string> = {
-  MISSING_SEO_DESCRIPTION: 'No meta description',
+  MISSING_SEO_TITLE: 'No SEO title',
+  MISSING_META_DESCRIPTION: 'No meta description',
+  MISSING_OG_IMAGE: 'No social image',
   MISSING_ALT_TEXT: 'Image without alternative text',
-  MISSING_TRANSLATION: 'Not translated',
   BROKEN_INTERNAL_LINK: 'Link to a page that is not there',
+  MISSING_TRANSLATION: 'Not translated',
+  OUTDATED_TRANSLATION: 'Translation out of date',
+  EMPTY_REQUIRED_BLOCK: 'Published with no content',
+  UNPUBLISHED_LINKED_CONTENT: 'Links to unpublished content',
   ORPHAN_PAGE: 'Not linked from anywhere',
-  STALE_CONTENT: 'Past its review date',
-  MISSING_HERO_IMAGE: 'No hero image',
-  DUPLICATE_SLUG: 'Duplicate address',
-  EMPTY_PAGE: 'No content',
+  INVALID_REDIRECT: 'Redirect that does not resolve',
+  PAST_REVIEW_DATE: 'Past its review date',
   UNPUBLISHED_CHANGES: 'Edited but not published',
 };
 

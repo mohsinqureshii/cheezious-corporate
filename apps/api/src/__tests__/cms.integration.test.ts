@@ -86,6 +86,9 @@ afterAll(async () => {
   await ctx.prisma.contentVersion.deleteMany({
     where: { entityType: { in: ['story', 'job'] }, data: { path: ['title'], string_starts_with: TEST_PREFIX } },
   });
+  await ctx.prisma.publishingJob.deleteMany({
+    where: { entityType: 'story', entityId: { in: [] } },
+  });
   await ctx.prisma.supplierSubmission.deleteMany({ where: { email: { startsWith: TEST_PREFIX } } });
   await ctx.prisma.contactSubmission.deleteMany({ where: { email: { startsWith: TEST_PREFIX } } });
   await ctx.prisma.job.deleteMany({ where: { title: { startsWith: TEST_PREFIX } } });
@@ -1023,5 +1026,81 @@ describe('public submission forms', () => {
     // to anything.
     expect((await request(app).get('/api/cms/submissions/contact')).status).toBe(401);
     expect((await request(app).get(`/api/cms/submissions/contact/${reference}`)).status).toBe(401);
+  });
+});
+
+describe('scheduled publishing', () => {
+  it('enqueues exactly one job however many times it is rescheduled', async () => {
+    const cookie = await signIn(await createUser('schedule-owner', 'CORPORATE_COMMUNICATIONS'));
+
+    const created = await request(app)
+      .post('/api/cms/content/stories')
+      .set('Cookie', cookie)
+      .send({ locale: 'en', title: `${TEST_PREFIX} scheduled` });
+    const id = created.body.item.id as string;
+
+    const first = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    const second = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+
+    for (const scheduledFor of [first, second]) {
+      const response = await request(app)
+        .post(`/api/cms/content/stories/${id}/transition`)
+        .set('Cookie', cookie)
+        .send({ action: 'SCHEDULE', scheduledFor });
+      expect(response.status).toBe(200);
+    }
+
+    // Rescheduling must move the job, not add another — two jobs would publish
+    // twice.
+    const jobs = await ctx.prisma.publishingJob.findMany({
+      where: { entityType: 'story', entityId: id },
+    });
+    expect(jobs).toHaveLength(1);
+    expect(jobs[0]?.status).toBe('PENDING');
+    expect(jobs[0]?.runAt.toISOString()).toBe(second);
+
+    // Cancelling the schedule cancels the job rather than leaving it to fire.
+    await request(app)
+      .post(`/api/cms/content/stories/${id}/transition`)
+      .set('Cookie', cookie)
+      .send({ action: 'CANCEL_SCHEDULE' });
+
+    const cancelled = await ctx.prisma.publishingJob.findFirst({
+      where: { entityType: 'story', entityId: id },
+    });
+    expect(cancelled?.status).toBe('CANCELLED');
+  });
+
+  it('refuses to schedule a time that has already passed', async () => {
+    const cookie = await signIn(await createUser('schedule-past', 'CORPORATE_COMMUNICATIONS'));
+
+    const created = await request(app)
+      .post('/api/cms/content/stories')
+      .set('Cookie', cookie)
+      .send({ locale: 'en', title: `${TEST_PREFIX} past schedule` });
+
+    const response = await request(app)
+      .post(`/api/cms/content/stories/${created.body.item.id}/transition`)
+      .set('Cookie', cookie)
+      .send({ action: 'SCHEDULE', scheduledFor: new Date(Date.now() - 60_000).toISOString() });
+
+    expect(response.status).toBe(422);
+    expect(response.body.error.fields[0].field).toBe('scheduledFor');
+  });
+
+  it('will not let an author schedule what they could not publish', async () => {
+    const cookie = await signIn(await createUser('schedule-author', 'AUTHOR'));
+
+    const created = await request(app)
+      .post('/api/cms/content/stories')
+      .set('Cookie', cookie)
+      .send({ locale: 'en', title: `${TEST_PREFIX} author schedule` });
+
+    const response = await request(app)
+      .post(`/api/cms/content/stories/${created.body.item.id}/transition`)
+      .set('Cookie', cookie)
+      .send({ action: 'SCHEDULE', scheduledFor: new Date(Date.now() + 3_600_000).toISOString() });
+
+    expect(response.status).toBe(403);
   });
 });

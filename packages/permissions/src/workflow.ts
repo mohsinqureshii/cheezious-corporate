@@ -85,7 +85,11 @@ export const TRANSITIONS: readonly TransitionRule[] = [
   },
   {
     action: 'SCHEDULE',
-    from: ['APPROVED', 'PUBLISHED', 'UNPUBLISHED', 'DRAFT'],
+    // SCHEDULED is included deliberately: moving a pending publish to a
+    // different time is an ordinary act, and forcing an editor to cancel the
+    // schedule first leaves a window in which the content is not scheduled at
+    // all — which is exactly when they get distracted.
+    from: ['APPROVED', 'PUBLISHED', 'UNPUBLISHED', 'DRAFT', 'SCHEDULED'],
     to: 'SCHEDULED',
     requires: 'publish',
     label: 'Schedule',

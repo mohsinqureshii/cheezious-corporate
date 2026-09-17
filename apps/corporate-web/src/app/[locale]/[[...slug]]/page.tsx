@@ -51,6 +51,9 @@ export async function generateStaticParams(): Promise<RouteParams[]> {
   }
 }
 
+/** Where the locale root sends visitors. Kept in step with the middleware. */
+const CORPORATE_HOME = '/company';
+
 function pathFromSlug(slug: string[] | undefined): string {
   return slug && slug.length > 0 ? `/${slug.join('/')}` : '/';
 }
@@ -61,6 +64,9 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
 
   const locale = localeParam;
   const path = pathFromSlug(slug);
+
+  // The locale root redirects, so it needs no metadata of its own.
+  if (path === '/') return { robots: { index: false, follow: true } };
 
   const response = await getPage(locale, path);
   const page = response?.page;
@@ -83,6 +89,12 @@ export default async function CorporatePage({
   const locale: Locale = localeParam;
   const path = pathFromSlug(slug);
   const query = await searchParams;
+
+  // The corporate home lives at /company, because this site sits alongside a
+  // consumer site rather than replacing it. The locale root is therefore a
+  // signpost, not a page — and a 404 there would be a 404 on the most
+  // guessable URL the site has.
+  if (path === '/') redirect(`/${locale}${CORPORATE_HOME}`);
 
   // A preview token renders the working copy rather than what is published.
   // Uncacheable by construction, so an editor's draft can never be served to a

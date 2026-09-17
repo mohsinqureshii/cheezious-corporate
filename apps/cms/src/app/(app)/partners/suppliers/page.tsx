@@ -2,6 +2,6 @@ import { queueListPage } from '@/components/queues/pages';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = { title: 'Applications' };
+export const metadata = { title: 'Supplier submissions' };
 
-export default queueListPage('applications');
+export default queueListPage('suppliers');

@@ -269,6 +269,45 @@ export function cmsSubmissionsRoutes(): Router {
     }),
   );
 
+  /**
+   * Who a submission can be assigned to.
+   *
+   * Deliberately available to anyone who can read a queue, rather than gated
+   * behind user administration: someone working the Procurement inbox needs to
+   * hand a supplier to a colleague without also being able to manage accounts.
+   * It returns names and ids only.
+   */
+  router.get(
+    '/assignees',
+    asyncHandler(async (req, res) => {
+      const queuePermissions = [
+        'applications.manage',
+        'suppliers.manage',
+        'properties.manage',
+        'partnerships.manage',
+        'contact.manage',
+      ] as const;
+
+      const held = queuePermissions.filter((permission) => req.ability.can(permission));
+      if (held.length === 0) {
+        throw new ApiError('FORBIDDEN', 'You do not work any submission queue.');
+      }
+
+      const users = await req.ctx.prisma.user.findMany({
+        where: {
+          status: 'ACTIVE',
+          deletedAt: null,
+          roles: { some: { role: { permissions: { some: { permission: { key: { in: [...held] } } } } } } },
+        },
+        orderBy: { name: 'asc' },
+        take: 100,
+        select: { id: true, name: true },
+      });
+
+      res.json({ assignees: users });
+    }),
+  );
+
   // ===========================================================================
   // Supplier, property, partnership and contact queues
   //
@@ -301,6 +340,7 @@ export function cmsSubmissionsRoutes(): Router {
       _count: { select: { attachments: true, notesLog: true } },
     },
     noteField: 'supplierSubmissionId',
+    attachmentModel: 'supplierAttachment',
   });
 
   registerQueue(router, {
@@ -328,6 +368,7 @@ export function cmsSubmissionsRoutes(): Router {
       _count: { select: { attachments: true, notesLog: true } },
     },
     noteField: 'propertySubmissionId',
+    attachmentModel: 'propertyAttachment',
   });
 
   registerQueue(router, {
@@ -392,6 +433,8 @@ interface QueueConfig {
   searchFields: string[];
   listSelect: Record<string, unknown>;
   noteField: 'supplierSubmissionId' | 'propertySubmissionId' | 'partnershipSubmissionId' | 'contactSubmissionId';
+  /** The join model holding this queue's uploaded files, where it has any. */
+  attachmentModel?: 'supplierAttachment' | 'propertyAttachment';
 }
 
 /**
@@ -535,6 +578,68 @@ function registerQueue(router: Router, config: QueueConfig): void {
       res.json({ submission: updated });
     }),
   );
+
+  if (config.attachmentModel) {
+    /**
+     * Download an attachment.
+     *
+     * Served through the API rather than from a public URL, because these files
+     * are personal data belonging to whoever submitted them. The request is
+     * permission-checked, never cached by an intermediary, and audited — a
+     * download of someone's documents is an event worth being able to account
+     * for later.
+     */
+    router.get(
+      `${config.path}/:id/files/:fileId`,
+      requirePermission(config.readPermission),
+      asyncHandler(async (req, res) => {
+        const attachments = req.ctx.prisma[config.attachmentModel!] as never as {
+          findFirst: (args: unknown) => Promise<{
+            id: string;
+            asset: { storageKey: string; originalName: string; mimeType: string };
+            submission: { reference: string; deletedAt: Date | null };
+          } | null>;
+        };
+
+        const attachment = await attachments.findFirst({
+          where: { id: param(req, 'fileId'), submissionId: param(req, 'id') },
+          include: {
+            asset: { select: { storageKey: true, originalName: true, mimeType: true } },
+            submission: { select: { reference: true, deletedAt: true } },
+          },
+        });
+        if (!attachment || attachment.submission.deletedAt) throw ApiError.notFound('File');
+
+        const { createStorageDriver } = await import('../services/storage');
+
+        let buffer: Buffer;
+        try {
+          buffer = await createStorageDriver(req.ctx.env).get(attachment.asset.storageKey);
+        } catch {
+          throw ApiError.notFound('File');
+        }
+
+        await new AuditService(req.ctx.prisma).record(
+          { id: req.principal!.id, email: req.principal!.email, ipAddress: clientIp(req) },
+          {
+            action: 'EXPORT',
+            entityType: config.model,
+            entityId: param(req, 'id'),
+            entityLabel: attachment.submission.reference,
+            summary: 'Downloaded an attachment',
+          },
+        );
+
+        res.setHeader('Content-Type', attachment.asset.mimeType);
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="${encodeURIComponent(attachment.asset.originalName)}"`,
+        );
+        res.setHeader('Cache-Control', 'private, no-store');
+        res.send(buffer);
+      }),
+    );
+  }
 
   router.post(
     `${config.path}/:id/notes`,

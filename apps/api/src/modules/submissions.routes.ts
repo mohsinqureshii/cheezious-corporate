@@ -41,11 +41,11 @@ const SPAM_MESSAGE = 'We could not accept this submission.';
  * response is identical to a generic validation failure.
  */
 function assertNotSpam(
-  input: { website?: string; elapsedMs?: number },
+  input: { contactFax?: string; elapsedMs?: number },
   req: import('express').Request,
   label: string,
 ): void {
-  if (input.website) {
+  if (input.contactFax) {
     req.ctx.logger.warn({ ip: clientIp(req), form: label }, 'submission rejected by honeypot');
     throw new ApiError('VALIDATION_ERROR', SPAM_MESSAGE);
   }

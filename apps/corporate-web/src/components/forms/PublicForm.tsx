@@ -262,8 +262,8 @@ export function PublicForm({ formKey, locale, fields, submitLabel, successMessag
       {/* Honeypot: off-screen rather than display:none, because some bots skip
           hidden fields. Excluded from the tab order and from assistive tech. */}
       <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
-        <label htmlFor={`${formId}-website-hp`}>Leave this field empty</label>
-        <input id={`${formId}-website-hp`} type="text" name="website_hp" tabIndex={-1} autoComplete="off" />
+        <label htmlFor={`${formId}-contact-fax`}>Leave this field empty</label>
+        <input id={`${formId}-contact-fax`} type="text" name="contactFax" tabIndex={-1} autoComplete="off" />
       </div>
 
       <div className="border-t border-ink-line pt-6">

@@ -302,7 +302,7 @@ export function careersRoutes(): Router {
 
       // Honeypot and timing checks. Both are silent: a bot learns nothing from
       // being told why it was refused.
-      if (body.website) {
+      if (body.contactFax) {
         logger.warn({ ip: clientIp(req) }, 'application rejected by honeypot');
         throw new ApiError('VALIDATION_ERROR', 'We could not accept this submission.');
       }

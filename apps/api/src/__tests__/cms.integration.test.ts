@@ -86,6 +86,8 @@ afterAll(async () => {
   await ctx.prisma.contentVersion.deleteMany({
     where: { entityType: { in: ['story', 'job'] }, data: { path: ['title'], string_starts_with: TEST_PREFIX } },
   });
+  await ctx.prisma.supplierSubmission.deleteMany({ where: { email: { startsWith: TEST_PREFIX } } });
+  await ctx.prisma.contactSubmission.deleteMany({ where: { email: { startsWith: TEST_PREFIX } } });
   await ctx.prisma.job.deleteMany({ where: { title: { startsWith: TEST_PREFIX } } });
   await ctx.prisma.story.deleteMany({ where: { title: { startsWith: TEST_PREFIX } } });
   await ctx.prisma.auditLog.deleteMany({ where: { actorEmail: { startsWith: TEST_PREFIX } } });
@@ -937,5 +939,89 @@ describe('media library', () => {
 
     // Either the route refuses the whole request or the brand flag specifically.
     expect([403]).toContain(response.status);
+  });
+});
+
+describe('public submission forms', () => {
+  const base = {
+    contactName: 'Integration Contact',
+    email: `${TEST_PREFIX}-supplier@example.test`,
+    phone: '0300 1234567',
+    consent: true,
+    elapsedMs: 9000,
+  };
+
+  it('accepts a supplier who gives their own website', async () => {
+    // The honeypot used to be called `website`, which is also a real field on
+    // this form — so a supplier filling it in truthfully was rejected as a bot.
+    const response = await request(app)
+      .post('/api/submit/suppliers')
+      .send({
+        ...base,
+        companyName: `${TEST_PREFIX} Dairy`,
+        website: 'https://example.com',
+        productsServices: 'Cheese and dairy',
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.reference).toMatch(/^SUP-/);
+
+    const stored = await ctx.prisma.supplierSubmission.findFirst({
+      where: { email: base.email },
+      select: { website: true },
+    });
+    expect(stored?.website).toBe('https://example.com');
+  });
+
+  it('rejects a filled honeypot without naming the field', async () => {
+    const response = await request(app)
+      .post('/api/submit/suppliers')
+      .send({
+        ...base,
+        email: `${TEST_PREFIX}-bot@example.test`,
+        companyName: `${TEST_PREFIX} Bot`,
+        productsServices: 'Spam',
+        contactFax: '+1 555 0100',
+      });
+
+    expect(response.status).toBe(422);
+    // Naming the honeypot in the error tells whoever is automating the form
+    // exactly which field to leave alone next time.
+    expect(JSON.stringify(response.body)).not.toContain('contactFax');
+  });
+
+  it('rejects a submission that arrives faster than a person could type it', async () => {
+    const response = await request(app)
+      .post('/api/submit/suppliers')
+      .send({
+        ...base,
+        email: `${TEST_PREFIX}-fast@example.test`,
+        companyName: `${TEST_PREFIX} Fast`,
+        productsServices: 'Spam',
+        elapsedMs: 40,
+      });
+
+    expect(response.status).toBe(422);
+  });
+
+  it('does not expose a submission through any public route', async () => {
+    const created = await request(app)
+      .post('/api/submit/contact')
+      .send({
+        name: `${TEST_PREFIX} Sender`,
+        email: `${TEST_PREFIX}-contact@example.test`,
+        subject: 'Integration test',
+        message: 'Nothing here should ever be public.',
+        consent: true,
+        elapsedMs: 9000,
+      });
+    expect(created.status).toBe(201);
+
+    const reference = created.body.reference as string;
+
+    // Anonymous access to the queue is refused, and the reference is not a key
+    // to anything.
+    expect((await request(app).get('/api/cms/submissions/contact')).status).toBe(401);
+    expect((await request(app).get(`/api/cms/submissions/contact/${reference}`)).status).toBe(401);
   });
 });

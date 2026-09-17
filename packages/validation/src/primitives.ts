@@ -105,9 +105,24 @@ export const consent = z
   .literal(true, { errorMap: () => ({ message: 'You must agree before submitting this form' }) });
 
 /** Anti-spam fields present on every public form. */
+/**
+ * Bot defences shared by every public form.
+ *
+ * The honeypot is called `contactFax` rather than something like `website`
+ * precisely because several of these forms collect a real website: a honeypot
+ * that shares a name with a genuine field does not catch bots, it rejects
+ * suppliers. It has to be plausible enough for an automated filler to complete
+ * and a name no real form here will ever use.
+ */
 export const spamGuard = z.object({
-  /** Honeypot: must stay empty. Bots fill every field they find. */
-  website: z.string().max(0, 'Submission rejected').optional().or(z.literal('')),
+  /**
+   * Honeypot: must stay empty. Bots fill every field they find.
+   *
+   * Accepted by the schema and rejected afterwards, deliberately. A field-level
+   * validation error would come back naming `contactFax`, which tells whoever is
+   * automating the form exactly which field to leave alone next time.
+   */
+  contactFax: z.string().max(200).optional(),
   /** Milliseconds the form was on screen. Instant submissions are automated. */
   elapsedMs: z.coerce.number().int().min(0).optional(),
 });

@@ -320,8 +320,8 @@ export function JobApplicationForm({
       {/* Honeypot: positioned off-screen rather than display:none, and excluded
           from the tab order and the accessibility tree. */}
       <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
-        <label htmlFor={`${formId}-website`}>Leave this empty</label>
-        <input id={`${formId}-website`} name="website" type="text" tabIndex={-1} autoComplete="off" />
+        <label htmlFor={`${formId}-contact-fax`}>Leave this empty</label>
+        <input id={`${formId}-contact-fax`} name="contactFax" type="text" tabIndex={-1} autoComplete="off" />
       </div>
 
       <div className="border-t border-ink-line pt-6">

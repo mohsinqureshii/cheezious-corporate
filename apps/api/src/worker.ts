@@ -4,6 +4,7 @@ import { createLogger } from '@cheezious/logger';
 import { extractTextFromBlocks } from '@cheezious/page-builder';
 import { sanitizeHtml } from '@cheezious/validation';
 
+import { RevalidationService } from './services/revalidation';
 import { SearchService } from './services/search';
 
 /**
@@ -302,6 +303,7 @@ async function publishScheduled(job: Job): Promise<void> {
   });
 
   await syncSearch(job.entityType, job.entityId, 'PUBLISHED');
+  await revalidateFor(job.entityType, record);
 
   // The author asked for this to happen; they should not have to check.
   if (record.createdById) {
@@ -333,6 +335,7 @@ async function unpublishEntity(job: Job): Promise<void> {
   });
 
   await syncSearch(job.entityType, job.entityId, 'UNPUBLISHED');
+  await revalidateFor(job.entityType, record);
 
   await prisma.workflowEvent.create({
     data: {
@@ -372,6 +375,7 @@ async function unpublishExpiredContent(): Promise<void> {
       data: { status: 'UNPUBLISHED', publishedAt: null, unpublishAt: null },
     });
     await syncSearch('page', page.id, 'UNPUBLISHED');
+    await revalidateFor('page', page as unknown as Record<string, unknown>);
     await prisma.auditLog.create({
       data: {
         action: 'UNPUBLISH',
@@ -447,6 +451,25 @@ async function syncSearch(entityType: string, entityId: string, status: string):
     // A search-index failure must never undo a publish.
     logger.warn({ err: error, entityType, entityId }, 'search index sync failed');
   }
+}
+
+/**
+ * Clear the public site's cache for something the worker just published.
+ *
+ * The worker runs outside a request, so nothing else will do it: without this a
+ * scheduled publish lands in the database at the promised minute and appears on
+ * the site up to a revalidation window later, which defeats the point of
+ * scheduling it.
+ */
+async function revalidateFor(entityType: string, record: Record<string, unknown>): Promise<void> {
+  const revalidation = new RevalidationService({ env, prisma, logger } as never);
+
+  const target =
+    entityType === 'page'
+      ? revalidation.page((record.locale as 'en' | 'ur') ?? 'en', String(record.path ?? '/'))
+      : revalidation.collection(entityType === 'news' ? 'news' : `${entityType}s`);
+
+  await revalidation.revalidate(target);
 }
 
 async function reindexAll(): Promise<void> {

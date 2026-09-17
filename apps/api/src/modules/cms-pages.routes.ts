@@ -22,6 +22,7 @@ import {
   requirePermission,
 } from '../middleware';
 import { PageService, PAGE_INCLUDE } from '../services/pages';
+import { RevalidationService } from '../services/revalidation';
 import { SearchService } from '../services/search';
 import { VersioningService } from '../services/versioning';
 import { WorkflowService } from '../services/workflow';
@@ -427,6 +428,16 @@ export function cmsPagesRoutes(): Router {
         },
       );
 
+      // A rename changes two addresses: the new one, and the old one that now
+      // has to serve a redirect rather than a cached copy of the page that used
+      // to live there.
+      if (updated.status === 'PUBLISHED') {
+        const revalidation = new RevalidationService(req.ctx);
+        await revalidation.revalidate(
+          revalidation.page(updated.locale, updated.path, existing.path),
+        );
+      }
+
       res.json({ page: { ...updated, hasUnpublishedChanges } });
     }),
   );
@@ -524,9 +535,13 @@ export function cmsPagesRoutes(): Router {
         return result;
       });
 
-      // Search indexing follows the published state. Kept outside the
-      // transaction: a search-index failure must not roll back a publish.
+      // Search indexing and cache invalidation both follow the published state,
+      // and both are kept outside the transaction: neither a search-index
+      // failure nor an unreachable public site may roll back a publish.
       await syncSearchIndex(req.ctx.prisma, page, outcome.status);
+
+      const revalidation = new RevalidationService(req.ctx);
+      await revalidation.revalidate(revalidation.page(page.locale, page.path));
 
       res.json({ status: outcome.status, scheduledFor: outcome.scheduledFor ?? null });
     }),

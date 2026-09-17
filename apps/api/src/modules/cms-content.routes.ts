@@ -21,6 +21,7 @@ import {
   requireAuth,
   requirePermission,
 } from '../middleware';
+import { RevalidationService } from '../services/revalidation';
 import { VersioningService } from '../services/versioning';
 import { WorkflowService } from '../services/workflow';
 
@@ -271,6 +272,13 @@ function registerCollection(router: Router, config: CollectionConfig): void {
         },
       );
 
+      // A reference collection publishes with a flag rather than a transition,
+      // so this is the only point at which its change reaches the public site.
+      if (config.publishFlag) {
+        const revalidation = new RevalidationService(req.ctx);
+        await revalidation.revalidate(revalidation.collection(config.path));
+      }
+
       res.json({ item: updated });
     }),
   );
@@ -414,6 +422,12 @@ function registerCollection(router: Router, config: CollectionConfig): void {
 
         return result;
       });
+
+      // Kept outside the transaction: an unreachable public site must not roll
+      // back a publish. Without it the change appears when the revalidation
+      // window elapses instead of immediately.
+      const revalidation = new RevalidationService(req.ctx);
+      await revalidation.revalidate(revalidation.collection(config.path));
 
       res.json({ status: outcome.status, scheduledFor: outcome.scheduledFor ?? null });
     }),

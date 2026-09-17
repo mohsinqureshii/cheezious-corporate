@@ -124,3 +124,19 @@ describe('ability', () => {
     expect(() => ability.assert('pages.read')).toThrow(/Authentication required/);
   });
 });
+
+describe('republishing', () => {
+  it('allows publishing edits to an already-published page', () => {
+    // The public site serves the published snapshot, so re-publishing is the
+    // only way an editor's changes to a live page reach production.
+    expect(canTransition('PUBLISHED', 'PUBLISH')).toBe(true);
+    expect(nextStatus('PUBLISHED', 'PUBLISH')).toBe('PUBLISHED');
+    expect(requiredPermission('pages', 'PUBLISH', 'PUBLISHED')).toBe('pages.publish');
+  });
+
+  it('still requires the publish permission to republish', () => {
+    const author = new Set(permissionsForRole('AUTHOR'));
+    const actions = availableTransitions('PUBLISHED', 'pages', (p) => author.has(p)).map((t) => t.action);
+    expect(actions).not.toContain('PUBLISH');
+  });
+});

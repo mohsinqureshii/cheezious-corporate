@@ -166,6 +166,21 @@ export function requireInternalKey() {
   };
 }
 
+/**
+ * Read a required route parameter.
+ *
+ * Express types params as possibly undefined. Rather than casting, a missing
+ * parameter is treated as a routing mistake and surfaces as a clean 404 instead
+ * of an opaque database error further down.
+ */
+export function param(req: Request, name: string): string {
+  const value = req.params[name];
+  if (typeof value !== 'string' || value.length === 0) {
+    throw new ApiError('NOT_FOUND', 'That address is not valid.');
+  }
+  return value;
+}
+
 /** Client IP, honouring a single trusted proxy hop. */
 export function clientIp(req: Request): string {
   const forwarded = req.header('x-forwarded-for');

@@ -14,6 +14,10 @@ import {
 } from './middleware';
 import { authRoutes } from './modules/auth.routes';
 import { careersRoutes } from './modules/careers.routes';
+import { cmsDashboardRoutes } from './modules/cms-dashboard.routes';
+import { cmsPagesRoutes } from './modules/cms-pages.routes';
+import { cmsSubmissionsRoutes } from './modules/cms-submissions.routes';
+import { cmsSystemRoutes } from './modules/cms-system.routes';
 import { mediaRoutes } from './modules/media.routes';
 import { publicRoutes } from './modules/public.routes';
 import { publicContentRoutes } from './modules/public-content.routes';
@@ -108,6 +112,12 @@ export function createApp(ctx: AppContext): Express {
   app.use('/api/public', publicContentRoutes());
   app.use('/api/public', careersRoutes());
   app.use('/api/submit', submissionsRoutes());
+
+  // Management API. Every route beneath requires a session and a permission.
+  app.use('/api/cms/dashboard', cmsDashboardRoutes());
+  app.use('/api/cms/pages', cmsPagesRoutes());
+  app.use('/api/cms/submissions', cmsSubmissionsRoutes());
+  app.use('/api/cms/system', cmsSystemRoutes());
 
   // File delivery for the local storage driver. Mounted outside /api because
   // these are assets, not API responses, and are cached very differently.

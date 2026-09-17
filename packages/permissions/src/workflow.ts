@@ -72,7 +72,11 @@ export const TRANSITIONS: readonly TransitionRule[] = [
   },
   {
     action: 'PUBLISH',
-    from: ['APPROVED', 'SCHEDULED', 'UNPUBLISHED', 'DRAFT', 'IN_REVIEW', 'CHANGES_REQUESTED'],
+    // PUBLISHED is included deliberately: publishing edits to an already-live
+    // page is the single most common action in a CMS. Because the public site
+    // serves the published snapshot rather than the working copy, re-publishing
+    // is how an editor's changes reach production at all.
+    from: ['APPROVED', 'SCHEDULED', 'UNPUBLISHED', 'DRAFT', 'IN_REVIEW', 'CHANGES_REQUESTED', 'PUBLISHED'],
     to: 'PUBLISHED',
     requires: 'publish',
     label: 'Publish',

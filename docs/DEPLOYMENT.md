@@ -48,6 +48,23 @@ fails while prerendering error pages, with an error about `<Html>` outside
 mistake a corporate site can make is letting a staging copy get indexed and
 compete with production, so this is set first and removed last.
 
+## PostgreSQL
+
+Any PostgreSQL 14 or newer. The migrations run
+`CREATE EXTENSION IF NOT EXISTS pg_trgm` and `unaccent`, which back the
+full-text search, so the role in `DIRECT_DATABASE_URL` must be allowed to create
+extensions. On a managed provider that gives you an owner or superuser role —
+Railway, Neon, Supabase, RDS — this is already true. On one that does not, ask
+for the two extensions to be installed before the first migration.
+
+`DIRECT_DATABASE_URL` matters only when `DATABASE_URL` points at a connection
+pooler: Prisma takes an advisory lock while migrating and a pooler can hand the
+unlock to a different connection. Without a pooler, set both to the same value.
+
+Redis is **not** required. `REDIS_URL` is accepted and validated, and nothing
+reads it yet — the rate limiter's Redis store is not implemented. Provisioning
+Redis today buys nothing; see the status document.
+
 ## Releasing
 
 ```bash
@@ -56,7 +73,18 @@ pnpm db:migrate:deploy     # migrations first; they are additive
 pnpm build                 # packages, then applications
 ```
 
-Then restart the API, the worker, the public site and the CMS.
+Then restart the API, the worker, the public site and the CMS. Their production
+entry points are:
+
+| Process     | Start command                                  |
+| ----------- | ---------------------------------------------- |
+| API         | `pnpm --filter @cheezious/api start`           |
+| Worker      | `pnpm --filter @cheezious/api worker:start`    |
+| Public site | `pnpm --filter @cheezious/corporate-web start` |
+| CMS         | `pnpm --filter @cheezious/cms start`           |
+
+The `dev` and `worker` scripts are for development only: they run TypeScript
+through `tsx` and read the root `.env`, neither of which belongs in a deploy.
 
 Migrations run before the new code, and are additive, so the old code keeps
 working against the new schema for the length of the deploy. A migration that

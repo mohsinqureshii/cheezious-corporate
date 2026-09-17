@@ -45,7 +45,10 @@ export async function resolveImages(ids: string[]): Promise<Map<string, MediaIma
  * This is why links survive renames: the block holds a page id, and the path is
  * looked up at render time from whatever that page's path is *now*.
  */
-export async function resolvePageReferences(page: CorporatePage, locale: Locale): Promise<Map<string, string>> {
+export async function resolvePageReferences(
+  page: CorporatePage,
+  locale: Locale,
+): Promise<Map<string, string>> {
   const ids = new Set<string>();
   for (const block of page.blocks) collectPageReferences(block.data, ids);
   if (ids.size === 0) return new Map();

@@ -95,7 +95,8 @@ export function MobileNavigation({
       >
         <div className="flex h-[var(--header-height)] shrink-0 items-center justify-between border-b border-ink-line px-gutter">
           <span className="text-heading-sm font-bold text-ink">
-            Cheezious <span className="text-eyebrow uppercase text-ink-muted">{labels.corporate}</span>
+            Cheezious{' '}
+            <span className="text-eyebrow uppercase text-ink-muted">{labels.corporate}</span>
           </span>
           <button
             type="button"
@@ -104,12 +105,20 @@ export function MobileNavigation({
             aria-label={labels.closeMenu}
           >
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-              <path d="M5 5l12 12M17 5L5 17" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              <path
+                d="M5 5l12 12M17 5L5 17"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
             </svg>
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto overscroll-contain px-gutter py-6" aria-label="Primary">
+        <nav
+          className="flex-1 overflow-y-auto overscroll-contain px-gutter py-6"
+          aria-label="Primary"
+        >
           <ul className="divide-y divide-ink-line">
             {primary.map((section) => {
               const isExpanded = expanded === section.id;
@@ -145,9 +154,17 @@ export function MobileNavigation({
                           viewBox="0 0 14 8"
                           fill="none"
                           aria-hidden="true"
-                          className={['transition-transform duration-quick', isExpanded ? 'rotate-180' : ''].join(' ')}
+                          className={[
+                            'transition-transform duration-quick',
+                            isExpanded ? 'rotate-180' : '',
+                          ].join(' ')}
                         >
-                          <path d="M1 1l6 6 6-6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                          <path
+                            d="M1 1l6 6 6-6"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                            strokeLinecap="round"
+                          />
                         </svg>
                       </button>
                     ) : null}
@@ -163,26 +180,30 @@ export function MobileNavigation({
                             </p>
                           ) : null}
                           <ul className="space-y-1">
-                            {(column.children.length > 0 ? column.children : [column]).map((item) => {
-                              const href = item.page
-                                ? `/${locale}${item.page.path}`
-                                : (item.externalUrl ?? '#');
-                              return (
-                                <li key={item.id}>
-                                  <Link
-                                    href={href}
-                                    className={[
-                                      // 44px minimum touch target.
-                                      'flex min-h-[44px] items-center text-body-sm no-underline',
-                                      item.isCallToAction ? 'font-semibold text-ink' : 'text-ink-soft',
-                                    ].join(' ')}
-                                    onClick={onClose}
-                                  >
-                                    {item.label}
-                                  </Link>
-                                </li>
-                              );
-                            })}
+                            {(column.children.length > 0 ? column.children : [column]).map(
+                              (item) => {
+                                const href = item.page
+                                  ? `/${locale}${item.page.path}`
+                                  : (item.externalUrl ?? '#');
+                                return (
+                                  <li key={item.id}>
+                                    <Link
+                                      href={href}
+                                      className={[
+                                        // 44px minimum touch target.
+                                        'flex min-h-[44px] items-center text-body-sm no-underline',
+                                        item.isCallToAction
+                                          ? 'font-semibold text-ink'
+                                          : 'text-ink-soft',
+                                      ].join(' ')}
+                                      onClick={onClose}
+                                    >
+                                      {item.label}
+                                    </Link>
+                                  </li>
+                                );
+                              },
+                            )}
                           </ul>
                         </div>
                       ))}
@@ -204,7 +225,12 @@ export function MobileNavigation({
             >
               <svg width="16" height="16" viewBox="0 0 18 18" fill="none" aria-hidden="true">
                 <circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M12.5 12.5L16 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path
+                  d="M12.5 12.5L16 16"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
               </svg>
               {labels.search}
             </Link>
@@ -231,7 +257,13 @@ export function MobileNavigation({
           >
             {labels.orderNow}
             <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
-              <path d="M2 9L9 2M9 2H4M9 2v5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M2 9L9 2M9 2H4M9 2v5"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
             <span className="sr-only"> (opens the Cheezious ordering site in a new tab)</span>
           </a>

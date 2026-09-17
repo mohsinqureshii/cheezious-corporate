@@ -25,7 +25,8 @@ export const revalidate = 3600;
 /** URL builders per collection, so a path is written once. */
 const PATHS = {
   stories: (locale: string, slug: string) => `/${locale}/company/newsroom/stories/${slug}`,
-  pressReleases: (locale: string, slug: string) => `/${locale}/company/newsroom/press-releases/${slug}`,
+  pressReleases: (locale: string, slug: string) =>
+    `/${locale}/company/newsroom/press-releases/${slug}`,
   people: (locale: string, slug: string) => `/${locale}/company/leadership/${slug}`,
   policies: (locale: string, slug: string) => `/${locale}/company/governance/policies/${slug}`,
   jobs: (locale: string, slug: string) => `/${locale}/careers/jobs/${slug}`,
@@ -71,12 +72,11 @@ export async function GET(): Promise<Response> {
 
   for (const [locale, payload] of byLocale) {
     for (const page of payload.pages) {
-      const defaults =
-        (page.path === '/company'
-          ? SITEMAP_DEFAULTS.home
-          : page.type === 'SECTION_INDEX' || page.type === 'LANDING'
-            ? SITEMAP_DEFAULTS.sectionIndex
-            : SITEMAP_DEFAULTS.standard) ?? { priority: 0.5, changeFrequency: 'monthly' as const };
+      const defaults = (page.path === '/company'
+        ? SITEMAP_DEFAULTS.home
+        : page.type === 'SECTION_INDEX' || page.type === 'LANDING'
+          ? SITEMAP_DEFAULTS.sectionIndex
+          : SITEMAP_DEFAULTS.standard) ?? { priority: 0.5, changeFrequency: 'monthly' as const };
 
       entries.push({
         path: `/${locale}${page.path}`,
@@ -103,7 +103,10 @@ export async function GET(): Promise<Response> {
 
     for (const [locale, payload] of byLocale) {
       for (const record of payload[collection] as SitemapEntryRecord[]) {
-        const defaults = DEFAULTS[collection] ?? { priority: 0.5, changeFrequency: 'monthly' as const };
+        const defaults = DEFAULTS[collection] ?? {
+          priority: 0.5,
+          changeFrequency: 'monthly' as const,
+        };
 
         entries.push({
           path: PATHS[collection](locale, record.slug),

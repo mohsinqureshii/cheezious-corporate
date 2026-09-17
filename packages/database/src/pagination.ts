@@ -43,6 +43,11 @@ export function buildPageMeta(total: number, page: number, pageSize: number): Pa
   };
 }
 
-export function paginate<T>(items: T[], total: number, page: number, pageSize: number): Paginated<T> {
+export function paginate<T>(
+  items: T[],
+  total: number,
+  page: number,
+  pageSize: number,
+): Paginated<T> {
   return { items, meta: buildPageMeta(total, page, pageSize) };
 }

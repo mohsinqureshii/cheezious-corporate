@@ -1,10 +1,18 @@
-import { Prisma } from '@cheezious/database';
+import { type Prisma } from '@cheezious/database';
+import type { Permission } from '@cheezious/permissions';
 import { ApiError } from '@cheezious/validation';
 import { Router } from 'express';
 import { z } from 'zod';
 
 import { AuditService } from '../lib/audit';
-import { asyncHandler, clientIp, param, rateLimit, requireAuth, requirePermission } from '../middleware';
+import {
+  asyncHandler,
+  clientIp,
+  param,
+  rateLimit,
+  requireAuth,
+  requirePermission,
+} from '../middleware';
 
 /**
  * Submission queues.
@@ -68,7 +76,12 @@ export function cmsSubmissionsRoutes(): Router {
         ...(query.status ? { status: { in: query.status.split(',') as never } } : {}),
         ...(query.assigneeId ? { assigneeId: query.assigneeId } : {}),
         ...(query.from || query.to
-          ? { createdAt: { ...(query.from ? { gte: query.from } : {}), ...(query.to ? { lte: query.to } : {}) } }
+          ? {
+              createdAt: {
+                ...(query.from ? { gte: query.from } : {}),
+                ...(query.to ? { lte: query.to } : {}),
+              },
+            }
           : {}),
         ...(query.q
           ? {
@@ -114,7 +127,12 @@ export function cmsSubmissionsRoutes(): Router {
 
       res.json({
         items,
-        meta: { page: query.page, pageSize: query.pageSize, total, totalPages: Math.max(1, Math.ceil(total / query.pageSize)) },
+        meta: {
+          page: query.page,
+          pageSize: query.pageSize,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / query.pageSize)),
+        },
         facets: { statuses: statusCounts.map((row) => ({ value: row.status, count: row._count })) },
       });
     }),
@@ -127,12 +145,27 @@ export function cmsSubmissionsRoutes(): Router {
       const application = await req.ctx.prisma.jobApplication.findFirst({
         where: { id: param(req, 'id'), deletedAt: null },
         include: {
-          job: { select: { id: true, title: true, slug: true, department: { select: { name: true } } } },
+          job: {
+            select: { id: true, title: true, slug: true, department: { select: { name: true } } },
+          },
           assignee: { select: { id: true, name: true, email: true } },
           files: {
-            include: { asset: { select: { id: true, originalName: true, mimeType: true, byteSize: true, storageKey: true } } },
+            include: {
+              asset: {
+                select: {
+                  id: true,
+                  originalName: true,
+                  mimeType: true,
+                  byteSize: true,
+                  storageKey: true,
+                },
+              },
+            },
           },
-          notes: { orderBy: { createdAt: 'desc' }, include: { author: { select: { id: true, name: true } } } },
+          notes: {
+            orderBy: { createdAt: 'desc' },
+            include: { author: { select: { id: true, name: true } } },
+          },
         },
       });
       if (!application) throw ApiError.notFound('Application');
@@ -190,7 +223,10 @@ export function cmsSubmissionsRoutes(): Router {
       );
 
       res.setHeader('Content-Type', file.asset.mimeType);
-      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.asset.originalName)}"`);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${encodeURIComponent(file.asset.originalName)}"`,
+      );
       // Personal data is never cached by an intermediary.
       res.setHeader('Cache-Control', 'private, no-store');
       res.send(buffer);
@@ -297,7 +333,9 @@ export function cmsSubmissionsRoutes(): Router {
         where: {
           status: 'ACTIVE',
           deletedAt: null,
-          roles: { some: { role: { permissions: { some: { permission: { key: { in: [...held] } } } } } } },
+          roles: {
+            some: { role: { permissions: { some: { permission: { key: { in: [...held] } } } } } },
+          },
         },
         orderBy: { name: 'asc' },
         take: 100,
@@ -424,15 +462,20 @@ export function cmsSubmissionsRoutes(): Router {
 
 interface QueueConfig {
   path: string;
-  model: 'supplierSubmission' | 'propertySubmission' | 'partnershipSubmission' | 'contactSubmission';
-  readPermission: import('@cheezious/permissions').Permission;
-  managePermission: import('@cheezious/permissions').Permission;
-  exportPermission?: import('@cheezious/permissions').Permission;
+  model:
+    'supplierSubmission' | 'propertySubmission' | 'partnershipSubmission' | 'contactSubmission';
+  readPermission: Permission;
+  managePermission: Permission;
+  exportPermission?: Permission;
   label: string;
   statuses: string[];
   searchFields: string[];
   listSelect: Record<string, unknown>;
-  noteField: 'supplierSubmissionId' | 'propertySubmissionId' | 'partnershipSubmissionId' | 'contactSubmissionId';
+  noteField:
+    | 'supplierSubmissionId'
+    | 'propertySubmissionId'
+    | 'partnershipSubmissionId'
+    | 'contactSubmissionId';
   /** The join model holding this queue's uploaded files, where it has any. */
   attachmentModel?: 'supplierAttachment' | 'propertyAttachment';
 }
@@ -464,7 +507,12 @@ function registerQueue(router: Router, config: QueueConfig): void {
         ...(query.status ? { status: { in: query.status.split(',') } } : {}),
         ...(query.assigneeId ? { assigneeId: query.assigneeId } : {}),
         ...(query.from || query.to
-          ? { createdAt: { ...(query.from ? { gte: query.from } : {}), ...(query.to ? { lte: query.to } : {}) } }
+          ? {
+              createdAt: {
+                ...(query.from ? { gte: query.from } : {}),
+                ...(query.to ? { lte: query.to } : {}),
+              },
+            }
           : {}),
         ...(query.q
           ? {
@@ -491,7 +539,12 @@ function registerQueue(router: Router, config: QueueConfig): void {
 
       res.json({
         items,
-        meta: { page: query.page, pageSize: query.pageSize, total, totalPages: Math.max(1, Math.ceil(total / query.pageSize)) },
+        meta: {
+          page: query.page,
+          pageSize: query.pageSize,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / query.pageSize)),
+        },
         facets: { statuses: statusCounts.map((row) => ({ value: row.status, count: row._count })) },
       });
     }),
@@ -509,12 +562,17 @@ function registerQueue(router: Router, config: QueueConfig): void {
         where: { id: param(req, 'id'), deletedAt: null },
         include: {
           assignee: { select: { id: true, name: true, email: true } },
-          notesLog: { orderBy: { createdAt: 'desc' }, include: { author: { select: { id: true, name: true } } } },
+          notesLog: {
+            orderBy: { createdAt: 'desc' },
+            include: { author: { select: { id: true, name: true } } },
+          },
           ...(config.model === 'supplierSubmission' || config.model === 'propertySubmission'
             ? {
                 attachments: {
                   include: {
-                    asset: { select: { id: true, originalName: true, mimeType: true, byteSize: true } },
+                    asset: {
+                      select: { id: true, originalName: true, mimeType: true, byteSize: true },
+                    },
                   },
                 },
               }
@@ -540,7 +598,9 @@ function registerQueue(router: Router, config: QueueConfig): void {
         .parse(req.body);
 
       const model = req.ctx.prisma[config.model] as never as {
-        findFirst: (args: unknown) => Promise<{ id: string; reference: string; status: string } | null>;
+        findFirst: (
+          args: unknown,
+        ) => Promise<{ id: string; reference: string; status: string } | null>;
         update: (args: unknown) => Promise<Record<string, unknown>>;
       };
 
@@ -691,7 +751,10 @@ function registerQueue(router: Router, config: QueueConfig): void {
         );
 
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename="${config.model}-${Date.now()}.csv"`);
+        res.setHeader(
+          'Content-Disposition',
+          `attachment; filename="${config.model}-${Date.now()}.csv"`,
+        );
         res.setHeader('Cache-Control', 'private, no-store');
         res.send(toCsv(rows));
       }),
@@ -732,5 +795,8 @@ function toCsv(rows: Array<Record<string, unknown>>): string {
     lines.push(headers.map((header) => escape(flatten(row[header]))).join(','));
   }
 
-  return `﻿${lines.join('\r\n')}`;
+  // A UTF-8 byte-order mark, written as an escape so it is visible in
+  // review. Without it Excel reads a UTF-8 CSV as the local code page and
+  // mangles every Urdu name in the export.
+  return `\uFEFF${lines.join('\r\n')}`;
 }

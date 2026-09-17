@@ -5,7 +5,14 @@ import type { MediaImage } from '@/lib/content';
 import { PublicForm } from '../forms/PublicForm';
 
 import type { BlockContext } from './heroes';
-import { ActionLink, BlockImage, resolveLink, Section, SectionHeader, type Tone } from './primitives';
+import {
+  ActionLink,
+  BlockImage,
+  resolveLink,
+  Section,
+  SectionHeader,
+  type Tone,
+} from './primitives';
 
 /** Call-to-action blocks. Each routes to a real business process. */
 
@@ -28,7 +35,11 @@ export function CTAEditorial({ data, context }: { data: BlockData; context: Bloc
   const isDark = tone === 'dark';
 
   return (
-    <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width={(data.width as never) ?? 'standard'}>
+    <Section
+      tone={tone}
+      spacing={(data.spacing as never) ?? 'standard'}
+      width={(data.width as never) ?? 'standard'}
+    >
       <div className="grid items-center gap-x-gutter gap-y-10 lg:grid-cols-12">
         <div className={media ? 'lg:col-span-6' : 'lg:col-span-8'}>
           {data.eyebrow ? (
@@ -42,7 +53,12 @@ export function CTAEditorial({ data, context }: { data: BlockData; context: Bloc
             </h2>
           ) : null}
           {data.body ? (
-            <p className={['mt-5 max-w-prose text-body-lg', isDark ? 'text-paper/75' : 'text-ink-soft'].join(' ')}>
+            <p
+              className={[
+                'mt-5 max-w-prose text-body-lg',
+                isDark ? 'text-paper/75' : 'text-ink-soft',
+              ].join(' ')}
+            >
               {String(data.body)}
             </p>
           ) : null}
@@ -105,7 +121,9 @@ export function CTABand({ data, context }: { data: BlockData; context: BlockCont
         <div className="flex shrink-0 flex-wrap gap-4">
           {/* On the yellow band the button inverts to ink for contrast. */}
           <ActionLink link={primary} tone={isAccent ? 'light' : tone} />
-          {secondary ? <ActionLink link={secondary} variant="secondary" tone={isAccent ? 'light' : tone} /> : null}
+          {secondary ? (
+            <ActionLink link={secondary} variant="secondary" tone={isAccent ? 'light' : tone} />
+          ) : null}
         </div>
       </div>
     </Section>
@@ -125,8 +143,17 @@ export function ContactDirectory({ data, context }: { data: BlockData; context: 
   if (entries.length === 0) return null;
 
   return (
-    <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width={(data.width as never) ?? 'standard'}>
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} intro={data.intro as string} tone={tone} />
+    <Section
+      tone={tone}
+      spacing={(data.spacing as never) ?? 'standard'}
+      width={(data.width as never) ?? 'standard'}
+    >
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+      />
       <ul className="grid gap-x-gutter gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
         {entries.map((entry, index) => {
           const link = resolveLink(entry.link as never, context.locale, context.pathById);
@@ -152,7 +179,10 @@ export function ContactDirectory({ data, context }: { data: BlockData; context: 
                 ) : null}
                 {entry.phone ? (
                   <p>
-                    <a href={`tel:${String(entry.phone).replace(/\s/g, '')}`} className="text-body-sm text-ink-soft">
+                    <a
+                      href={`tel:${String(entry.phone).replace(/\s/g, '')}`}
+                      className="text-body-sm text-ink-soft"
+                    >
                       {String(entry.phone)}
                     </a>
                   </p>
@@ -165,8 +195,21 @@ export function ContactDirectory({ data, context }: { data: BlockData; context: 
                                  transition-colors duration-quick hover:text-brand-deep"
                     >
                       {link.label}
-                      <svg width="12" height="9" viewBox="0 0 12 9" fill="none" aria-hidden="true" className="rtl:rotate-180">
-                        <path d="M7.5 1L11 4.5 7.5 8M11 4.5H1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                      <svg
+                        width="12"
+                        height="9"
+                        viewBox="0 0 12 9"
+                        fill="none"
+                        aria-hidden="true"
+                        className="rtl:rotate-180"
+                      >
+                        <path
+                          d="M7.5 1L11 4.5 7.5 8M11 4.5H1"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     </Link>
                   </p>
@@ -187,7 +230,11 @@ export function FormBlock({ data, context }: { data: BlockData; context: BlockCo
   if (!formKey) return null;
 
   return (
-    <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width={(data.width as never) ?? 'narrow'}>
+    <Section
+      tone={tone}
+      spacing={(data.spacing as never) ?? 'standard'}
+      width={(data.width as never) ?? 'narrow'}
+    >
       <SectionHeader
         eyebrow={data.eyebrow as string}
         heading={(data.heading as string) ?? (data.successHeading as string)}

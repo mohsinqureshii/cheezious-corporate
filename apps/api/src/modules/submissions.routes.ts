@@ -1,5 +1,5 @@
 import { generateReference, hashIp } from '@cheezious/auth';
-import type { Prisma } from '@cheezious/database';
+import type { PrismaClient, Prisma } from '@cheezious/database';
 import {
   ApiError,
   consent,
@@ -13,6 +13,7 @@ import {
   spamGuard,
   validateUpload,
 } from '@cheezious/validation';
+import type { Request } from 'express';
 import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
@@ -42,7 +43,7 @@ const SPAM_MESSAGE = 'We could not accept this submission.';
  */
 function assertNotSpam(
   input: { contactFax?: string; elapsedMs?: number },
-  req: import('express').Request,
+  req: Request,
   label: string,
 ): void {
   if (input.contactFax) {
@@ -61,7 +62,8 @@ function scoreSpam(text: string): number {
   const linkCount = (text.match(/https?:\/\//gi) ?? []).length;
   if (linkCount > 3) score += 0.4;
   if (linkCount > 8) score += 0.3;
-  if (/\b(viagra|casino|crypto airdrop|seo services|guest post|backlink)\b/i.test(text)) score += 0.5;
+  if (/\b(viagra|casino|crypto airdrop|seo services|guest post|backlink)\b/i.test(text))
+    score += 0.5;
   if (text.length > 40 && text === text.toUpperCase()) score += 0.2;
   if (/(.)\1{15,}/.test(text)) score += 0.2;
   return Math.min(1, score);
@@ -74,7 +76,8 @@ const CONSENT_TEXT = {
     'I consent to Cheezious storing and processing this information to assess the proposed location.',
   partnership:
     'I consent to Cheezious storing and processing this information to assess a potential partnership.',
-  contact: 'I consent to Cheezious storing and processing this information to respond to my enquiry.',
+  contact:
+    'I consent to Cheezious storing and processing this information to respond to my enquiry.',
 } as const;
 
 const RETENTION_DAYS = { supplier: 730, property: 730, partnership: 365, contact: 365 };
@@ -189,11 +192,17 @@ export function submissionsRoutes(): Router {
           select: { id: true },
         });
         if (!exists) {
-          throw ApiError.validation([{ field: 'categoryId', message: 'Choose a category from the list.' }]);
+          throw ApiError.validation([
+            { field: 'categoryId', message: 'Choose a category from the list.' },
+          ]);
         }
       }
 
-      const files = await storeAttachments(req, STORAGE_PREFIX.supplierAttachments, env.MAX_APPLICATION_UPLOAD_MB);
+      const files = await storeAttachments(
+        req,
+        STORAGE_PREFIX.supplierAttachments,
+        env.MAX_APPLICATION_UPLOAD_MB,
+      );
       const reference = generateReference('SUP');
 
       const submission = await prisma.$transaction(async (tx) => {
@@ -209,7 +218,9 @@ export function submissionsRoutes(): Router {
             productsServices: sanitizeHtml(body.productsServices),
             citiesServed: normaliseList(body.citiesServed),
             certifications: body.certifications ? sanitizeHtml(body.certifications) : null,
-            productionCapacity: body.productionCapacity ? sanitizeHtml(body.productionCapacity) : null,
+            productionCapacity: body.productionCapacity
+              ? sanitizeHtml(body.productionCapacity)
+              : null,
             companyProfile: body.companyProfile ? sanitizeHtml(body.companyProfile) : null,
             notes: body.notes ? sanitizeHtml(body.notes) : null,
             consentGivenAt: new Date(),
@@ -243,7 +254,13 @@ export function submissionsRoutes(): Router {
         return created;
       });
 
-      await recordSubmissionAudit(prisma, 'supplierSubmission', submission.id, submission.reference, body.companyName);
+      await recordSubmissionAudit(
+        prisma,
+        'supplierSubmission',
+        submission.id,
+        submission.reference,
+        body.companyName,
+      );
 
       res.status(201).json({
         ok: true,
@@ -293,7 +310,10 @@ export function submissionsRoutes(): Router {
     })
     .merge(spamGuard)
     .refine(
-      (v) => v.groundFloorSqft === undefined || v.totalAreaSqft === undefined || v.groundFloorSqft <= v.totalAreaSqft,
+      (v) =>
+        v.groundFloorSqft === undefined ||
+        v.totalAreaSqft === undefined ||
+        v.groundFloorSqft <= v.totalAreaSqft,
       { path: ['groundFloorSqft'], message: 'Ground-floor area cannot exceed the total area.' },
     );
 
@@ -309,7 +329,11 @@ export function submissionsRoutes(): Router {
       assertNotSpam(body, req, 'property');
 
       const { prisma, env } = req.ctx;
-      const files = await storeAttachments(req, STORAGE_PREFIX.propertyAttachments, env.MAX_APPLICATION_UPLOAD_MB);
+      const files = await storeAttachments(
+        req,
+        STORAGE_PREFIX.propertyAttachments,
+        env.MAX_APPLICATION_UPLOAD_MB,
+      );
       const reference = generateReference('PRP');
 
       // Match the submitted city to a known city where possible, so the
@@ -379,7 +403,13 @@ export function submissionsRoutes(): Router {
         return created;
       });
 
-      await recordSubmissionAudit(prisma, 'propertySubmission', submission.id, submission.reference, body.cityName);
+      await recordSubmissionAudit(
+        prisma,
+        'propertySubmission',
+        submission.id,
+        submission.reference,
+        body.cityName,
+      );
 
       res.status(201).json({
         ok: true,
@@ -460,7 +490,16 @@ export function submissionsRoutes(): Router {
   const contactSchema = z
     .object({
       categoryKey: z
-        .enum(['CUSTOMER', 'CORPORATE', 'MEDIA', 'CAREERS', 'SUPPLIERS', 'REAL_ESTATE', 'PARTNERSHIPS', 'OTHER'])
+        .enum([
+          'CUSTOMER',
+          'CORPORATE',
+          'MEDIA',
+          'CAREERS',
+          'SUPPLIERS',
+          'REAL_ESTATE',
+          'PARTNERSHIPS',
+          'OTHER',
+        ])
         .default('OTHER'),
       name: requiredString('Name', 120),
       email: emailSchema,
@@ -541,7 +580,7 @@ interface StoredAttachment {
 
 /** Validate and store uploaded attachments, rejecting the whole batch on failure. */
 async function storeAttachments(
-  req: import('express').Request,
+  req: Request,
   prefix: string,
   maxMb: number,
 ): Promise<StoredAttachment[]> {
@@ -562,7 +601,10 @@ async function storeAttachments(
     );
     if (!validation.valid) {
       throw ApiError.validation(
-        validation.errors.map((message) => ({ field: 'attachments', message: `${file.originalname}: ${message}` })),
+        validation.errors.map((message) => ({
+          field: 'attachments',
+          message: `${file.originalname}: ${message}`,
+        })),
       );
     }
   }
@@ -597,7 +639,7 @@ function normaliseList(value: string | string[] | undefined): string[] {
 
 /** Audit that a submission arrived, without recording its personal data. */
 async function recordSubmissionAudit(
-  prisma: import('@cheezious/database').PrismaClient,
+  prisma: PrismaClient,
   entityType: string,
   entityId: string,
   reference: string,

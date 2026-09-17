@@ -17,7 +17,9 @@ export const metadata = { title: 'Active sessions' };
 export default async function SessionsPage() {
   const { cookie } = await requireUsableSession();
 
-  const data = await cmsFetch<{ sessions: SessionRow[] }>('/api/auth/sessions', { cookie }).catch(() => null);
+  const data = await cmsFetch<{ sessions: SessionRow[] }>('/api/auth/sessions', { cookie }).catch(
+    () => null,
+  );
 
   return (
     <>
@@ -39,8 +41,8 @@ export default async function SessionsPage() {
           )}
 
           <p className="mt-05 text-helper-01 text-content-tertiary">
-            Do not recognise a session? End it, then change your password — changing it signs out every other
-            device.
+            Do not recognise a session? End it, then change your password — changing it signs out
+            every other device.
           </p>
         </div>
       </div>

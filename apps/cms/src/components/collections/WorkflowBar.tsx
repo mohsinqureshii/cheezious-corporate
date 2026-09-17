@@ -51,23 +51,28 @@ export function WorkflowBar({
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}/api/cms/content/${collectionPath}/${recordId}/transition`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          action,
-          ...(note ? { note } : {}),
-          ...(when ? { scheduledFor: new Date(when).toISOString() } : {}),
-        }),
-      });
+      const response = await fetch(
+        `${API_URL}/api/cms/content/${collectionPath}/${recordId}/transition`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            action,
+            ...(note ? { note } : {}),
+            ...(when ? { scheduledFor: new Date(when).toISOString() } : {}),
+          }),
+        },
+      );
 
       const body = (await response.json()) as {
         error?: { message: string; fields?: Array<{ field: string; message: string }> };
       };
 
       if (!response.ok) {
-        setError(body.error?.fields?.[0]?.message ?? body.error?.message ?? 'That could not be done.');
+        setError(
+          body.error?.fields?.[0]?.message ?? body.error?.message ?? 'That could not be done.',
+        );
         return;
       }
 
@@ -97,7 +102,8 @@ export function WorkflowBar({
 
       {scheduledFor ? (
         <p className="mt-02 text-body-01 text-status-info">
-          Scheduled to publish {formatDate(scheduledFor, 'en', { dateStyle: 'medium', timeStyle: 'short' })}.
+          Scheduled to publish{' '}
+          {formatDate(scheduledFor, 'en', { dateStyle: 'medium', timeStyle: 'short' })}.
         </p>
       ) : null}
 
@@ -108,7 +114,10 @@ export function WorkflowBar({
       ) : null}
 
       {error ? (
-        <p className="mt-04 border-s-[3px] border-status-danger bg-status-dangerSubtle px-03 py-02 text-helper-01" role="alert">
+        <p
+          className="mt-04 border-s-[3px] border-status-danger bg-status-dangerSubtle px-03 py-02 text-helper-01"
+          role="alert"
+        >
           {error}
         </p>
       ) : null}
@@ -126,6 +135,9 @@ export function WorkflowBar({
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
                 className="textarea"
+                // A dialog takes focus when it opens: WAI-ARIA asks for it, and without
+                // it a keyboard user is left behind the overlay with nothing focused.
+                // eslint-disable-next-line jsx-a11y/no-autofocus
                 autoFocus
               />
               <p className="field-helper">The author is notified with this message.</p>
@@ -143,9 +155,14 @@ export function WorkflowBar({
                 value={when}
                 onChange={(event) => setWhen(event.target.value)}
                 className="input"
+                // A dialog takes focus when it opens: WAI-ARIA asks for it, and without
+                // it a keyboard user is left behind the overlay with nothing focused.
+                // eslint-disable-next-line jsx-a11y/no-autofocus
                 autoFocus
               />
-              <p className="field-helper">Your local time. The scheduler publishes within a minute of it.</p>
+              <p className="field-helper">
+                Your local time. The scheduler publishes within a minute of it.
+              </p>
             </div>
           ) : null}
 
@@ -153,7 +170,11 @@ export function WorkflowBar({
             <button
               type="button"
               className="btn-primary btn-sm"
-              disabled={pending !== null || (NOTE_REQUIRED.has(prompting) && !note.trim()) || (NEEDS_DATE.has(prompting) && !when)}
+              disabled={
+                pending !== null ||
+                (NOTE_REQUIRED.has(prompting) && !note.trim()) ||
+                (NEEDS_DATE.has(prompting) && !when)
+              }
               onClick={() => void run(prompting)}
             >
               Confirm
@@ -176,7 +197,11 @@ export function WorkflowBar({
                 type="button"
                 disabled={pending !== null || (dirty && transition.action === 'PUBLISH')}
                 onClick={() => start(transition.action)}
-                className={transition.action === 'PUBLISH' ? 'btn-primary justify-center' : 'btn-secondary justify-center'}
+                className={
+                  transition.action === 'PUBLISH'
+                    ? 'btn-primary justify-center'
+                    : 'btn-secondary justify-center'
+                }
               >
                 {pending === transition.action ? 'Working…' : transition.label}
               </button>

@@ -59,7 +59,9 @@ export function ArticleLayout({
   // Only worth showing when the article has genuinely been revised since it was
   // published; otherwise it is noise on every page.
   const revised =
-    publishedAt && updatedAt && new Date(updatedAt).getTime() - new Date(publishedAt).getTime() > 86_400_000;
+    publishedAt &&
+    updatedAt &&
+    new Date(updatedAt).getTime() - new Date(publishedAt).getTime() > 86_400_000;
 
   return (
     <article>
@@ -92,13 +94,18 @@ export function ArticleLayout({
         <p className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-1 text-body-xs text-ink-faint">
           {dateline ? <span>{dateline}</span> : null}
           {publishedAt ? (
-            <time dateTime={publishedAt}>{formatDate(publishedAt, locale, { dateStyle: 'long' })}</time>
+            <time dateTime={publishedAt}>
+              {formatDate(publishedAt, locale, { dateStyle: 'long' })}
+            </time>
           ) : null}
           {byline ? <span>By {byline}</span> : null}
           {readingMinutes ? <span>{readingMinutes} min read</span> : null}
           {revised && updatedAt ? (
             <span>
-              Updated <time dateTime={updatedAt}>{formatDate(updatedAt, locale, { dateStyle: 'long' })}</time>
+              Updated{' '}
+              <time dateTime={updatedAt}>
+                {formatDate(updatedAt, locale, { dateStyle: 'long' })}
+              </time>
             </span>
           ) : null}
         </p>
@@ -107,7 +114,12 @@ export function ArticleLayout({
       {heroImage ? (
         <Section width="wide" spacing="compact">
           <figure>
-            <BlockImage image={heroImage} sizes="(min-width: 1280px) 1120px, 100vw" aspectRatio="21:9" priority />
+            <BlockImage
+              image={heroImage}
+              sizes="(min-width: 1280px) 1120px, 100vw"
+              aspectRatio="21:9"
+              priority
+            />
             <ImageCaption image={heroImage} />
           </figure>
         </Section>

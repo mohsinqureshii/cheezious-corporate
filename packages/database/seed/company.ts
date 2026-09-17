@@ -13,16 +13,52 @@ import type { PrismaClient } from '@prisma/client';
 export async function seedCompany(prisma: PrismaClient, actorId: string): Promise<void> {
   // --- Departments and teams -------------------------------------------------
   const departments = [
-    { key: 'RESTAURANT_OPERATIONS', name: 'Restaurant Operations', summary: 'Running restaurants day to day, and the standards they run to.' },
-    { key: 'SUPPLY_CHAIN', name: 'Supply Chain', summary: 'Procurement, warehousing, cold chain and distribution.' },
-    { key: 'TECHNOLOGY', name: 'Technology', summary: 'The systems that take an order and get food to a customer.' },
+    {
+      key: 'RESTAURANT_OPERATIONS',
+      name: 'Restaurant Operations',
+      summary: 'Running restaurants day to day, and the standards they run to.',
+    },
+    {
+      key: 'SUPPLY_CHAIN',
+      name: 'Supply Chain',
+      summary: 'Procurement, warehousing, cold chain and distribution.',
+    },
+    {
+      key: 'TECHNOLOGY',
+      name: 'Technology',
+      summary: 'The systems that take an order and get food to a customer.',
+    },
     { key: 'FINANCE', name: 'Finance', summary: 'Financial control, planning and reporting.' },
-    { key: 'PEOPLE', name: 'People', summary: 'Hiring, training, pay and the working environment.' },
-    { key: 'MARKETING', name: 'Marketing', summary: 'Brand, campaigns and customer communication.' },
-    { key: 'FOOD_QUALITY', name: 'Food & Quality', summary: 'Food safety, quality systems and product development.' },
-    { key: 'DEVELOPMENT', name: 'Restaurant Development', summary: 'Finding, designing and building new restaurants.' },
-    { key: 'LEGAL', name: 'Legal & Compliance', summary: 'Contracts, governance and regulatory compliance.' },
-    { key: 'CUSTOMER_CARE', name: 'Customer Care', summary: 'Answering customers and closing the loop on feedback.' },
+    {
+      key: 'PEOPLE',
+      name: 'People',
+      summary: 'Hiring, training, pay and the working environment.',
+    },
+    {
+      key: 'MARKETING',
+      name: 'Marketing',
+      summary: 'Brand, campaigns and customer communication.',
+    },
+    {
+      key: 'FOOD_QUALITY',
+      name: 'Food & Quality',
+      summary: 'Food safety, quality systems and product development.',
+    },
+    {
+      key: 'DEVELOPMENT',
+      name: 'Restaurant Development',
+      summary: 'Finding, designing and building new restaurants.',
+    },
+    {
+      key: 'LEGAL',
+      name: 'Legal & Compliance',
+      summary: 'Contracts, governance and regulatory compliance.',
+    },
+    {
+      key: 'CUSTOMER_CARE',
+      name: 'Customer Care',
+      summary: 'Answering customers and closing the loop on feedback.',
+    },
   ];
 
   for (const [index, department] of departments.entries()) {
@@ -56,7 +92,14 @@ export async function seedCompany(prisma: PrismaClient, actorId: string): Promis
   for (const [index, group] of groups.entries()) {
     await prisma.leadershipGroup.upsert({
       where: { key: group.key },
-      create: { key: group.key, name: group.name, slug: slugify(group.name), summary: group.summary, sortOrder: index, isPublished: true },
+      create: {
+        key: group.key,
+        name: group.name,
+        slug: slugify(group.name),
+        summary: group.summary,
+        sortOrder: index,
+        isPublished: true,
+      },
       update: { name: group.name, summary: group.summary, sortOrder: index },
     });
   }
@@ -72,17 +115,62 @@ export async function seedCompany(prisma: PrismaClient, actorId: string): Promis
    * No real person is represented, and no biography asserts a real career.
    */
   const people = [
-    { slug: 'chief-executive-placeholder', name: '[Placeholder] Chief Executive', role: 'Chief Executive Officer', group: executive.id, department: 'RESTAURANT_OPERATIONS' },
-    { slug: 'chief-operating-placeholder', name: '[Placeholder] Chief Operating Officer', role: 'Chief Operating Officer', group: executive.id, department: 'RESTAURANT_OPERATIONS' },
-    { slug: 'chief-financial-placeholder', name: '[Placeholder] Chief Financial Officer', role: 'Chief Financial Officer', group: executive.id, department: 'FINANCE' },
-    { slug: 'supply-chain-director-placeholder', name: '[Placeholder] Supply Chain Director', role: 'Director, Supply Chain', group: senior.id, department: 'SUPPLY_CHAIN' },
-    { slug: 'technology-director-placeholder', name: '[Placeholder] Technology Director', role: 'Director, Technology', group: senior.id, department: 'TECHNOLOGY' },
-    { slug: 'people-director-placeholder', name: '[Placeholder] People Director', role: 'Director, People', group: senior.id, department: 'PEOPLE' },
-    { slug: 'quality-director-placeholder', name: '[Placeholder] Food & Quality Director', role: 'Director, Food & Quality', group: senior.id, department: 'FOOD_QUALITY' },
+    {
+      slug: 'chief-executive-placeholder',
+      name: '[Placeholder] Chief Executive',
+      role: 'Chief Executive Officer',
+      group: executive.id,
+      department: 'RESTAURANT_OPERATIONS',
+    },
+    {
+      slug: 'chief-operating-placeholder',
+      name: '[Placeholder] Chief Operating Officer',
+      role: 'Chief Operating Officer',
+      group: executive.id,
+      department: 'RESTAURANT_OPERATIONS',
+    },
+    {
+      slug: 'chief-financial-placeholder',
+      name: '[Placeholder] Chief Financial Officer',
+      role: 'Chief Financial Officer',
+      group: executive.id,
+      department: 'FINANCE',
+    },
+    {
+      slug: 'supply-chain-director-placeholder',
+      name: '[Placeholder] Supply Chain Director',
+      role: 'Director, Supply Chain',
+      group: senior.id,
+      department: 'SUPPLY_CHAIN',
+    },
+    {
+      slug: 'technology-director-placeholder',
+      name: '[Placeholder] Technology Director',
+      role: 'Director, Technology',
+      group: senior.id,
+      department: 'TECHNOLOGY',
+    },
+    {
+      slug: 'people-director-placeholder',
+      name: '[Placeholder] People Director',
+      role: 'Director, People',
+      group: senior.id,
+      department: 'PEOPLE',
+    },
+    {
+      slug: 'quality-director-placeholder',
+      name: '[Placeholder] Food & Quality Director',
+      role: 'Director, Food & Quality',
+      group: senior.id,
+      department: 'FOOD_QUALITY',
+    },
   ];
 
   for (const [index, person] of people.entries()) {
-    const department = await prisma.department.findUnique({ where: { key: person.department }, select: { id: true } });
+    const department = await prisma.department.findUnique({
+      where: { key: person.department },
+      select: { id: true },
+    });
     const translationGroupId = `person-${person.slug}`;
 
     await prisma.person.upsert({
@@ -99,7 +187,8 @@ export async function seedCompany(prisma: PrismaClient, actorId: string): Promis
           'Placeholder biography. Replace with an approved profile describing this person’s responsibilities and background.',
         fullBio:
           '<p>Placeholder biography. This profile exists to demonstrate the leadership template. Replace the text, portrait and responsibilities with content approved by Corporate Communications before publishing.</p>',
-        responsibilities: 'Placeholder responsibilities. Replace with the approved description of this role.',
+        responsibilities:
+          'Placeholder responsibilities. Replace with the approved description of this role.',
         sortOrder: index,
         isFeatured: index === 0,
         status: 'PUBLISHED',
@@ -112,7 +201,11 @@ export async function seedCompany(prisma: PrismaClient, actorId: string): Promis
 
   // --- Corporate footprint ---------------------------------------------------
   const regions = [
-    { key: 'PUNJAB', name: 'Punjab', cities: ['Lahore', 'Rawalpindi', 'Faisalabad', 'Multan', 'Gujranwala'] },
+    {
+      key: 'PUNJAB',
+      name: 'Punjab',
+      cities: ['Lahore', 'Rawalpindi', 'Faisalabad', 'Multan', 'Gujranwala'],
+    },
     { key: 'ICT', name: 'Islamabad Capital Territory', cities: ['Islamabad'] },
     { key: 'SINDH', name: 'Sindh', cities: ['Karachi', 'Hyderabad'] },
     { key: 'KP', name: 'Khyber Pakhtunkhwa', cities: ['Peshawar', 'Abbottabad'] },
@@ -172,7 +265,10 @@ export async function seedCompany(prisma: PrismaClient, actorId: string): Promis
     }
   }
 
-  const islamabad = await prisma.city.findUnique({ where: { slug: 'islamabad' }, select: { id: true } });
+  const islamabad = await prisma.city.findUnique({
+    where: { slug: 'islamabad' },
+    select: { id: true },
+  });
   if (islamabad) {
     const existing = await prisma.corporateLocation.findFirst({
       where: { cityId: islamabad.id, kind: 'HEAD_OFFICE' },
@@ -194,12 +290,42 @@ export async function seedCompany(prisma: PrismaClient, actorId: string): Promis
   // --- Timeline --------------------------------------------------------------
   // Structural examples only. Years are generic placeholders, not company history.
   const milestones = [
-    { year: 2012, headline: '[Placeholder] Company founded', description: 'Replace with the approved founding milestone.', category: 'Company' },
-    { year: 2015, headline: '[Placeholder] Expansion milestone', description: 'Replace with an approved expansion milestone.', category: 'Growth' },
-    { year: 2018, headline: '[Placeholder] Operations milestone', description: 'Replace with an approved operations or supply-chain milestone.', category: 'Operations' },
-    { year: 2021, headline: '[Placeholder] Technology milestone', description: 'Replace with an approved technology milestone.', category: 'Technology' },
-    { year: 2024, headline: '[Placeholder] People milestone', description: 'Replace with an approved people or community milestone.', category: 'People' },
-    { year: 2026, headline: '[Placeholder] Current milestone', description: 'Replace with the most recent approved milestone.', category: 'Company' },
+    {
+      year: 2012,
+      headline: '[Placeholder] Company founded',
+      description: 'Replace with the approved founding milestone.',
+      category: 'Company',
+    },
+    {
+      year: 2015,
+      headline: '[Placeholder] Expansion milestone',
+      description: 'Replace with an approved expansion milestone.',
+      category: 'Growth',
+    },
+    {
+      year: 2018,
+      headline: '[Placeholder] Operations milestone',
+      description: 'Replace with an approved operations or supply-chain milestone.',
+      category: 'Operations',
+    },
+    {
+      year: 2021,
+      headline: '[Placeholder] Technology milestone',
+      description: 'Replace with an approved technology milestone.',
+      category: 'Technology',
+    },
+    {
+      year: 2024,
+      headline: '[Placeholder] People milestone',
+      description: 'Replace with an approved people or community milestone.',
+      category: 'People',
+    },
+    {
+      year: 2026,
+      headline: '[Placeholder] Current milestone',
+      description: 'Replace with the most recent approved milestone.',
+      category: 'Company',
+    },
   ];
 
   for (const [index, milestone] of milestones.entries()) {
@@ -237,7 +363,9 @@ export async function seedCompany(prisma: PrismaClient, actorId: string): Promis
 
   const awardCategory = await prisma.awardCategory.findUniqueOrThrow({ where: { key: 'BRAND' } });
   const translationGroupId = 'award-placeholder-1';
-  const existingAward = await prisma.award.findFirst({ where: { translationGroupId, locale: 'en' } });
+  const existingAward = await prisma.award.findFirst({
+    where: { translationGroupId, locale: 'en' },
+  });
   if (!existingAward) {
     await prisma.award.create({
       data: {
@@ -268,7 +396,13 @@ export async function seedCompany(prisma: PrismaClient, actorId: string): Promis
   for (const [index, category] of ingredientCategories.entries()) {
     await prisma.ingredientCategory.upsert({
       where: { key: category.key },
-      create: { key: category.key, name: category.name, slug: slugify(category.name), summary: category.summary, sortOrder: index },
+      create: {
+        key: category.key,
+        name: category.name,
+        slug: slugify(category.name),
+        summary: category.summary,
+        sortOrder: index,
+      },
       update: { name: category.name, summary: category.summary, sortOrder: index },
     });
   }

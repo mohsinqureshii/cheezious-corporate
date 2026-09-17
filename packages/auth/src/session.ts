@@ -65,7 +65,9 @@ export async function resolveSession(
     include: {
       user: {
         include: {
-          roles: { include: { role: { include: { permissions: { include: { permission: true } } } } } },
+          roles: {
+            include: { role: { include: { permissions: { include: { permission: true } } } } },
+          },
         },
       },
     },
@@ -121,7 +123,11 @@ export function toPrincipal(user: UserWithRoles): Principal {
   };
 }
 
-export async function revokeSession(prisma: PrismaClient, sessionId: string, reason = 'LOGOUT'): Promise<void> {
+export async function revokeSession(
+  prisma: PrismaClient,
+  sessionId: string,
+  reason = 'LOGOUT',
+): Promise<void> {
   await prisma.session.updateMany({
     where: { id: sessionId, revokedAt: null },
     data: { revokedAt: new Date(), revokedReason: reason },
@@ -136,7 +142,11 @@ export async function revokeAllSessionsForUser(
   exceptSessionId?: string,
 ): Promise<number> {
   const result = await prisma.session.updateMany({
-    where: { userId, revokedAt: null, ...(exceptSessionId ? { NOT: { id: exceptSessionId } } : {}) },
+    where: {
+      userId,
+      revokedAt: null,
+      ...(exceptSessionId ? { NOT: { id: exceptSessionId } } : {}),
+    },
     data: { revokedAt: new Date(), revokedReason: reason },
   });
   return result.count;

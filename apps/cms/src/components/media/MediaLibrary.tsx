@@ -104,7 +104,9 @@ export function MediaLibrary({
         const body = (await response.json()) as {
           error?: { message: string; fields?: Array<{ message: string }> };
         };
-        setUploadError(body.error?.fields?.[0]?.message ?? body.error?.message ?? 'The upload failed.');
+        setUploadError(
+          body.error?.fields?.[0]?.message ?? body.error?.message ?? 'The upload failed.',
+        );
         return;
       }
       router.refresh();
@@ -131,10 +133,12 @@ export function MediaLibrary({
         >
           <span className="flex-1">
             <span className="block text-heading-compact text-content-primary">
-              {facets.missingAltText} image{facets.missingAltText === 1 ? '' : 's'} without alternative text
+              {facets.missingAltText} image{facets.missingAltText === 1 ? '' : 's'} without
+              alternative text
             </span>
             <span className="block text-helper-01 text-content-secondary">
-              Screen readers announce nothing for these. {initialQuery.missingAltText ? 'Showing them now.' : 'Show only those.'}
+              Screen readers announce nothing for these.{' '}
+              {initialQuery.missingAltText ? 'Showing them now.' : 'Show only those.'}
             </span>
           </span>
         </button>
@@ -200,12 +204,18 @@ export function MediaLibrary({
         </FilterBar>
 
         {uploadError ? (
-          <p className="border-b border-border-subtle bg-status-dangerSubtle px-05 py-03 text-body-01" role="alert">
+          <p
+            className="border-b border-border-subtle bg-status-dangerSubtle px-05 py-03 text-body-01"
+            role="alert"
+          >
             {uploadError}
           </p>
         ) : null}
 
-        <div className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined} aria-busy={isPending}>
+        <div
+          className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined}
+          aria-busy={isPending}
+        >
           {items.length === 0 ? (
             <EmptyState
               title="Nothing here"
@@ -227,7 +237,6 @@ export function MediaLibrary({
                   >
                     <span className="block aspect-square overflow-hidden bg-surface-subtle">
                       {asset.kind === 'IMAGE' ? (
-                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={assetUrl(asset.storageKey)}
                           alt=""
@@ -240,7 +249,9 @@ export function MediaLibrary({
                         </span>
                       )}
                     </span>
-                    <span className="mt-02 block truncate text-helper-01 text-content-primary">{asset.title}</span>
+                    <span className="mt-02 block truncate text-helper-01 text-content-primary">
+                      {asset.title}
+                    </span>
                     {asset.kind === 'IMAGE' && !asset.altText ? (
                       <span className="block text-helper-01 text-status-warning">No alt text</span>
                     ) : (
@@ -357,14 +368,22 @@ function AssetInspector({
   }
 
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center bg-gray-100/50 p-05" role="dialog" aria-modal="true" aria-label={asset.title}>
+    <div
+      className="fixed inset-0 z-modal flex items-center justify-center bg-gray-100/50 p-05"
+      role="dialog"
+      aria-modal="true"
+      aria-label={asset.title}
+    >
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
 
       <div className="relative grid max-h-[85vh] w-full max-w-4xl grid-cols-1 overflow-hidden border border-border-subtle bg-surface-base shadow-modal md:grid-cols-[minmax(0,1fr)_340px]">
         <div className="flex items-center justify-center bg-gray-100 p-05">
           {asset.kind === 'IMAGE' ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={assetUrl(asset.storageKey)} alt={asset.altText ?? ''} className="max-h-[60vh] w-auto object-contain" />
+            <img
+              src={assetUrl(asset.storageKey)}
+              alt={asset.altText ?? ''}
+              className="max-h-[60vh] w-auto object-contain"
+            />
           ) : (
             <a
               href={assetUrl(asset.storageKey)}
@@ -386,7 +405,10 @@ function AssetInspector({
           </div>
 
           {error ? (
-            <p className="mt-04 border-s-[3px] border-status-danger bg-status-dangerSubtle px-03 py-02 text-helper-01" role="alert">
+            <p
+              className="mt-04 border-s-[3px] border-status-danger bg-status-dangerSubtle px-03 py-02 text-helper-01"
+              role="alert"
+            >
               {error}
             </p>
           ) : null}
@@ -396,7 +418,13 @@ function AssetInspector({
               <label htmlFor="asset-title" className="field-label">
                 Title
               </label>
-              <input id="asset-title" className="input" value={title} disabled={!canUpdate} onChange={(event) => setTitle(event.target.value)} />
+              <input
+                id="asset-title"
+                className="input"
+                value={title}
+                disabled={!canUpdate}
+                onChange={(event) => setTitle(event.target.value)}
+              />
             </div>
 
             {asset.kind === 'IMAGE' ? (
@@ -413,8 +441,8 @@ function AssetInspector({
                   onChange={(event) => setAltText(event.target.value)}
                 />
                 <p className="field-helper">
-                  What the image conveys, for someone who cannot see it. Leave empty only if the image is purely
-                  decorative.
+                  What the image conveys, for someone who cannot see it. Leave empty only if the
+                  image is purely decorative.
                 </p>
               </div>
             ) : null}
@@ -423,15 +451,30 @@ function AssetInspector({
               <label htmlFor="asset-caption" className="field-label">
                 Caption
               </label>
-              <textarea id="asset-caption" rows={2} className="textarea" value={caption} disabled={!canUpdate} onChange={(event) => setCaption(event.target.value)} />
+              <textarea
+                id="asset-caption"
+                rows={2}
+                className="textarea"
+                value={caption}
+                disabled={!canUpdate}
+                onChange={(event) => setCaption(event.target.value)}
+              />
             </div>
 
             <div>
               <label htmlFor="asset-credit" className="field-label">
                 Credit
               </label>
-              <input id="asset-credit" className="input" value={credit} disabled={!canUpdate} onChange={(event) => setCredit(event.target.value)} />
-              <p className="field-helper">The photographer or rights holder, where one must be named.</p>
+              <input
+                id="asset-credit"
+                className="input"
+                value={credit}
+                disabled={!canUpdate}
+                onChange={(event) => setCredit(event.target.value)}
+              />
+              <p className="field-helper">
+                The photographer or rights holder, where one must be named.
+              </p>
             </div>
 
             {canManageBrand ? (
@@ -487,15 +530,28 @@ function AssetInspector({
               confirmDelete ? (
                 <>
                   <span className="text-helper-01 text-content-secondary">Delete this asset?</span>
-                  <button type="button" onClick={remove} disabled={busy} className="btn-danger btn-sm">
+                  <button
+                    type="button"
+                    onClick={remove}
+                    disabled={busy}
+                    className="btn-danger btn-sm"
+                  >
                     Yes, delete
                   </button>
-                  <button type="button" onClick={() => setConfirmDelete(false)} className="btn-ghost btn-sm">
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    className="btn-ghost btn-sm"
+                  >
                     Cancel
                   </button>
                 </>
               ) : (
-                <button type="button" onClick={() => setConfirmDelete(true)} className="btn-ghost btn-sm">
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  className="btn-ghost btn-sm"
+                >
                   Delete
                 </button>
               )

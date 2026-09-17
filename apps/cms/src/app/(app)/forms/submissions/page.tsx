@@ -42,7 +42,10 @@ export default async function FormSubmissionsPage() {
       <>
         <PageHeader title="Form submissions" />
         <div className="p-06">
-          <ErrorState title="Submissions could not be loaded" description="This section is restricted." />
+          <ErrorState
+            title="Submissions could not be loaded"
+            description="This section is restricted."
+          />
         </div>
       </>
     );
@@ -50,7 +53,10 @@ export default async function FormSubmissionsPage() {
 
   return (
     <>
-      <PageHeader title="Form submissions" description="Everything received through a custom form." />
+      <PageHeader
+        title="Form submissions"
+        description="Everything received through a custom form."
+      />
 
       <div className="p-06">
         <div className="panel">
@@ -74,11 +80,16 @@ export default async function FormSubmissionsPage() {
               <tbody>
                 {data.items.map((submission) => (
                   <tr key={submission.id}>
-                    <td className="font-mono text-helper-01 text-content-secondary">{submission.reference}</td>
+                    <td className="font-mono text-helper-01 text-content-secondary">
+                      {submission.reference}
+                    </td>
                     <td className="text-content-primary">{submission.form?.name ?? '—'}</td>
                     <td>
                       <time dateTime={submission.createdAt}>
-                        {formatDate(submission.createdAt, 'en', { dateStyle: 'medium', timeStyle: 'short' })}
+                        {formatDate(submission.createdAt, 'en', {
+                          dateStyle: 'medium',
+                          timeStyle: 'short',
+                        })}
                       </time>
                     </td>
                     <td className="tabular text-content-secondary">{submission._count.files}</td>
@@ -93,8 +104,8 @@ export default async function FormSubmissionsPage() {
         </div>
 
         <p className="mt-04 max-w-2xl text-helper-01 text-content-tertiary">
-          A custom form can collect anything, so its answers are treated as personal data and are not shown in
-          this list.
+          A custom form can collect anything, so its answers are treated as personal data and are
+          not shown in this list.
         </p>
       </div>
     </>

@@ -65,7 +65,9 @@ describe('html sanitisation', () => {
 
   it('removes javascript: links but keeps safe ones', () => {
     expect(sanitizeHtml('<a href="javascript:alert(1)">bad</a>')).toBe('<a>bad</a>');
-    expect(sanitizeHtml('<a href="https://cheezious.com">good</a>')).toContain('href="https://cheezious.com"');
+    expect(sanitizeHtml('<a href="https://cheezious.com">good</a>')).toContain(
+      'href="https://cheezious.com"',
+    );
   });
 
   it('adds rel="noopener noreferrer" to links opening in a new tab', () => {
@@ -74,7 +76,9 @@ describe('html sanitisation', () => {
   });
 
   it('drops disallowed elements but keeps editorial ones', () => {
-    const result = sanitizeHtml('<iframe src="https://evil"></iframe><h2>Heading</h2><blockquote>Quote</blockquote>');
+    const result = sanitizeHtml(
+      '<iframe src="https://evil"></iframe><h2>Heading</h2><blockquote>Quote</blockquote>',
+    );
     expect(result).not.toContain('iframe');
     expect(result).toContain('<h2>Heading</h2>');
     expect(result).toContain('<blockquote>Quote</blockquote>');
@@ -103,7 +107,12 @@ describe('upload validation', () => {
 
   it('accepts a genuine PDF CV', () => {
     const result = validateUpload(
-      { filename: 'Ayesha-Khan-CV.pdf', mimeType: 'application/pdf', byteSize: 240_000, head: pdfHead },
+      {
+        filename: 'Ayesha-Khan-CV.pdf',
+        mimeType: 'application/pdf',
+        byteSize: 240_000,
+        head: pdfHead,
+      },
       options,
     );
     expect(result.valid).toBe(true);
@@ -137,8 +146,16 @@ describe('upload validation', () => {
   });
 
   it('rejects oversized and empty files', () => {
-    expect(validateUpload({ filename: 'a.pdf', mimeType: 'application/pdf', byteSize: 50_000_000 }, options).valid).toBe(false);
-    expect(validateUpload({ filename: 'a.pdf', mimeType: 'application/pdf', byteSize: 0 }, options).valid).toBe(false);
+    expect(
+      validateUpload(
+        { filename: 'a.pdf', mimeType: 'application/pdf', byteSize: 50_000_000 },
+        options,
+      ).valid,
+    ).toBe(false);
+    expect(
+      validateUpload({ filename: 'a.pdf', mimeType: 'application/pdf', byteSize: 0 }, options)
+        .valid,
+    ).toBe(false);
   });
 
   it('strips path traversal and unsafe characters from filenames', () => {

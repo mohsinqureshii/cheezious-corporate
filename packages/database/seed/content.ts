@@ -33,7 +33,13 @@ export async function seedContent(prisma: PrismaClient, actorId: string): Promis
     });
   }
 
-  for (const [index, name] of ['Operations', 'Supply Chain', 'Careers', 'Quality', 'Growth'].entries()) {
+  for (const [index, name] of [
+    'Operations',
+    'Supply Chain',
+    'Careers',
+    'Quality',
+    'Growth',
+  ].entries()) {
     await prisma.storyTag.upsert({
       where: { slug: slugify(name) },
       create: { name, slug: slugify(name) },
@@ -42,9 +48,13 @@ export async function seedContent(prisma: PrismaClient, actorId: string): Promis
     void index;
   }
 
-  const companyCategory = await prisma.storyCategory.findUniqueOrThrow({ where: { key: 'COMPANY' } });
+  const companyCategory = await prisma.storyCategory.findUniqueOrThrow({
+    where: { key: 'COMPANY' },
+  });
   const peopleCategory = await prisma.storyCategory.findUniqueOrThrow({ where: { key: 'PEOPLE' } });
-  const expansionCategory = await prisma.storyCategory.findUniqueOrThrow({ where: { key: 'EXPANSION' } });
+  const expansionCategory = await prisma.storyCategory.findUniqueOrThrow({
+    where: { key: 'EXPANSION' },
+  });
 
   const stories = [
     {
@@ -131,12 +141,19 @@ export async function seedContent(prisma: PrismaClient, actorId: string): Promis
   for (const [index, category] of releaseCategories.entries()) {
     await prisma.pressReleaseCategory.upsert({
       where: { key: category.key },
-      create: { key: category.key, name: category.name, slug: slugify(category.name), sortOrder: index },
+      create: {
+        key: category.key,
+        name: category.name,
+        slug: slugify(category.name),
+        sortOrder: index,
+      },
       update: { name: category.name, sortOrder: index },
     });
   }
 
-  const corporate = await prisma.pressReleaseCategory.findUniqueOrThrow({ where: { key: 'CORPORATE' } });
+  const corporate = await prisma.pressReleaseCategory.findUniqueOrThrow({
+    where: { key: 'CORPORATE' },
+  });
 
   const contact = await prisma.mediaContact.findFirst({ where: { email: 'press@example.com' } });
   const mediaContact =
@@ -153,8 +170,14 @@ export async function seedContent(prisma: PrismaClient, actorId: string): Promis
     }));
 
   const releases = [
-    { slug: 'corporate-announcement-placeholder', headline: '[Placeholder] Corporate announcement' },
-    { slug: 'expansion-announcement-placeholder', headline: '[Placeholder] Expansion announcement' },
+    {
+      slug: 'corporate-announcement-placeholder',
+      headline: '[Placeholder] Corporate announcement',
+    },
+    {
+      slug: 'expansion-announcement-placeholder',
+      headline: '[Placeholder] Expansion announcement',
+    },
   ];
 
   for (const [index, release] of releases.entries()) {
@@ -182,7 +205,9 @@ export async function seedContent(prisma: PrismaClient, actorId: string): Promis
   }
 
   // --- Third-party coverage --------------------------------------------------
-  const existingCoverage = await prisma.mediaCoverage.findFirst({ where: { outlet: '[Placeholder] Publication' } });
+  const existingCoverage = await prisma.mediaCoverage.findFirst({
+    where: { outlet: '[Placeholder] Publication' },
+  });
   if (!existingCoverage) {
     await prisma.mediaCoverage.create({
       data: {
@@ -199,5 +224,8 @@ export async function seedContent(prisma: PrismaClient, actorId: string): Promis
 }
 
 function slugify(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }

@@ -33,12 +33,16 @@ export function ForgotPasswordForm() {
 
       if (!response.ok) {
         setStatus('error');
-        setMessage(body.error?.message ?? 'That request could not be completed. Try again shortly.');
+        setMessage(
+          body.error?.message ?? 'That request could not be completed. Try again shortly.',
+        );
         return;
       }
 
       setStatus('sent');
-      setMessage(body.message ?? 'If that email address has an account, a reset link is on its way.');
+      setMessage(
+        body.message ?? 'If that email address has an account, a reset link is on its way.',
+      );
     } catch {
       setStatus('error');
       setMessage('We could not reach the server. Check your connection and try again.');
@@ -47,7 +51,10 @@ export function ForgotPasswordForm() {
 
   if (status === 'sent') {
     return (
-      <div className="border-s-[3px] border-status-success bg-status-successSubtle px-05 py-04" role="status">
+      <div
+        className="border-s-[3px] border-status-success bg-status-successSubtle px-05 py-04"
+        role="status"
+      >
         <p className="text-body-01 text-content-primary">{message}</p>
         <p className="mt-02 text-helper-01 text-content-secondary">
           The link expires shortly after it is issued. Request another if it has.
@@ -59,7 +66,10 @@ export function ForgotPasswordForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-05" noValidate>
       {status === 'error' ? (
-        <div className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04" role="alert">
+        <div
+          className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04"
+          role="alert"
+        >
           <p className="text-body-01 text-content-primary">{message}</p>
         </div>
       ) : null}
@@ -75,12 +85,15 @@ export function ForgotPasswordForm() {
           onChange={(event) => setEmail(event.target.value)}
           required
           autoComplete="username"
-          autoFocus
           className="input"
         />
       </div>
 
-      <button type="submit" disabled={status === 'submitting'} className="btn-primary w-full justify-center">
+      <button
+        type="submit"
+        disabled={status === 'submitting'}
+        className="btn-primary w-full justify-center"
+      >
         {status === 'submitting' ? 'Sending…' : 'Send reset link'}
       </button>
     </form>

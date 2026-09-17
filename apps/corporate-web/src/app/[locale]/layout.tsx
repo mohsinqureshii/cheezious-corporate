@@ -18,10 +18,20 @@ export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
 }
 
-const LABELS: Record<Locale, {
-  skipToContent: string; openMenu: string; closeMenu: string; search: string;
-  orderNow: string; corporate: string; backToTop: string; followUs: string; consumerNote: string;
-}> = {
+const LABELS: Record<
+  Locale,
+  {
+    skipToContent: string;
+    openMenu: string;
+    closeMenu: string;
+    search: string;
+    orderNow: string;
+    corporate: string;
+    backToTop: string;
+    followUs: string;
+    consumerNote: string;
+  }
+> = {
   en: {
     skipToContent: 'Skip to content',
     openMenu: 'Open menu',

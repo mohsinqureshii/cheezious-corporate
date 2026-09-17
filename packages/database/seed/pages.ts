@@ -1,8 +1,8 @@
 import { validateBlock } from '@cheezious/page-builder';
 import type { PrismaClient } from '@prisma/client';
 
-import { heroForPath, placeholderForPath } from './media';
 import { SITE_MAP, type PageSeedSpec } from './lib/site-map';
+import { heroForPath, placeholderForPath } from './media';
 
 /**
  * Create the corporate page tree.
@@ -20,7 +20,10 @@ export async function seedPages(
   mediaByKey: Map<string, string>,
 ): Promise<void> {
   const definitions = new Map(
-    (await prisma.blockDefinition.findMany({ select: { id: true, key: true } })).map((d) => [d.key, d.id]),
+    (await prisma.blockDefinition.findMany({ select: { id: true, key: true } })).map((d) => [
+      d.key,
+      d.id,
+    ]),
   );
 
   // --- Pass 1: pages --------------------------------------------------------
@@ -80,7 +83,10 @@ export async function seedPages(
 
   // --- Pass 2: blocks -------------------------------------------------------
   const careerCategories = new Map(
-    (await prisma.careerCategory.findMany({ select: { id: true, key: true } })).map((c) => [c.key, c.id]),
+    (await prisma.careerCategory.findMany({ select: { id: true, key: true } })).map((c) => [
+      c.key,
+      c.id,
+    ]),
   );
 
   for (const spec of SITE_MAP) {

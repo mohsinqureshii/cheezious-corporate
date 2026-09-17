@@ -5,7 +5,11 @@ import { CollectionTable } from '@/components/collections/CollectionTable';
 import { RecordEditor } from '@/components/collections/RecordEditor';
 import { ErrorState, PageHeader } from '@/components/ui';
 import { CmsApiError, cmsFetch } from '@/lib/api';
-import { collectionHref, type CollectionItemResponse, type CollectionListResponse } from '@/lib/collections';
+import {
+  collectionHref,
+  type CollectionItemResponse,
+  type CollectionListResponse,
+} from '@/lib/collections';
 import { requireUsableSession } from '@/lib/session';
 
 /**
@@ -50,7 +54,12 @@ export function collectionListPage(collectionPath: string) {
 
     const granted = new Set(session.user.permissions);
     // The API is the authority; this only decides whether to offer the button.
-    const canCreate = [...granted].some((permission) => permission.endsWith('.create') || permission.endsWith('.manage') || permission.endsWith('.update'));
+    const canCreate = [...granted].some(
+      (permission) =>
+        permission.endsWith('.create') ||
+        permission.endsWith('.manage') ||
+        permission.endsWith('.update'),
+    );
 
     return (
       <>
@@ -58,7 +67,10 @@ export function collectionListPage(collectionPath: string) {
           title={data.collection.labelPlural}
           actions={
             canCreate ? (
-              <Link href={`${collectionHref(collectionPath)}/new`} className="btn-primary no-underline">
+              <Link
+                href={`${collectionHref(collectionPath)}/new`}
+                className="btn-primary no-underline"
+              >
                 Create {data.collection.label.toLowerCase()}
               </Link>
             ) : undefined
@@ -120,14 +132,19 @@ export function collectionRecordPage(collectionPath: string) {
 
     let data: CollectionItemResponse;
     try {
-      data = await cmsFetch<CollectionItemResponse>(`/api/cms/content/${collectionPath}/${id}`, { cookie });
+      data = await cmsFetch<CollectionItemResponse>(`/api/cms/content/${collectionPath}/${id}`, {
+        cookie,
+      });
     } catch (error) {
       if (error instanceof CmsApiError && error.status === 404) notFound();
       return <CollectionError error={error} />;
     }
 
     const canEdit = [...granted].some(
-      (permission) => permission.endsWith('.update') || permission.endsWith('.manage') || permission.endsWith('.create'),
+      (permission) =>
+        permission.endsWith('.update') ||
+        permission.endsWith('.manage') ||
+        permission.endsWith('.create'),
     );
 
     return (

@@ -1,3 +1,5 @@
+import type { PrismaClient, Prisma } from '@cheezious/database';
+import type { Ability } from '@cheezious/permissions';
 import { OPEN_WORK_STATUSES } from '@cheezious/permissions';
 import { Router } from 'express';
 import { z } from 'zod';
@@ -75,7 +77,11 @@ export function cmsDashboardRoutes(): Router {
 
       res.json({
         issues,
-        summary: counts.map((row) => ({ type: row.type, severity: row.severity, count: row._count })),
+        summary: counts.map((row) => ({
+          type: row.type,
+          severity: row.severity,
+          count: row._count,
+        })),
       });
     }),
   );
@@ -84,11 +90,7 @@ export function cmsDashboardRoutes(): Router {
 }
 
 /** What this user personally owes. */
-async function buildMyWork(
-  prisma: import('@cheezious/database').PrismaClient,
-  userId: string,
-  canRead: boolean,
-) {
+async function buildMyWork(prisma: PrismaClient, userId: string, canRead: boolean) {
   if (!canRead) return null;
 
   const mine = { OR: [{ createdById: userId }, { updatedById: userId }], deletedAt: null };
@@ -124,7 +126,7 @@ async function buildMyWork(
 }
 
 /** What is waiting on somebody, and for how long. */
-async function buildReviewQueue(prisma: import('@cheezious/database').PrismaClient, canRead: boolean) {
+async function buildReviewQueue(prisma: PrismaClient, canRead: boolean) {
   if (!canRead) return null;
 
   const agingBefore = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -157,7 +159,7 @@ async function buildReviewQueue(prisma: import('@cheezious/database').PrismaClie
 }
 
 async function buildPublishing(
-  prisma: import('@cheezious/database').PrismaClient,
+  prisma: PrismaClient,
   endOfToday: Date,
   endOfWeek: Date,
   canRead: boolean,
@@ -172,7 +174,11 @@ async function buildPublishing(
       select: pageCardSelect,
     }),
     prisma.page.findMany({
-      where: { status: 'SCHEDULED', scheduledFor: { gt: endOfToday, lte: endOfWeek }, deletedAt: null },
+      where: {
+        status: 'SCHEDULED',
+        scheduledFor: { gt: endOfToday, lte: endOfWeek },
+        deletedAt: null,
+      },
       orderBy: { scheduledFor: 'asc' },
       take: 10,
       select: pageCardSelect,
@@ -188,7 +194,15 @@ async function buildPublishing(
       where: { status: 'FAILED' },
       orderBy: { updatedAt: 'desc' },
       take: 10,
-      select: { id: true, kind: true, entityType: true, entityId: true, lastError: true, attempts: true, updatedAt: true },
+      select: {
+        id: true,
+        kind: true,
+        entityType: true,
+        entityId: true,
+        lastError: true,
+        attempts: true,
+        updatedAt: true,
+      },
     }),
   ]);
 
@@ -202,10 +216,7 @@ async function buildPublishing(
  * Procurement Manager their supplier queue without revealing that job
  * applications exist.
  */
-async function buildInbox(
-  prisma: import('@cheezious/database').PrismaClient,
-  ability: import('@cheezious/permissions').Ability,
-) {
+async function buildInbox(prisma: PrismaClient, ability: Ability) {
   const [applications, suppliers, properties, partnerships, contact] = await Promise.all([
     ability.can('applications.read')
       ? prisma.jobApplication.count({ where: { status: 'NEW', deletedAt: null } })
@@ -227,7 +238,7 @@ async function buildInbox(
   return { applications, suppliers, properties, partnerships, contact };
 }
 
-async function buildActivity(prisma: import('@cheezious/database').PrismaClient, canRead: boolean) {
+async function buildActivity(prisma: PrismaClient, canRead: boolean) {
   const entries = await prisma.activityLog.findMany({
     orderBy: { createdAt: 'desc' },
     take: 20,
@@ -243,49 +254,101 @@ async function buildActivity(prisma: import('@cheezious/database').PrismaClient,
  * Computed live rather than read from a cache, because a dashboard that reports
  * a problem an editor fixed an hour ago trains people to ignore it.
  */
-async function buildContentHealth(
-  prisma: import('@cheezious/database').PrismaClient,
-  staleBefore: Date,
-  canRead: boolean,
-) {
+async function buildContentHealth(prisma: PrismaClient, staleBefore: Date, canRead: boolean) {
   if (!canRead) return null;
 
   const published = { status: 'PUBLISHED' as const, deletedAt: null };
 
-  const [missingSeoTitle, missingDescription, missingOgImage, staleContent, pastReview, unpublishedChanges, missingTranslation, missingAltText] =
-    await Promise.all([
-      prisma.page.count({ where: { ...published, OR: [{ seo: { is: null } }, { seo: { title: null } }] } }),
-      prisma.page.count({ where: { ...published, OR: [{ seo: { is: null } }, { seo: { description: null } }] } }),
-      prisma.page.count({ where: { ...published, OR: [{ seo: { is: null } }, { seo: { ogImageId: null } }] } }),
-      prisma.page.count({ where: { ...published, updatedAt: { lt: staleBefore } } }),
-      prisma.page.count({ where: { ...published, reviewDate: { lt: new Date() } } }),
-      prisma.page.count({ where: { ...published, hasUnpublishedChanges: true } }),
-      // An English page with no Urdu counterpart is a translation gap.
-      prisma.$queryRaw<Array<{ count: bigint }>>`
+  const [
+    missingSeoTitle,
+    missingDescription,
+    missingOgImage,
+    staleContent,
+    pastReview,
+    unpublishedChanges,
+    missingTranslation,
+    missingAltText,
+  ] = await Promise.all([
+    prisma.page.count({
+      where: { ...published, OR: [{ seo: { is: null } }, { seo: { title: null } }] },
+    }),
+    prisma.page.count({
+      where: { ...published, OR: [{ seo: { is: null } }, { seo: { description: null } }] },
+    }),
+    prisma.page.count({
+      where: { ...published, OR: [{ seo: { is: null } }, { seo: { ogImageId: null } }] },
+    }),
+    prisma.page.count({ where: { ...published, updatedAt: { lt: staleBefore } } }),
+    prisma.page.count({ where: { ...published, reviewDate: { lt: new Date() } } }),
+    prisma.page.count({ where: { ...published, hasUnpublishedChanges: true } }),
+    // An English page with no Urdu counterpart is a translation gap.
+    prisma.$queryRaw<Array<{ count: bigint }>>`
         SELECT COUNT(*) AS count FROM "pages" p
         WHERE p."locale" = 'en' AND p."status" = 'PUBLISHED' AND p."deletedAt" IS NULL
           AND NOT EXISTS (
             SELECT 1 FROM "pages" t
             WHERE t."translationGroupId" = p."translationGroupId" AND t."locale" = 'ur'
           )`,
-      prisma.mediaAsset.count({ where: { kind: 'IMAGE', deletedAt: null, OR: [{ altText: null }, { altText: '' }] } }),
-    ]);
+    prisma.mediaAsset.count({
+      where: { kind: 'IMAGE', deletedAt: null, OR: [{ altText: null }, { altText: '' }] },
+    }),
+  ]);
 
   const issues = [
-    { type: 'MISSING_SEO_TITLE', label: 'Pages without an SEO title', count: missingSeoTitle, severity: 'warning' },
-    { type: 'MISSING_META_DESCRIPTION', label: 'Pages without a meta description', count: missingDescription, severity: 'warning' },
-    { type: 'MISSING_OG_IMAGE', label: 'Pages without a social image', count: missingOgImage, severity: 'info' },
-    { type: 'MISSING_ALT_TEXT', label: 'Images without alt text', count: missingAltText, severity: 'error' },
-    { type: 'MISSING_TRANSLATION', label: 'Pages not translated into Urdu', count: Number(missingTranslation[0]?.count ?? 0), severity: 'info' },
-    { type: 'UNPUBLISHED_CHANGES', label: 'Published pages with unpublished edits', count: unpublishedChanges, severity: 'info' },
-    { type: 'PAST_REVIEW_DATE', label: 'Pages past their review date', count: pastReview, severity: 'warning' },
-    { type: 'STALE_CONTENT', label: 'Pages not updated in six months', count: staleContent, severity: 'info' },
+    {
+      type: 'MISSING_SEO_TITLE',
+      label: 'Pages without an SEO title',
+      count: missingSeoTitle,
+      severity: 'warning',
+    },
+    {
+      type: 'MISSING_META_DESCRIPTION',
+      label: 'Pages without a meta description',
+      count: missingDescription,
+      severity: 'warning',
+    },
+    {
+      type: 'MISSING_OG_IMAGE',
+      label: 'Pages without a social image',
+      count: missingOgImage,
+      severity: 'info',
+    },
+    {
+      type: 'MISSING_ALT_TEXT',
+      label: 'Images without alt text',
+      count: missingAltText,
+      severity: 'error',
+    },
+    {
+      type: 'MISSING_TRANSLATION',
+      label: 'Pages not translated into Urdu',
+      count: Number(missingTranslation[0]?.count ?? 0),
+      severity: 'info',
+    },
+    {
+      type: 'UNPUBLISHED_CHANGES',
+      label: 'Published pages with unpublished edits',
+      count: unpublishedChanges,
+      severity: 'info',
+    },
+    {
+      type: 'PAST_REVIEW_DATE',
+      label: 'Pages past their review date',
+      count: pastReview,
+      severity: 'warning',
+    },
+    {
+      type: 'STALE_CONTENT',
+      label: 'Pages not updated in six months',
+      count: staleContent,
+      severity: 'info',
+    },
   ].filter((issue) => issue.count > 0);
 
   return { issues, totalIssues: issues.reduce((sum, issue) => sum + issue.count, 0) };
 }
 
-async function buildSystemHealth(prisma: import('@cheezious/database').PrismaClient, canRead: boolean) {
+async function buildSystemHealth(prisma: PrismaClient, canRead: boolean) {
   if (!canRead) return null;
 
   const [pendingJobs, failedJobs, activeSessions, totalUsers] = await Promise.all([
@@ -309,6 +372,6 @@ const pageCardSelect = {
   scheduledFor: true,
   updatedAt: true,
   updatedBy: { select: { id: true, name: true } },
-} satisfies import('@cheezious/database').Prisma.PageSelect;
+} satisfies Prisma.PageSelect;
 
 export { OPEN_WORK_STATUSES };

@@ -114,7 +114,9 @@ export function UsersTable({ rows, meta, roles, canManage, initialQuery }: Users
             {row.status === 'ACTIVE' ? 'Active' : 'Disabled'}
           </span>
           {row.mustChangePassword ? (
-            <span className="tag bg-status-warningSubtle text-content-primary">Password pending</span>
+            <span className="tag bg-status-warningSubtle text-content-primary">
+              Password pending
+            </span>
           ) : null}
         </span>
       ),
@@ -140,7 +142,11 @@ export function UsersTable({ rows, meta, roles, canManage, initialQuery }: Users
             align: 'end' as const,
             width: '90px',
             render: (row: UserRow) => (
-              <button type="button" onClick={() => setEditing(row)} className="text-interactive hover:underline">
+              <button
+                type="button"
+                onClick={() => setEditing(row)}
+                className="text-interactive hover:underline"
+              >
                 Edit
                 <span className="sr-only"> {row.name}</span>
               </button>
@@ -206,18 +212,30 @@ export function UsersTable({ rows, meta, roles, canManage, initialQuery }: Users
           </select>
 
           {canManage ? (
-            <button type="button" className="btn-primary btn-sm ms-auto" onClick={() => setInviting(true)}>
+            <button
+              type="button"
+              className="btn-primary btn-sm ms-auto"
+              onClick={() => setInviting(true)}
+            >
               Invite someone
             </button>
           ) : null}
         </FilterBar>
 
-        <div className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined} aria-busy={isPending}>
+        <div
+          className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined}
+          aria-busy={isPending}
+        >
           <DataTable
             caption="CMS users"
             columns={columns}
             rows={rows}
-            emptyState={<EmptyState title="Nobody matches those filters" description="Try a different search." />}
+            emptyState={
+              <EmptyState
+                title="Nobody matches those filters"
+                description="Try a different search."
+              />
+            }
           />
         </div>
 
@@ -231,7 +249,13 @@ export function UsersTable({ rows, meta, roles, canManage, initialQuery }: Users
         ) : null}
       </div>
 
-      {inviting ? <InviteDialog roles={roles} onClose={() => setInviting(false)} onDone={() => router.refresh()} /> : null}
+      {inviting ? (
+        <InviteDialog
+          roles={roles}
+          onClose={() => setInviting(false)}
+          onDone={() => router.refresh()}
+        />
+      ) : null}
       {editing ? (
         <EditUserDialog
           user={editing}
@@ -247,9 +271,22 @@ export function UsersTable({ rows, meta, roles, canManage, initialQuery }: Users
   );
 }
 
-function Dialog({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
+function Dialog({
+  title,
+  children,
+  onClose,
+}: {
+  title: string;
+  children: React.ReactNode;
+  onClose: () => void;
+}) {
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center bg-gray-100/50 p-05" role="dialog" aria-modal="true" aria-label={title}>
+    <div
+      className="fixed inset-0 z-modal flex items-center justify-center bg-gray-100/50 p-05"
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+    >
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
       <div className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto border border-border-subtle bg-surface-base p-06 shadow-modal">
         <div className="flex items-start justify-between gap-03">
@@ -300,7 +337,11 @@ function InviteDialog({
       };
 
       if (!response.ok) {
-        setError(body.error?.fields?.[0]?.message ?? body.error?.message ?? 'The invitation could not be created.');
+        setError(
+          body.error?.fields?.[0]?.message ??
+            body.error?.message ??
+            'The invitation could not be created.',
+        );
         return;
       }
 
@@ -324,8 +365,8 @@ function InviteDialog({
           {issued.password}
         </p>
         <p className="mt-03 text-helper-01 text-content-secondary">
-          This is shown once and is not stored in readable form. Pass it on through a channel you trust — not in
-          the same message as the sign-in link.
+          This is shown once and is not stored in readable form. Pass it on through a channel you
+          trust — not in the same message as the sign-in link.
         </p>
         <button type="button" onClick={onClose} className="btn-primary mt-05">
           Done
@@ -338,7 +379,10 @@ function InviteDialog({
     <Dialog title="Invite someone" onClose={onClose}>
       <form onSubmit={submit} className="space-y-05">
         {error ? (
-          <p className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-03 py-02 text-helper-01" role="alert">
+          <p
+            className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-03 py-02 text-helper-01"
+            role="alert"
+          >
             {error}
           </p>
         ) : null}
@@ -347,26 +391,52 @@ function InviteDialog({
           <label htmlFor="invite-name" className="field-label">
             Name
           </label>
-          <input id="invite-name" className="input" value={name} required onChange={(event) => setName(event.target.value)} autoFocus />
+          <input
+            id="invite-name"
+            className="input"
+            value={name}
+            required
+            onChange={(event) => setName(event.target.value)}
+            // A dialog takes focus when it opens: WAI-ARIA asks for it, and without
+            // it a keyboard user is left behind the overlay with nothing focused.
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+          />
         </div>
 
         <div>
           <label htmlFor="invite-email" className="field-label">
             Email address
           </label>
-          <input id="invite-email" type="email" className="input" value={email} required onChange={(event) => setEmail(event.target.value)} />
+          <input
+            id="invite-email"
+            type="email"
+            className="input"
+            value={email}
+            required
+            onChange={(event) => setEmail(event.target.value)}
+          />
         </div>
 
         <div>
           <label htmlFor="invite-job-title" className="field-label">
             Job title
           </label>
-          <input id="invite-job-title" className="input" value={jobTitle} onChange={(event) => setJobTitle(event.target.value)} />
+          <input
+            id="invite-job-title"
+            className="input"
+            value={jobTitle}
+            onChange={(event) => setJobTitle(event.target.value)}
+          />
         </div>
 
         <RolePicker roles={roles} selected={roleIds} onChange={setRoleIds} />
 
-        <button type="submit" disabled={busy || roleIds.length === 0 || !name || !email} className="btn-primary">
+        <button
+          type="submit"
+          disabled={busy || roleIds.length === 0 || !name || !email}
+          className="btn-primary"
+        >
           {busy ? 'Creating…' : 'Create account'}
         </button>
       </form>
@@ -421,7 +491,10 @@ function EditUserDialog({
     <Dialog title={user.name} onClose={onClose}>
       <form onSubmit={submit} className="space-y-05">
         {error ? (
-          <p className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-03 py-02 text-helper-01" role="alert">
+          <p
+            className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-03 py-02 text-helper-01"
+            role="alert"
+          >
             {error}
           </p>
         ) : null}
@@ -432,26 +505,43 @@ function EditUserDialog({
           <label htmlFor="edit-name" className="field-label">
             Name
           </label>
-          <input id="edit-name" className="input" value={name} required onChange={(event) => setName(event.target.value)} />
+          <input
+            id="edit-name"
+            className="input"
+            value={name}
+            required
+            onChange={(event) => setName(event.target.value)}
+          />
         </div>
 
         <div>
           <label htmlFor="edit-job-title" className="field-label">
             Job title
           </label>
-          <input id="edit-job-title" className="input" value={jobTitle} onChange={(event) => setJobTitle(event.target.value)} />
+          <input
+            id="edit-job-title"
+            className="input"
+            value={jobTitle}
+            onChange={(event) => setJobTitle(event.target.value)}
+          />
         </div>
 
         <div>
           <label htmlFor="edit-status" className="field-label">
             Status
           </label>
-          <select id="edit-status" className="select" value={status} onChange={(event) => setStatus(event.target.value)}>
+          <select
+            id="edit-status"
+            className="select"
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+          >
             <option value="ACTIVE">Active</option>
             <option value="DISABLED">Disabled</option>
           </select>
           <p className="field-helper">
-            Disabling an account ends its sessions immediately — it does not wait for them to expire.
+            Disabling an account ends its sessions immediately — it does not wait for them to
+            expire.
           </p>
         </div>
 
@@ -489,7 +579,9 @@ function RolePicker({
               checked={selected.includes(role.id)}
               onChange={(event) =>
                 onChange(
-                  event.target.checked ? [...selected, role.id] : selected.filter((id) => id !== role.id),
+                  event.target.checked
+                    ? [...selected, role.id]
+                    : selected.filter((id) => id !== role.id),
                 )
               }
             />

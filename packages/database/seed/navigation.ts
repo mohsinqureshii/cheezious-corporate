@@ -29,7 +29,11 @@ const PRIMARY: NavItemSpec[] = [
         children: [
           { label: 'About Cheezious', path: '/company/about', descriptor: 'What the company does' },
           { label: 'Our Story', path: '/company/our-story', descriptor: 'Where we started' },
-          { label: 'At a Glance', path: '/company/at-a-glance', descriptor: 'The company in figures' },
+          {
+            label: 'At a Glance',
+            path: '/company/at-a-glance',
+            descriptor: 'The company in figures',
+          },
           { label: 'Purpose', path: '/company/purpose' },
           { label: 'Mission & Vision', path: '/company/mission-vision' },
           { label: 'Values', path: '/company/values' },
@@ -41,10 +45,18 @@ const PRIMARY: NavItemSpec[] = [
         children: [
           { label: 'Leadership', path: '/company/leadership', descriptor: 'Who runs the company' },
           { label: 'Organization', path: '/company/organization' },
-          { label: 'Where We Operate', path: '/company/where-we-operate', descriptor: 'Our corporate footprint' },
+          {
+            label: 'Where We Operate',
+            path: '/company/where-we-operate',
+            descriptor: 'Our corporate footprint',
+          },
           { label: 'Timeline', path: '/company/timeline' },
           { label: 'Awards & Recognition', path: '/company/awards-recognition' },
-          { label: 'Governance', path: '/company/governance', descriptor: 'How the company is governed' },
+          {
+            label: 'Governance',
+            path: '/company/governance',
+            descriptor: 'How the company is governed',
+          },
         ],
       },
     ],
@@ -56,7 +68,11 @@ const PRIMARY: NavItemSpec[] = [
       {
         label: 'Operations',
         children: [
-          { label: 'Business Overview', path: '/company/business', descriptor: 'How it fits together' },
+          {
+            label: 'Business Overview',
+            path: '/company/business',
+            descriptor: 'How it fits together',
+          },
           { label: 'Restaurant Operations', path: '/company/business/restaurant-operations' },
           { label: 'Our Restaurants', path: '/company/business/restaurants' },
           { label: 'Delivery & Digital', path: '/company/business/delivery-digital' },
@@ -144,16 +160,30 @@ const PRIMARY: NavItemSpec[] = [
       {
         label: 'Suppliers',
         children: [
-          { label: 'Partner With Us', path: '/company/partners', descriptor: 'Ways to work with us' },
+          {
+            label: 'Partner With Us',
+            path: '/company/partners',
+            descriptor: 'Ways to work with us',
+          },
           { label: 'Suppliers', path: '/company/partners/suppliers' },
-          { label: 'Supplier Registration', path: '/company/partners/supplier-registration', descriptor: 'Register your company', isCallToAction: true },
+          {
+            label: 'Supplier Registration',
+            path: '/company/partners/supplier-registration',
+            descriptor: 'Register your company',
+            isCallToAction: true,
+          },
         ],
       },
       {
         label: 'Real estate & partnerships',
         children: [
           { label: 'Real Estate Partners', path: '/company/partners/real-estate' },
-          { label: 'Submit a Property', path: '/company/partners/submit-property', descriptor: 'Propose a location', isCallToAction: true },
+          {
+            label: 'Submit a Property',
+            path: '/company/partners/submit-property',
+            descriptor: 'Propose a location',
+            isCallToAction: true,
+          },
           { label: 'Institutional Partnerships', path: '/company/partners/institutional' },
           { label: 'Business Enquiries', path: '/company/partners/business-enquiries' },
         ],
@@ -178,7 +208,12 @@ const PRIMARY: NavItemSpec[] = [
       {
         label: 'For media',
         children: [
-          { label: 'Media Center', path: '/company/newsroom/media-center', descriptor: 'Assets and information', isCallToAction: true },
+          {
+            label: 'Media Center',
+            path: '/company/newsroom/media-center',
+            descriptor: 'Assets and information',
+            isCallToAction: true,
+          },
           { label: 'Media Coverage', path: '/company/newsroom/media-coverage' },
           { label: 'Media Contacts', path: '/company/newsroom/media-contacts' },
           { label: 'Media Library', path: '/company/newsroom/media-library' },
@@ -268,13 +303,17 @@ const UTILITY: NavItemSpec[] = [
 
 export async function seedNavigation(prisma: PrismaClient): Promise<void> {
   const pageIdByPath = new Map(
-    (await prisma.page.findMany({ where: { locale: 'en' }, select: { id: true, path: true } })).map((p) => [
-      p.path,
-      p.id,
-    ]),
+    (await prisma.page.findMany({ where: { locale: 'en' }, select: { id: true, path: true } })).map(
+      (p) => [p.path, p.id],
+    ),
   );
 
-  const navigations: Array<{ key: string; label: string; location: 'PRIMARY' | 'FOOTER' | 'UTILITY'; items: NavItemSpec[] }> = [
+  const navigations: Array<{
+    key: string;
+    label: string;
+    location: 'PRIMARY' | 'FOOTER' | 'UTILITY';
+    items: NavItemSpec[];
+  }> = [
     { key: 'primary', label: 'Primary navigation', location: 'PRIMARY', items: PRIMARY },
     { key: 'footer', label: 'Footer navigation', location: 'FOOTER', items: FOOTER },
     { key: 'utility', label: 'Utility navigation', location: 'UTILITY', items: UTILITY },
@@ -308,7 +347,9 @@ async function createItems(
 
     // An item pointing at a page that does not exist would render a dead link.
     if (item.path && !pageId) {
-      console.warn(`    ! navigation item "${item.label}" targets missing page ${item.path}; skipped`);
+      console.warn(
+        `    ! navigation item "${item.label}" targets missing page ${item.path}; skipped`,
+      );
       continue;
     }
 

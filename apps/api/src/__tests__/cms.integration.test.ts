@@ -1,7 +1,7 @@
+import { MemoryRateLimitStore, RateLimiter, hashPassword } from '@cheezious/auth';
 import { apiSchema, parseEnv } from '@cheezious/config';
 import { createPrismaClient } from '@cheezious/database';
 import { nullLogger } from '@cheezious/logger';
-import { MemoryRateLimitStore, RateLimiter, hashPassword } from '@cheezious/auth';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -40,7 +40,9 @@ async function signIn(email: string): Promise<string> {
   await rateLimitStore.reset('login:127.0.0.1');
 
   const response = await request(app).post('/api/auth/login').send({ email, password: PASSWORD });
-  expect(response.status, `sign-in failed for ${email}: ${JSON.stringify(response.body)}`).toBe(200);
+  expect(response.status, `sign-in failed for ${email}: ${JSON.stringify(response.body)}`).toBe(
+    200,
+  );
   const cookie = response.headers['set-cookie'];
   return Array.isArray(cookie) ? (cookie[0] ?? '') : String(cookie ?? '');
 }
@@ -77,14 +79,25 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // Remove everything this run created, in dependency order.
-  await ctx.prisma.pageBlock.deleteMany({ where: { page: { path: { startsWith: `/${TEST_PREFIX}` } } } });
-  await ctx.prisma.pageSeo.deleteMany({ where: { page: { path: { startsWith: `/${TEST_PREFIX}` } } } });
-  await ctx.prisma.slugHistory.deleteMany({ where: { oldPath: { startsWith: `/${TEST_PREFIX}` } } });
+  await ctx.prisma.pageBlock.deleteMany({
+    where: { page: { path: { startsWith: `/${TEST_PREFIX}` } } },
+  });
+  await ctx.prisma.pageSeo.deleteMany({
+    where: { page: { path: { startsWith: `/${TEST_PREFIX}` } } },
+  });
+  await ctx.prisma.slugHistory.deleteMany({
+    where: { oldPath: { startsWith: `/${TEST_PREFIX}` } },
+  });
   await ctx.prisma.redirect.deleteMany({ where: { source: { startsWith: `/${TEST_PREFIX}` } } });
-  await ctx.prisma.contentVersion.deleteMany({ where: { entityType: 'page', entityId: { in: [] } } });
+  await ctx.prisma.contentVersion.deleteMany({
+    where: { entityType: 'page', entityId: { in: [] } },
+  });
   await ctx.prisma.page.deleteMany({ where: { path: { startsWith: `/${TEST_PREFIX}` } } });
   await ctx.prisma.contentVersion.deleteMany({
-    where: { entityType: { in: ['story', 'job'] }, data: { path: ['title'], string_starts_with: TEST_PREFIX } },
+    where: {
+      entityType: { in: ['story', 'job'] },
+      data: { path: ['title'], string_starts_with: TEST_PREFIX },
+    },
   });
   await ctx.prisma.publishingJob.deleteMany({
     where: { entityType: 'story', entityId: { in: [] } },
@@ -279,14 +292,20 @@ describe('permissions', () => {
     const cookie = await signIn(procurementEmail);
 
     // Procurement can see its own queue…
-    const suppliers = await request(app).get('/api/cms/submissions/suppliers').set('Cookie', cookie);
+    const suppliers = await request(app)
+      .get('/api/cms/submissions/suppliers')
+      .set('Cookie', cookie);
     expect(suppliers.status).toBe(200);
 
     // …and must not be able to read applicants or property leads.
-    const applications = await request(app).get('/api/cms/submissions/applications').set('Cookie', cookie);
+    const applications = await request(app)
+      .get('/api/cms/submissions/applications')
+      .set('Cookie', cookie);
     expect(applications.status).toBe(403);
 
-    const properties = await request(app).get('/api/cms/submissions/properties').set('Cookie', cookie);
+    const properties = await request(app)
+      .get('/api/cms/submissions/properties')
+      .set('Cookie', cookie);
     expect(properties.status).toBe(403);
   });
 
@@ -294,9 +313,15 @@ describe('permissions', () => {
     const hrEmail = await createUser('hr', 'HR_MANAGER');
     const cookie = await signIn(hrEmail);
 
-    expect((await request(app).get('/api/cms/submissions/applications').set('Cookie', cookie)).status).toBe(200);
-    expect((await request(app).get('/api/cms/submissions/suppliers').set('Cookie', cookie)).status).toBe(403);
-    expect((await request(app).get('/api/cms/submissions/properties').set('Cookie', cookie)).status).toBe(403);
+    expect(
+      (await request(app).get('/api/cms/submissions/applications').set('Cookie', cookie)).status,
+    ).toBe(200);
+    expect(
+      (await request(app).get('/api/cms/submissions/suppliers').set('Cookie', cookie)).status,
+    ).toBe(403);
+    expect(
+      (await request(app).get('/api/cms/submissions/properties').set('Cookie', cookie)).status,
+    ).toBe(403);
   });
 
   it('refuses role management to an administrator without roles.manage', async () => {
@@ -436,7 +461,9 @@ describe('slug changes and redirects', () => {
     expect(redirect.body.redirect.statusCode).toBe(301);
 
     // And the new URL serves the page.
-    expect((await request(app).get('/api/public/en/pages').query({ path: newPath })).status).toBe(200);
+    expect((await request(app).get('/api/public/en/pages').query({ path: newPath })).status).toBe(
+      200,
+    );
   });
 
   it('refuses a path already used by another page', async () => {
@@ -445,7 +472,10 @@ describe('slug changes and redirects', () => {
     const path = `/${TEST_PREFIX}/taken`;
 
     await request(app).post('/api/cms/pages').set('Cookie', cookie).send({ title: 'First', path });
-    const second = await request(app).post('/api/cms/pages').set('Cookie', cookie).send({ title: 'Second', path });
+    const second = await request(app)
+      .post('/api/cms/pages')
+      .set('Cookie', cookie)
+      .send({ title: 'Second', path });
 
     expect(second.status).toBe(422);
     expect(second.body.error.fields[0].field).toBe('path');
@@ -469,13 +499,18 @@ describe('versioning', () => {
       .set('Cookie', cookie)
       .send({ action: 'PUBLISH' });
 
-    await request(app).patch(`/api/cms/pages/${pageId}`).set('Cookie', cookie).send({ title: 'Version two' });
+    await request(app)
+      .patch(`/api/cms/pages/${pageId}`)
+      .set('Cookie', cookie)
+      .send({ title: 'Version two' });
     await request(app)
       .post(`/api/cms/pages/${pageId}/transition`)
       .set('Cookie', cookie)
       .send({ action: 'PUBLISH' });
 
-    const versions = await request(app).get(`/api/cms/pages/${pageId}/versions`).set('Cookie', cookie);
+    const versions = await request(app)
+      .get(`/api/cms/pages/${pageId}/versions`)
+      .set('Cookie', cookie);
     expect(versions.body.versions.length).toBeGreaterThanOrEqual(2);
 
     const firstVersion = versions.body.versions[versions.body.versions.length - 1];
@@ -485,11 +520,16 @@ describe('versioning', () => {
       .send({});
     expect(restored.status).toBe(200);
 
-    const page = await ctx.prisma.page.findUniqueOrThrow({ where: { id: pageId }, select: { title: true } });
+    const page = await ctx.prisma.page.findUniqueOrThrow({
+      where: { id: pageId },
+      select: { title: true },
+    });
     expect(page.title).toBe('Version one');
 
     // Restoring appends: the state before the restore is still recoverable.
-    const afterRestore = await request(app).get(`/api/cms/pages/${pageId}/versions`).set('Cookie', cookie);
+    const afterRestore = await request(app)
+      .get(`/api/cms/pages/${pageId}/versions`)
+      .set('Cookie', cookie);
     expect(afterRestore.body.versions.length).toBeGreaterThan(versions.body.versions.length);
   });
 
@@ -621,7 +661,10 @@ describe('account self-service', () => {
     const response = await request(app)
       .post('/api/auth/password/change')
       .set('Cookie', cookie)
-      .send({ currentPassword: 'not-the-current-password', newPassword: 'another-long-passphrase-4471' });
+      .send({
+        currentPassword: 'not-the-current-password',
+        newPassword: 'another-long-passphrase-4471',
+      });
 
     expect(response.status).toBe(422);
     expect(response.body.error.fields[0].field).toBe('currentPassword');
@@ -640,7 +683,9 @@ describe('account self-service', () => {
       .send({ currentPassword: PASSWORD, newPassword: 'short' });
 
     expect(response.status).toBe(422);
-    expect(response.body.error.fields.some((field: { field: string }) => field.field === 'newPassword')).toBe(true);
+    expect(
+      response.body.error.fields.some((field: { field: string }) => field.field === 'newPassword'),
+    ).toBe(true);
   });
 
   it('changes the password, ends other sessions and keeps the current one', async () => {
@@ -676,7 +721,12 @@ describe('account self-service', () => {
     const response = await request(app)
       .patch('/api/auth/me')
       .set('Cookie', cookie)
-      .send({ name: 'Corrected Name', jobTitle: 'Analyst', email: 'someone-else@example.test', roles: ['SUPER_ADMIN'] });
+      .send({
+        name: 'Corrected Name',
+        jobTitle: 'Analyst',
+        email: 'someone-else@example.test',
+        roles: ['SUPER_ADMIN'],
+      });
 
     expect(response.status).toBe(200);
     expect(response.body.user.name).toBe('Corrected Name');
@@ -691,7 +741,10 @@ describe('account self-service', () => {
     const email = await createUser('selfservice-blank', 'VIEWER');
     const cookie = await signIn(email);
 
-    const response = await request(app).patch('/api/auth/me').set('Cookie', cookie).send({ name: '   ' });
+    const response = await request(app)
+      .patch('/api/auth/me')
+      .set('Cookie', cookie)
+      .send({ name: '   ' });
 
     expect(response.status).toBe(422);
   });
@@ -720,7 +773,9 @@ describe('account self-service', () => {
     const theirSessions = await request(app).get('/api/auth/sessions').set('Cookie', theirCookie);
     const theirSessionId = theirSessions.body.sessions[0].id;
 
-    const response = await request(app).delete(`/api/auth/sessions/${theirSessionId}`).set('Cookie', myCookie);
+    const response = await request(app)
+      .delete(`/api/auth/sessions/${theirSessionId}`)
+      .set('Cookie', myCookie);
 
     // Not found rather than forbidden: one user has no business learning that
     // another user's session id exists.
@@ -737,7 +792,11 @@ describe('structured content collections', () => {
     const created = await request(app)
       .post('/api/cms/content/stories')
       .set('Cookie', cookie)
-      .send({ locale: 'en', title: `${TEST_PREFIX} author story`, excerpt: 'Drafted by an author.' });
+      .send({
+        locale: 'en',
+        title: `${TEST_PREFIX} author story`,
+        excerpt: 'Drafted by an author.',
+      });
 
     expect(created.status).toBe(201);
     expect(created.body.item.status).toBe('DRAFT');
@@ -757,15 +816,25 @@ describe('structured content collections', () => {
   });
 
   it('keeps Procurement out of people and HR out of suppliers', async () => {
-    const procurement = await signIn(await createUser('collections-procurement', 'PROCUREMENT_MANAGER'));
+    const procurement = await signIn(
+      await createUser('collections-procurement', 'PROCUREMENT_MANAGER'),
+    );
     const hr = await signIn(await createUser('collections-hr', 'HR_MANAGER'));
 
-    expect((await request(app).get('/api/cms/content/people').set('Cookie', procurement)).status).toBe(403);
-    expect((await request(app).get('/api/cms/submissions/suppliers').set('Cookie', hr)).status).toBe(403);
+    expect(
+      (await request(app).get('/api/cms/content/people').set('Cookie', procurement)).status,
+    ).toBe(403);
+    expect(
+      (await request(app).get('/api/cms/submissions/suppliers').set('Cookie', hr)).status,
+    ).toBe(403);
 
     // Each can still reach their own queue.
-    expect((await request(app).get('/api/cms/submissions/suppliers').set('Cookie', procurement)).status).toBe(200);
-    expect((await request(app).get('/api/cms/submissions/applications').set('Cookie', hr)).status).toBe(200);
+    expect(
+      (await request(app).get('/api/cms/submissions/suppliers').set('Cookie', procurement)).status,
+    ).toBe(200);
+    expect(
+      (await request(app).get('/api/cms/submissions/applications').set('Cookie', hr)).status,
+    ).toBe(200);
   });
 
   it('sanitises rich text on the way in', async () => {
@@ -789,7 +858,9 @@ describe('structured content collections', () => {
   });
 
   it('separates the working copy from what the public site serves', async () => {
-    const cookie = await signIn(await createUser('collections-separation', 'CORPORATE_COMMUNICATIONS'));
+    const cookie = await signIn(
+      await createUser('collections-separation', 'CORPORATE_COMMUNICATIONS'),
+    );
 
     const created = await request(app)
       .post('/api/cms/content/stories')
@@ -797,7 +868,10 @@ describe('structured content collections', () => {
       .send({ locale: 'en', title: `${TEST_PREFIX} separation`, excerpt: 'As published.' });
     const id = created.body.item.id as string;
 
-    await request(app).post(`/api/cms/content/stories/${id}/transition`).set('Cookie', cookie).send({ action: 'PUBLISH' });
+    await request(app)
+      .post(`/api/cms/content/stories/${id}/transition`)
+      .set('Cookie', cookie)
+      .send({ action: 'PUBLISH' });
 
     await request(app)
       .patch(`/api/cms/content/stories/${id}`)
@@ -823,12 +897,22 @@ describe('structured content collections', () => {
       .send({ locale: 'en', title: `${TEST_PREFIX} delete guard` });
     const id = created.body.item.id as string;
 
-    await request(app).post(`/api/cms/content/stories/${id}/transition`).set('Cookie', cookie).send({ action: 'PUBLISH' });
+    await request(app)
+      .post(`/api/cms/content/stories/${id}/transition`)
+      .set('Cookie', cookie)
+      .send({ action: 'PUBLISH' });
 
-    expect((await request(app).delete(`/api/cms/content/stories/${id}`).set('Cookie', cookie)).status).toBe(409);
+    expect(
+      (await request(app).delete(`/api/cms/content/stories/${id}`).set('Cookie', cookie)).status,
+    ).toBe(409);
 
-    await request(app).post(`/api/cms/content/stories/${id}/transition`).set('Cookie', cookie).send({ action: 'UNPUBLISH' });
-    expect((await request(app).delete(`/api/cms/content/stories/${id}`).set('Cookie', cookie)).status).toBe(204);
+    await request(app)
+      .post(`/api/cms/content/stories/${id}/transition`)
+      .set('Cookie', cookie)
+      .send({ action: 'UNPUBLISH' });
+    expect(
+      (await request(app).delete(`/api/cms/content/stories/${id}`).set('Cookie', cookie)).status,
+    ).toBe(204);
   });
 
   it('treats opening a job as a publishing act', async () => {
@@ -847,8 +931,9 @@ describe('structured content collections', () => {
       .send({ status: 'OPEN' });
 
     // HR can write the posting; whether it goes live is a separate right.
-    const hrMayPublish = (await request(app).get('/api/auth/me').set('Cookie', editorCookie)).body.user
-      .permissions.includes('careers.publish');
+    const hrMayPublish = (
+      await request(app).get('/api/auth/me').set('Cookie', editorCookie)
+    ).body.user.permissions.includes('careers.publish');
     expect(opened.status).toBe(hrMayPublish ? 200 : 403);
   });
 
@@ -1119,7 +1204,10 @@ describe('workflow permissions across content types', () => {
     const types: Array<{ path: string; body: Record<string, unknown> }> = [
       { path: 'stories', body: { locale: 'en', title: `${TEST_PREFIX} workflow story` } },
       { path: 'news', body: { locale: 'en', title: `${TEST_PREFIX} workflow news` } },
-      { path: 'press-releases', body: { locale: 'en', headline: `${TEST_PREFIX} workflow release` } },
+      {
+        path: 'press-releases',
+        body: { locale: 'en', headline: `${TEST_PREFIX} workflow release` },
+      },
       { path: 'people', body: { locale: 'en', name: `${TEST_PREFIX} Person`, role: 'Test role' } },
       { path: 'policies', body: { locale: 'en', title: `${TEST_PREFIX} workflow policy` } },
     ];
@@ -1138,7 +1226,9 @@ describe('workflow permissions across content types', () => {
           .post(`/api/cms/content/${type.path}/${id}/transition`)
           .set('Cookie', cookie)
           .send({ action });
-        expect(response.status, `${type.path} ${action}: ${JSON.stringify(response.body)}`).toBe(200);
+        expect(response.status, `${type.path} ${action}: ${JSON.stringify(response.body)}`).toBe(
+          200,
+        );
       }
 
       await request(app)
@@ -1159,7 +1249,9 @@ describe('workflow permissions across content types', () => {
       .send({ locale: 'en', title });
     const slug = first.body.item.slug as string;
 
-    await request(app).delete(`/api/cms/content/stories/${first.body.item.id}`).set('Cookie', cookie);
+    await request(app)
+      .delete(`/api/cms/content/stories/${first.body.item.id}`)
+      .set('Cookie', cookie);
 
     // Deleting a draft called "Annual Report" must not reserve that address
     // forever.
@@ -1171,7 +1263,9 @@ describe('workflow permissions across content types', () => {
     expect(second.status).toBe(201);
     expect(second.body.item.slug).toBe(slug);
 
-    await request(app).delete(`/api/cms/content/stories/${second.body.item.id}`).set('Cookie', cookie);
+    await request(app)
+      .delete(`/api/cms/content/stories/${second.body.item.id}`)
+      .set('Cookie', cookie);
   });
 });
 
@@ -1214,7 +1308,9 @@ describe('sitemap data', () => {
     // A draft has no public URL, so it has no business in the sitemap.
     expect(slugs).not.toContain(created.body.item.slug);
 
-    await request(app).delete(`/api/cms/content/stories/${created.body.item.id}`).set('Cookie', cookie);
+    await request(app)
+      .delete(`/api/cms/content/stories/${created.body.item.id}`)
+      .set('Cookie', cookie);
   });
 
   it('offers a social image for every page, even one without its own', async () => {

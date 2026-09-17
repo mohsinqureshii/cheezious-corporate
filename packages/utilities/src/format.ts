@@ -14,7 +14,10 @@ export function formatDate(
   return new Intl.DateTimeFormat(DATE_LOCALE[locale] ?? 'en-PK', options).format(date);
 }
 
-export function formatDateTime(value: Date | string | number, locale: string = DEFAULT_LOCALE): string {
+export function formatDateTime(
+  value: Date | string | number,
+  locale: string = DEFAULT_LOCALE,
+): string {
   return formatDate(value, locale, {
     year: 'numeric',
     month: 'short',
@@ -25,7 +28,10 @@ export function formatDateTime(value: Date | string | number, locale: string = D
 }
 
 /** Short relative time ("3 days ago") for CMS activity feeds. */
-export function formatRelativeTime(value: Date | string | number, locale: string = DEFAULT_LOCALE): string {
+export function formatRelativeTime(
+  value: Date | string | number,
+  locale: string = DEFAULT_LOCALE,
+): string {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return '';
   const rtf = new Intl.RelativeTimeFormat(DATE_LOCALE[locale] ?? 'en-PK', { numeric: 'auto' });
@@ -39,12 +45,17 @@ export function formatRelativeTime(value: Date | string | number, locale: string
     ['minute', 60],
   ];
   for (const [unit, seconds] of table) {
-    if (Math.abs(diffSeconds) >= seconds) return rtf.format(Math.round(diffSeconds / seconds), unit);
+    if (Math.abs(diffSeconds) >= seconds)
+      return rtf.format(Math.round(diffSeconds / seconds), unit);
   }
   return rtf.format(diffSeconds, 'second');
 }
 
-export function formatNumber(value: number, locale: string = DEFAULT_LOCALE, options?: Intl.NumberFormatOptions): string {
+export function formatNumber(
+  value: number,
+  locale: string = DEFAULT_LOCALE,
+  options?: Intl.NumberFormatOptions,
+): string {
   return new Intl.NumberFormat(DATE_LOCALE[locale] ?? 'en-PK', options).format(value);
 }
 

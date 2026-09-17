@@ -118,7 +118,8 @@ export function displayValue(row: RecordRow, field: FieldSpec): string {
   if (field.type === 'reference') {
     // The API returns the related record alongside its id, so the name is shown
     // rather than a cuid nobody can read.
-    const related = row[field.name.replace(/Id$/, '')] as { name?: string; title?: string } | undefined;
+    const related = row[field.name.replace(/Id$/, '')] as
+      { name?: string; title?: string } | undefined;
     return related?.name ?? related?.title ?? '—';
   }
 
@@ -126,7 +127,9 @@ export function displayValue(row: RecordRow, field: FieldSpec): string {
 }
 
 /** Group a collection's fields for the editor's panels, preserving order. */
-export function groupFields(fields: FieldSpec[]): Array<{ key: string; label: string; fields: FieldSpec[] }> {
+export function groupFields(
+  fields: FieldSpec[],
+): Array<{ key: string; label: string; fields: FieldSpec[] }> {
   const groups: Array<{ key: FieldSpec['group']; label: string }> = [
     { key: 'content', label: 'Content' },
     { key: 'details', label: 'Details' },

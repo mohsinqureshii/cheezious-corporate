@@ -48,7 +48,9 @@ export function LocaleSwitch({ locale, otherLocale, fallbackPath }: LocaleSwitch
       const url = new URL(alternate.href);
       // Same-origin only: an alternate pointing elsewhere is not a language
       // switch, whatever it claims to be.
-      setHref(url.origin === window.location.origin ? `${url.pathname}${url.search}` : fallbackPath);
+      setHref(
+        url.origin === window.location.origin ? `${url.pathname}${url.search}` : fallbackPath,
+      );
     } catch {
       setHref(fallbackPath);
     }

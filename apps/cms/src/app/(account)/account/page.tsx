@@ -46,17 +46,24 @@ export default async function AccountPage() {
             <h2 className="text-heading-compact text-content-primary">Sign-in</h2>
             <dl className="mt-04 space-y-04">
               <div>
-                <dt className="text-label-01 uppercase tracking-wide text-content-tertiary">Email address</dt>
+                <dt className="text-label-01 uppercase tracking-wide text-content-tertiary">
+                  Email address
+                </dt>
                 <dd className="mt-01 break-all text-body-01 text-content-primary">{user.email}</dd>
                 <p className="mt-01 text-helper-01 text-content-tertiary">
                   Changing this is an administrative action. Ask an administrator.
                 </p>
               </div>
               <div>
-                <dt className="text-label-01 uppercase tracking-wide text-content-tertiary">Last signed in</dt>
+                <dt className="text-label-01 uppercase tracking-wide text-content-tertiary">
+                  Last signed in
+                </dt>
                 <dd className="mt-01 text-body-01 text-content-primary">
                   {user.lastLoginAt
-                    ? formatDate(user.lastLoginAt, 'en', { dateStyle: 'medium', timeStyle: 'short' })
+                    ? formatDate(user.lastLoginAt, 'en', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      })
                     : 'This is your first session.'}
                 </dd>
               </div>
@@ -75,7 +82,9 @@ export default async function AccountPage() {
           <div className="panel p-06">
             <h2 className="text-heading-compact text-content-primary">Access</h2>
 
-            <p className="mt-04 text-label-01 uppercase tracking-wide text-content-tertiary">Roles</p>
+            <p className="mt-04 text-label-01 uppercase tracking-wide text-content-tertiary">
+              Roles
+            </p>
             {user.roles.length > 0 ? (
               <ul className="mt-02 flex flex-wrap gap-02">
                 {user.roles.map((role) => (

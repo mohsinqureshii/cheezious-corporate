@@ -53,7 +53,12 @@ interface FieldError {
 
 const DEFAULT_FIELDS: Record<FormEndpoint, FieldDefinition[]> = {
   contact: [
-    { type: 'SELECT', name: 'categoryKey', label: 'What is your enquiry about?', isRequired: true, width: 'full',
+    {
+      type: 'SELECT',
+      name: 'categoryKey',
+      label: 'What is your enquiry about?',
+      isRequired: true,
+      width: 'full',
       options: [
         { value: 'CUSTOMER', label: 'Customer care' },
         { value: 'CORPORATE', label: 'Corporate enquiry' },
@@ -63,7 +68,8 @@ const DEFAULT_FIELDS: Record<FormEndpoint, FieldDefinition[]> = {
         { value: 'REAL_ESTATE', label: 'Real estate' },
         { value: 'PARTNERSHIPS', label: 'Partnerships' },
         { value: 'OTHER', label: 'Something else' },
-      ] },
+      ],
+    },
     { type: 'TEXT', name: 'name', label: 'Your name', isRequired: true, width: 'half' },
     { type: 'EMAIL', name: 'email', label: 'Email address', isRequired: true, width: 'half' },
     { type: 'PHONE', name: 'phone', label: 'Phone number', isRequired: false, width: 'half' },
@@ -73,19 +79,63 @@ const DEFAULT_FIELDS: Record<FormEndpoint, FieldDefinition[]> = {
   ],
   suppliers: [
     { type: 'TEXT', name: 'companyName', label: 'Company name', isRequired: true, width: 'half' },
-    { type: 'TEXT', name: 'website', label: 'Website', isRequired: false, width: 'half', placeholder: 'https://' },
+    {
+      type: 'TEXT',
+      name: 'website',
+      label: 'Website',
+      isRequired: false,
+      width: 'half',
+      placeholder: 'https://',
+    },
     { type: 'TEXT', name: 'contactName', label: 'Contact name', isRequired: true, width: 'half' },
     { type: 'EMAIL', name: 'email', label: 'Email address', isRequired: true, width: 'half' },
     { type: 'PHONE', name: 'phone', label: 'Phone number', isRequired: true, width: 'half' },
-    { type: 'SELECT', name: 'categoryId', label: 'Category', isRequired: false, width: 'half', options: [] },
-    { type: 'TEXTAREA', name: 'productsServices', label: 'What do you supply?', isRequired: true, width: 'full',
-      helpText: 'Describe the products or services you would supply.' },
-    { type: 'TEXT', name: 'citiesServed', label: 'Cities served', isRequired: false, width: 'full',
-      helpText: 'Separate multiple cities with commas.' },
-    { type: 'TEXTAREA', name: 'certifications', label: 'Certifications', isRequired: false, width: 'full' },
-    { type: 'TEXTAREA', name: 'productionCapacity', label: 'Production capacity', isRequired: false, width: 'full' },
-    { type: 'FILE', name: 'attachments', label: 'Company profile or catalogue', isRequired: false, width: 'full',
-      helpText: 'PDF, Word or images, up to 10 MB each.' },
+    {
+      type: 'SELECT',
+      name: 'categoryId',
+      label: 'Category',
+      isRequired: false,
+      width: 'half',
+      options: [],
+    },
+    {
+      type: 'TEXTAREA',
+      name: 'productsServices',
+      label: 'What do you supply?',
+      isRequired: true,
+      width: 'full',
+      helpText: 'Describe the products or services you would supply.',
+    },
+    {
+      type: 'TEXT',
+      name: 'citiesServed',
+      label: 'Cities served',
+      isRequired: false,
+      width: 'full',
+      helpText: 'Separate multiple cities with commas.',
+    },
+    {
+      type: 'TEXTAREA',
+      name: 'certifications',
+      label: 'Certifications',
+      isRequired: false,
+      width: 'full',
+    },
+    {
+      type: 'TEXTAREA',
+      name: 'productionCapacity',
+      label: 'Production capacity',
+      isRequired: false,
+      width: 'full',
+    },
+    {
+      type: 'FILE',
+      name: 'attachments',
+      label: 'Company profile or catalogue',
+      isRequired: false,
+      width: 'full',
+      helpText: 'PDF, Word or images, up to 10 MB each.',
+    },
   ],
   properties: [
     { type: 'TEXT', name: 'contactName', label: 'Your name', isRequired: true, width: 'half' },
@@ -93,9 +143,20 @@ const DEFAULT_FIELDS: Record<FormEndpoint, FieldDefinition[]> = {
     { type: 'PHONE', name: 'phone', label: 'Phone number', isRequired: true, width: 'half' },
     { type: 'TEXT', name: 'company', label: 'Company', isRequired: false, width: 'half' },
     { type: 'TEXT', name: 'cityName', label: 'City', isRequired: true, width: 'half' },
-    { type: 'TEXT', name: 'area', label: 'Area or neighbourhood', isRequired: false, width: 'half' },
+    {
+      type: 'TEXT',
+      name: 'area',
+      label: 'Area or neighbourhood',
+      isRequired: false,
+      width: 'half',
+    },
     { type: 'TEXTAREA', name: 'address', label: 'Address', isRequired: true, width: 'full' },
-    { type: 'SELECT', name: 'propertyType', label: 'Property type', isRequired: true, width: 'half',
+    {
+      type: 'SELECT',
+      name: 'propertyType',
+      label: 'Property type',
+      isRequired: true,
+      width: 'half',
       options: [
         { value: 'HIGH_STREET', label: 'High street' },
         { value: 'SHOPPING_MALL', label: 'Shopping mall' },
@@ -105,43 +166,127 @@ const DEFAULT_FIELDS: Record<FormEndpoint, FieldDefinition[]> = {
         { value: 'KIOSK', label: 'Kiosk' },
         { value: 'COMMERCIAL_PLAZA', label: 'Commercial plaza' },
         { value: 'OTHER', label: 'Other' },
-      ] },
-    { type: 'SELECT', name: 'ownership', label: 'Your relationship to the property', isRequired: true, width: 'half',
+      ],
+    },
+    {
+      type: 'SELECT',
+      name: 'ownership',
+      label: 'Your relationship to the property',
+      isRequired: true,
+      width: 'half',
       options: [
         { value: 'OWNER', label: 'Owner' },
         { value: 'AUTHORISED_AGENT', label: 'Authorised agent' },
         { value: 'DEVELOPER', label: 'Developer' },
         { value: 'OTHER', label: 'Other' },
-      ] },
-    { type: 'NUMBER', name: 'totalAreaSqft', label: 'Total area (sq ft)', isRequired: false, width: 'half' },
-    { type: 'NUMBER', name: 'groundFloorSqft', label: 'Ground-floor area (sq ft)', isRequired: false, width: 'half' },
-    { type: 'NUMBER', name: 'frontageFeet', label: 'Frontage (ft)', isRequired: false, width: 'half' },
-    { type: 'NUMBER', name: 'parkingSpaces', label: 'Parking spaces', isRequired: false, width: 'half' },
-    { type: 'CHECKBOX', name: 'driveThroughFeasible', label: 'A drive-through would be feasible here', isRequired: false, width: 'full' },
-    { type: 'TEXT', name: 'expectedRent', label: 'Expected rent', isRequired: false, width: 'half' },
-    { type: 'TEXTAREA', name: 'notes', label: 'Anything else we should know?', isRequired: false, width: 'full' },
-    { type: 'FILE', name: 'attachments', label: 'Photographs or floor plan', isRequired: false, width: 'full',
-      helpText: 'Images or PDF, up to 10 MB each.' },
+      ],
+    },
+    {
+      type: 'NUMBER',
+      name: 'totalAreaSqft',
+      label: 'Total area (sq ft)',
+      isRequired: false,
+      width: 'half',
+    },
+    {
+      type: 'NUMBER',
+      name: 'groundFloorSqft',
+      label: 'Ground-floor area (sq ft)',
+      isRequired: false,
+      width: 'half',
+    },
+    {
+      type: 'NUMBER',
+      name: 'frontageFeet',
+      label: 'Frontage (ft)',
+      isRequired: false,
+      width: 'half',
+    },
+    {
+      type: 'NUMBER',
+      name: 'parkingSpaces',
+      label: 'Parking spaces',
+      isRequired: false,
+      width: 'half',
+    },
+    {
+      type: 'CHECKBOX',
+      name: 'driveThroughFeasible',
+      label: 'A drive-through would be feasible here',
+      isRequired: false,
+      width: 'full',
+    },
+    {
+      type: 'TEXT',
+      name: 'expectedRent',
+      label: 'Expected rent',
+      isRequired: false,
+      width: 'half',
+    },
+    {
+      type: 'TEXTAREA',
+      name: 'notes',
+      label: 'Anything else we should know?',
+      isRequired: false,
+      width: 'full',
+    },
+    {
+      type: 'FILE',
+      name: 'attachments',
+      label: 'Photographs or floor plan',
+      isRequired: false,
+      width: 'full',
+      helpText: 'Images or PDF, up to 10 MB each.',
+    },
   ],
   partnerships: [
-    { type: 'TEXT', name: 'organisationName', label: 'Organisation name', isRequired: true, width: 'half' },
-    { type: 'TEXT', name: 'website', label: 'Website', isRequired: false, width: 'half', placeholder: 'https://' },
+    {
+      type: 'TEXT',
+      name: 'organisationName',
+      label: 'Organisation name',
+      isRequired: true,
+      width: 'half',
+    },
+    {
+      type: 'TEXT',
+      name: 'website',
+      label: 'Website',
+      isRequired: false,
+      width: 'half',
+      placeholder: 'https://',
+    },
     { type: 'TEXT', name: 'contactName', label: 'Your name', isRequired: true, width: 'half' },
     { type: 'TEXT', name: 'role', label: 'Your role', isRequired: false, width: 'half' },
     { type: 'EMAIL', name: 'email', label: 'Email address', isRequired: true, width: 'half' },
     { type: 'PHONE', name: 'phone', label: 'Phone number', isRequired: false, width: 'half' },
-    { type: 'TEXTAREA', name: 'proposal', label: 'What do you have in mind?', isRequired: true, width: 'full' },
+    {
+      type: 'TEXTAREA',
+      name: 'proposal',
+      label: 'What do you have in mind?',
+      isRequired: true,
+      width: 'full',
+    },
   ],
 };
 
 const CONSENT_LABEL: Record<FormEndpoint, string> = {
-  contact: 'I consent to Cheezious storing and processing this information to respond to my enquiry.',
-  suppliers: 'I consent to Cheezious storing and processing this information to assess a potential supplier relationship.',
-  properties: 'I consent to Cheezious storing and processing this information to assess the proposed location.',
-  partnerships: 'I consent to Cheezious storing and processing this information to assess a potential partnership.',
+  contact:
+    'I consent to Cheezious storing and processing this information to respond to my enquiry.',
+  suppliers:
+    'I consent to Cheezious storing and processing this information to assess a potential supplier relationship.',
+  properties:
+    'I consent to Cheezious storing and processing this information to assess the proposed location.',
+  partnerships:
+    'I consent to Cheezious storing and processing this information to assess a potential partnership.',
 };
 
-export function PublicForm({ formKey, locale, fields, submitLabel, successMessage }: PublicFormProps) {
+export function PublicForm({
+  formKey,
+  locale,
+  fields,
+  submitLabel,
+  successMessage,
+}: PublicFormProps) {
   const endpoint = ENDPOINT_BY_KEY[formKey];
   const formId = useId();
   const mountedAt = useRef(Date.now());
@@ -154,7 +299,8 @@ export function PublicForm({ formKey, locale, fields, submitLabel, successMessag
   if (!endpoint) {
     return (
       <p className="text-body-sm text-ink-muted">
-        This form is not yet configured. Add a form definition in the CMS with key <code>{formKey}</code>.
+        This form is not yet configured. Add a form definition in the CMS with key{' '}
+        <code>{formKey}</code>.
       </p>
     );
   }
@@ -211,7 +357,11 @@ export function PublicForm({ formKey, locale, fields, submitLabel, successMessag
 
   if (status === 'success') {
     return (
-      <div className="border-s-2 border-signal-success bg-paper-raised p-8" role="status" aria-live="polite">
+      <div
+        className="border-s-2 border-signal-success bg-paper-raised p-8"
+        role="status"
+        aria-live="polite"
+      >
         <h3 className="text-heading-md text-ink">Thank you</h3>
         <p className="mt-3 max-w-prose text-body-md text-ink-soft">{message}</p>
         {reference ? (
@@ -255,7 +405,13 @@ export function PublicForm({ formKey, locale, fields, submitLabel, successMessag
 
       <div className="grid gap-x-gutter gap-y-6 sm:grid-cols-2">
         {resolvedFields.map((field) => (
-          <Field key={field.name} field={field} formId={formId} error={errorFor(field.name)} locale={locale} />
+          <Field
+            key={field.name}
+            field={field}
+            formId={formId}
+            error={errorFor(field.name)}
+            locale={locale}
+          />
         ))}
       </div>
 
@@ -263,7 +419,13 @@ export function PublicForm({ formKey, locale, fields, submitLabel, successMessag
           hidden fields. Excluded from the tab order and from assistive tech. */}
       <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
         <label htmlFor={`${formId}-contact-fax`}>Leave this field empty</label>
-        <input id={`${formId}-contact-fax`} type="text" name="contactFax" tabIndex={-1} autoComplete="off" />
+        <input
+          id={`${formId}-contact-fax`}
+          type="text"
+          name="contactFax"
+          tabIndex={-1}
+          autoComplete="off"
+        />
       </div>
 
       <div className="border-t border-ink-line pt-6">
@@ -285,7 +447,10 @@ export function PublicForm({ formKey, locale, fields, submitLabel, successMessag
         </label>
         <p id={`${formId}-consent-help`} className="ms-7 mt-2 text-body-xs text-ink-faint">
           We use this information only to handle your submission. Read our{' '}
-          <a href={`/${locale}/company/governance/privacy`} className="underline underline-offset-2">
+          <a
+            href={`/${locale}/company/governance/privacy`}
+            className="underline underline-offset-2"
+          >
             privacy information
           </a>
           .
@@ -419,12 +584,22 @@ function Field({
         ) : (
           <input
             id={id}
-            type={field.type === 'EMAIL' ? 'email' : field.type === 'PHONE' ? 'tel' : field.type === 'NUMBER' ? 'number' : 'text'}
+            type={
+              field.type === 'EMAIL'
+                ? 'email'
+                : field.type === 'PHONE'
+                  ? 'tel'
+                  : field.type === 'NUMBER'
+                    ? 'number'
+                    : 'text'
+            }
             name={field.name}
             required={field.isRequired}
             placeholder={field.placeholder ?? undefined}
             autoComplete={AUTOCOMPLETE[field.name] ?? undefined}
-            inputMode={field.type === 'NUMBER' ? 'numeric' : field.type === 'PHONE' ? 'tel' : undefined}
+            inputMode={
+              field.type === 'NUMBER' ? 'numeric' : field.type === 'PHONE' ? 'tel' : undefined
+            }
             aria-describedby={describedBy || undefined}
             aria-invalid={error ? true : undefined}
             className={baseClass}

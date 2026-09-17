@@ -7,8 +7,8 @@ import { notFound } from 'next/navigation';
 
 import { RichText, Section, SectionHeader } from '@/components/blocks/primitives';
 import { getPolicy, getSettings } from '@/lib/content';
-import { mediaUrl } from '@/lib/urls';
 import { buildRouteSeo, siteUrl } from '@/lib/seo';
+import { mediaUrl } from '@/lib/urls';
 
 /**
  * A published policy.
@@ -42,7 +42,13 @@ interface Policy {
   seoDescription: string | null;
   isDemoContent?: boolean;
   category: { name: string; slug: string } | null;
-  document: { id: string; storageKey: string; originalName: string; mimeType: string; byteSize: number } | null;
+  document: {
+    id: string;
+    storageKey: string;
+    originalName: string;
+    mimeType: string;
+    byteSize: number;
+  } | null;
   versions: Array<{
     version: string;
     effectiveDate: string | null;
@@ -51,7 +57,11 @@ interface Policy {
   }>;
 }
 
-export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<RouteParams>;
+}): Promise<Metadata> {
   const { locale: localeParam, slug } = await params;
   if (!isLocale(localeParam)) return {};
 
@@ -68,7 +78,9 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
     path: `/${locale}/company/governance/policies/${slug}`,
     title: policy.seoTitle ?? policy.title,
     description:
-      policy.seoDescription ?? policy.summary ?? `${policy.title}, version ${policy.version}, from Cheezious.`,
+      policy.seoDescription ??
+      policy.summary ??
+      `${policy.title}, version ${policy.version}, from Cheezious.`,
     siteName: (settings['site.name'] as string) ?? 'Cheezious Corporate',
     type: 'article',
     publishedTime: policy.effectiveDate,
@@ -118,7 +130,10 @@ export default async function PolicyPage({ params }: { params: Promise<RoutePara
             </li>
             <li aria-hidden="true">/</li>
             <li>
-              <Link href={`/${locale}/company/governance/policies`} className="no-underline hover:text-ink">
+              <Link
+                href={`/${locale}/company/governance/policies`}
+                className="no-underline hover:text-ink"
+              >
                 Policies
               </Link>
             </li>
@@ -128,11 +143,15 @@ export default async function PolicyPage({ params }: { params: Promise<RoutePara
         </nav>
 
         {policy.category ? (
-          <p className="text-body-xs uppercase tracking-widest text-accent-ink">{policy.category.name}</p>
+          <p className="text-body-xs uppercase tracking-widest text-accent-ink">
+            {policy.category.name}
+          </p>
         ) : null}
 
         <h1 className="mt-4 text-display-sm text-ink">{policy.title}</h1>
-        {policy.summary ? <p className="mt-6 text-body-lg text-ink-muted">{policy.summary}</p> : null}
+        {policy.summary ? (
+          <p className="mt-6 text-body-lg text-ink-muted">{policy.summary}</p>
+        ) : null}
 
         <dl className="mt-10 grid gap-6 border-y border-rule py-6 sm:grid-cols-3">
           <div>
@@ -140,7 +159,9 @@ export default async function PolicyPage({ params }: { params: Promise<RoutePara
             <dd className="mt-1 text-body-md text-ink">{policy.version}</dd>
           </div>
           <div>
-            <dt className="text-body-xs uppercase tracking-widest text-ink-faint">Effective from</dt>
+            <dt className="text-body-xs uppercase tracking-widest text-ink-faint">
+              Effective from
+            </dt>
             <dd className="mt-1 text-body-md text-ink">
               {policy.effectiveDate ? (
                 <time dateTime={policy.effectiveDate}>
@@ -159,7 +180,11 @@ export default async function PolicyPage({ params }: { params: Promise<RoutePara
 
         {documentHref ? (
           <p className="mt-6">
-            <a href={documentHref} download className="text-body-sm uppercase tracking-widest text-ink no-underline hover:text-accent-ink">
+            <a
+              href={documentHref}
+              download
+              className="text-body-sm uppercase tracking-widest text-ink no-underline hover:text-accent-ink"
+            >
               Download the signed document
             </a>
           </p>

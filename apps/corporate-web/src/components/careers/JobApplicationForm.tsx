@@ -26,7 +26,13 @@ export interface JobApplicationFormProps {
   locale: Locale;
   jobSlug: string;
   jobTitle: string;
-  fields?: Array<{ name: string; label: string; type: string; isRequired: boolean; helpText?: string | null }>;
+  fields?: Array<{
+    name: string;
+    label: string;
+    type: string;
+    isRequired: boolean;
+    helpText?: string | null;
+  }>;
   submitLabel?: string;
   successMessage?: string;
   privacyPath: string;
@@ -64,7 +70,9 @@ export function JobApplicationForm({
     if (!file) return;
 
     if (file.size > MAX_FILE_MB * 1024 * 1024) {
-      setFileError(`That file is ${(file.size / 1024 / 1024).toFixed(1)} MB. The limit is ${MAX_FILE_MB} MB.`);
+      setFileError(
+        `That file is ${(file.size / 1024 / 1024).toFixed(1)} MB. The limit is ${MAX_FILE_MB} MB.`,
+      );
       return;
     }
     if (!ACCEPTED_TYPES.includes(file.type)) {
@@ -101,7 +109,9 @@ export function JobApplicationForm({
       if (!response.ok) {
         setStatus('error');
         setErrors(body.error?.fields ?? []);
-        setMessage(body.error?.message ?? 'We could not submit your application. Please try again.');
+        setMessage(
+          body.error?.message ?? 'We could not submit your application. Please try again.',
+        );
         // Focus the summary so the failure is announced rather than silently
         // appearing above the fold.
         requestAnimationFrame(() => errorSummaryRef.current?.focus());
@@ -121,7 +131,11 @@ export function JobApplicationForm({
 
   if (status === 'success') {
     return (
-      <div className="border-s-2 border-signal-success bg-paper-raised p-8" role="status" aria-live="polite">
+      <div
+        className="border-s-2 border-signal-success bg-paper-raised p-8"
+        role="status"
+        aria-live="polite"
+      >
         <h3 className="text-heading-md text-ink">
           {isDuplicate ? 'You have already applied' : 'Application received'}
         </h3>
@@ -177,7 +191,10 @@ export function JobApplicationForm({
 
         <div className="grid gap-x-gutter gap-y-6 sm:grid-cols-2">
           <div>
-            <label htmlFor={`${formId}-firstName`} className="block text-body-sm font-medium text-ink">
+            <label
+              htmlFor={`${formId}-firstName`}
+              className="block text-body-sm font-medium text-ink"
+            >
               First name <RequiredMark />
             </label>
             <input
@@ -193,7 +210,10 @@ export function JobApplicationForm({
           </div>
 
           <div>
-            <label htmlFor={`${formId}-lastName`} className="block text-body-sm font-medium text-ink">
+            <label
+              htmlFor={`${formId}-lastName`}
+              className="block text-body-sm font-medium text-ink"
+            >
               Last name <RequiredMark />
             </label>
             <input
@@ -255,7 +275,10 @@ export function JobApplicationForm({
           </div>
 
           <div>
-            <label htmlFor={`${formId}-linkedinUrl`} className="block text-body-sm font-medium text-ink">
+            <label
+              htmlFor={`${formId}-linkedinUrl`}
+              className="block text-body-sm font-medium text-ink"
+            >
               LinkedIn profile
             </label>
             <input
@@ -265,7 +288,10 @@ export function JobApplicationForm({
               placeholder="https://"
               className={['mt-2', inputClass('linkedinUrl')].join(' ')}
             />
-            <FieldErrorMessage id={`${formId}-linkedinUrl-error`} message={errorFor('linkedinUrl')} />
+            <FieldErrorMessage
+              id={`${formId}-linkedinUrl-error`}
+              message={errorFor('linkedinUrl')}
+            />
           </div>
         </div>
       </fieldset>
@@ -300,7 +326,10 @@ export function JobApplicationForm({
         </div>
 
         <div>
-          <label htmlFor={`${formId}-coverNote`} className="block text-body-sm font-medium text-ink">
+          <label
+            htmlFor={`${formId}-coverNote`}
+            className="block text-body-sm font-medium text-ink"
+          >
             Why this role?
           </label>
           <p id={`${formId}-coverNote-help`} className="mt-1 text-body-xs text-ink-faint">
@@ -321,7 +350,13 @@ export function JobApplicationForm({
           from the tab order and the accessibility tree. */}
       <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
         <label htmlFor={`${formId}-contact-fax`}>Leave this empty</label>
-        <input id={`${formId}-contact-fax`} name="contactFax" type="text" tabIndex={-1} autoComplete="off" />
+        <input
+          id={`${formId}-contact-fax`}
+          name="contactFax"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+        />
       </div>
 
       <div className="border-t border-ink-line pt-6">
@@ -334,8 +369,8 @@ export function JobApplicationForm({
             aria-invalid={errorFor('consent') ? true : undefined}
           />
           <span className="text-body-sm text-ink-soft">
-            I consent to Cheezious storing and processing the information in this application for recruitment
-            purposes. <RequiredMark />
+            I consent to Cheezious storing and processing the information in this application for
+            recruitment purposes. <RequiredMark />
           </span>
         </label>
         <p className="ms-7 mt-2 text-body-xs text-ink-faint">
@@ -345,7 +380,11 @@ export function JobApplicationForm({
           </a>
           .
         </p>
-        <FieldErrorMessage id={`${formId}-consent-error`} message={errorFor('consent')} className="ms-7" />
+        <FieldErrorMessage
+          id={`${formId}-consent-error`}
+          message={errorFor('consent')}
+          className="ms-7"
+        />
       </div>
 
       <div className="flex flex-wrap items-center gap-4">

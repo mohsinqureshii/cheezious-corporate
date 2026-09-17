@@ -32,11 +32,15 @@ export function AuthShell({
         <div className="w-full max-w-sm">
           <div className="mb-07 lg:hidden">
             <span className="text-heading-03 font-semibold text-content-primary">Cheezious</span>
-            <span className="ms-02 text-label-01 uppercase tracking-wide text-content-tertiary">CMS</span>
+            <span className="ms-02 text-label-01 uppercase tracking-wide text-content-tertiary">
+              CMS
+            </span>
           </div>
 
           <h1 className="text-heading-04 text-content-primary">{title}</h1>
-          {description ? <p className="mt-02 text-body-01 text-content-secondary">{description}</p> : null}
+          {description ? (
+            <p className="mt-02 text-body-01 text-content-secondary">{description}</p>
+          ) : null}
 
           <div className="mt-06">{children}</div>
 

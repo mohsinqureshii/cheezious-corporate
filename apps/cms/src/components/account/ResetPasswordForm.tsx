@@ -21,7 +21,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
   const [message, setMessage] = useState('');
 
   const mismatch = confirm.length > 0 && confirm !== password;
-  const meetsLocalPolicy = evaluatePassword(password).requirements.every((requirement) => requirement.met);
+  const meetsLocalPolicy = evaluatePassword(password).requirements.every(
+    (requirement) => requirement.met,
+  );
   const canSubmit = meetsLocalPolicy && confirm.length > 0 && !mismatch && status !== 'submitting';
 
   async function handleSubmit(event: React.FormEvent) {
@@ -45,7 +47,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
       if (!response.ok) {
         setStatus('error');
         setMessage(
-          body.error?.fields?.[0]?.message ?? body.error?.message ?? 'That reset link is invalid or has expired.',
+          body.error?.fields?.[0]?.message ??
+            body.error?.message ??
+            'That reset link is invalid or has expired.',
         );
         return;
       }
@@ -62,7 +66,10 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
   if (status === 'done') {
     return (
-      <div className="border-s-[3px] border-status-success bg-status-successSubtle px-05 py-04" role="status">
+      <div
+        className="border-s-[3px] border-status-success bg-status-successSubtle px-05 py-04"
+        role="status"
+      >
         <p className="text-body-01 text-content-primary">{message}</p>
         <p className="mt-04">
           <Link href="/sign-in" className="btn-primary no-underline">
@@ -76,7 +83,10 @@ export function ResetPasswordForm({ token }: { token: string }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-05" noValidate>
       {status === 'error' ? (
-        <div className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04" role="alert">
+        <div
+          className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04"
+          role="alert"
+        >
           <p className="text-body-01 text-content-primary">{message}</p>
         </div>
       ) : null}
@@ -92,7 +102,6 @@ export function ResetPasswordForm({ token }: { token: string }) {
           onChange={(event) => setPassword(event.target.value)}
           required
           autoComplete="new-password"
-          autoFocus
           className="input"
           aria-describedby="reset-password-strength"
         />

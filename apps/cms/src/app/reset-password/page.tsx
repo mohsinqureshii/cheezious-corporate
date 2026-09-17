@@ -38,7 +38,10 @@ export default async function ResetPasswordPage({
   }
 
   return (
-    <AuthShell title="Choose a new password" description="Set a password you do not use anywhere else.">
+    <AuthShell
+      title="Choose a new password"
+      description="Set a password you do not use anywhere else."
+    >
       <ResetPasswordForm token={token} />
     </AuthShell>
   );

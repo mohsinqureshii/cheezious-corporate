@@ -159,7 +159,10 @@ export function resolveSeo(input: SeoInput, context: SeoContext): ResolvedSeo {
     robots,
     openGraph: {
       title: clean(input.ogTitle) ?? title,
-      description: truncateForSeo(clean(input.ogDescription) ?? description, SEO_LIMITS.descriptionHardMax),
+      description: truncateForSeo(
+        clean(input.ogDescription) ?? description,
+        SEO_LIMITS.descriptionHardMax,
+      ),
       url: canonical,
       siteName: context.siteName,
       locale: OG_LOCALE[context.locale],
@@ -174,13 +177,20 @@ export function resolveSeo(input: SeoInput, context: SeoContext): ResolvedSeo {
             },
           ]
         : [],
-      ...(context.publishedTime ? { publishedTime: new Date(context.publishedTime).toISOString() } : {}),
-      ...(context.modifiedTime ? { modifiedTime: new Date(context.modifiedTime).toISOString() } : {}),
+      ...(context.publishedTime
+        ? { publishedTime: new Date(context.publishedTime).toISOString() }
+        : {}),
+      ...(context.modifiedTime
+        ? { modifiedTime: new Date(context.modifiedTime).toISOString() }
+        : {}),
     },
     twitter: {
       card: clean(input.twitterCard) ?? 'summary_large_image',
       title: clean(input.ogTitle) ?? title,
-      description: truncateForSeo(clean(input.ogDescription) ?? description, SEO_LIMITS.descriptionHardMax),
+      description: truncateForSeo(
+        clean(input.ogDescription) ?? description,
+        SEO_LIMITS.descriptionHardMax,
+      ),
       images: imageUrl ? [imageUrl] : [],
     },
     alternates: { canonical, languages },
@@ -201,7 +211,10 @@ export interface SeoQualityIssue {
  * dashboard, so problems are caught while writing rather than discovered in a
  * quarterly audit.
  */
-export function assessSeoQuality(resolved: ResolvedSeo, options: { requireOgImage?: boolean } = {}): SeoQualityIssue[] {
+export function assessSeoQuality(
+  resolved: ResolvedSeo,
+  options: { requireOgImage?: boolean } = {},
+): SeoQualityIssue[] {
   const issues: SeoQualityIssue[] = [];
 
   if (resolved.title.length > SEO_LIMITS.titleHardMax) {
@@ -212,7 +225,11 @@ export function assessSeoQuality(resolved: ResolvedSeo, options: { requireOgImag
     });
   }
   if (resolved.title.length < 15) {
-    issues.push({ field: 'title', severity: 'warning', message: 'The title is very short. Add more context.' });
+    issues.push({
+      field: 'title',
+      severity: 'warning',
+      message: 'The title is very short. Add more context.',
+    });
   }
 
   if (resolved.description.length < SEO_LIMITS.descriptionMin) {
@@ -239,7 +256,11 @@ export function assessSeoQuality(resolved: ResolvedSeo, options: { requireOgImag
   }
 
   if (!/^https?:\/\//.test(resolved.canonical)) {
-    issues.push({ field: 'canonical', severity: 'error', message: 'The canonical URL must be absolute.' });
+    issues.push({
+      field: 'canonical',
+      severity: 'error',
+      message: 'The canonical URL must be absolute.',
+    });
   }
 
   return issues;

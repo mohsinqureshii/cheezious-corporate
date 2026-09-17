@@ -23,17 +23,21 @@ export default async function RedirectsPage({
     isAutomatic: single(params.isAutomatic),
   };
 
-  const data = await cmsFetch<{ items: RedirectRow[]; meta: ListMeta; facets: { automatic: number } }>(
-    '/api/cms/structure/redirects',
-    { cookie, searchParams: query },
-  ).catch(() => null);
+  const data = await cmsFetch<{
+    items: RedirectRow[];
+    meta: ListMeta;
+    facets: { automatic: number };
+  }>('/api/cms/structure/redirects', { cookie, searchParams: query }).catch(() => null);
 
   if (!data) {
     return (
       <>
         <PageHeader title="Redirects" />
         <div className="p-06">
-          <ErrorState title="Redirects could not be loaded" description="Managing redirects is restricted." />
+          <ErrorState
+            title="Redirects could not be loaded"
+            description="Managing redirects is restricted."
+          />
         </div>
       </>
     );

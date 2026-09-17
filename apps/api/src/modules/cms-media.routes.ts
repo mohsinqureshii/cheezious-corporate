@@ -6,7 +6,14 @@ import multer from 'multer';
 import { z } from 'zod';
 
 import { AuditService } from '../lib/audit';
-import { asyncHandler, clientIp, param, rateLimit, requireAuth, requirePermission } from '../middleware';
+import {
+  asyncHandler,
+  clientIp,
+  param,
+  rateLimit,
+  requireAuth,
+  requirePermission,
+} from '../middleware';
 import { buildStorageKey, createStorageDriver, STORAGE_PREFIX } from '../services/storage';
 
 /**
@@ -148,7 +155,9 @@ export function cmsMediaRoutes(): Router {
         ...(query.brandOnly ? { isBrandAsset: true } : {}),
         ...(query.pressOnly ? { isPressAsset: true } : {}),
         // Only images need alternative text; a PDF does not have any.
-        ...(query.missingAltText ? { kind: 'IMAGE', OR: [{ altText: null }, { altText: '' }] } : {}),
+        ...(query.missingAltText
+          ? { kind: 'IMAGE', OR: [{ altText: null }, { altText: '' }] }
+          : {}),
         ...(query.q
           ? {
               OR: [
@@ -199,7 +208,13 @@ export function cmsMediaRoutes(): Router {
       res.json({
         folders: await req.ctx.prisma.mediaFolder.findMany({
           orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-          select: { id: true, name: true, slug: true, parentId: true, _count: { select: { assets: true } } },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            parentId: true,
+            _count: { select: { assets: true } },
+          },
         }),
       });
     }),
@@ -237,10 +252,13 @@ export function cmsMediaRoutes(): Router {
     asyncHandler(async (req, res) => {
       const files = (req.files as Express.Multer.File[] | undefined) ?? [];
       if (files.length === 0) {
-        throw ApiError.validation([{ field: 'files', message: 'Choose at least one file to upload.' }]);
+        throw ApiError.validation([
+          { field: 'files', message: 'Choose at least one file to upload.' },
+        ]);
       }
 
-      const folderId = typeof req.body.folderId === 'string' && req.body.folderId ? req.body.folderId : null;
+      const folderId =
+        typeof req.body.folderId === 'string' && req.body.folderId ? req.body.folderId : null;
 
       // The whole batch is validated before anything is written, so a bad file
       // at the end cannot leave half an upload behind.
@@ -344,7 +362,12 @@ export function cmsMediaRoutes(): Router {
           entityLabel: updated.title,
           summary: 'Updated asset details',
           before: existing,
-          after: { title: updated.title, altText: updated.altText, visibility: updated.visibility, isBrandAsset: updated.isBrandAsset },
+          after: {
+            title: updated.title,
+            altText: updated.altText,
+            visibility: updated.visibility,
+            isBrandAsset: updated.isBrandAsset,
+          },
         },
       );
 

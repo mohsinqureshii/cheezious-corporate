@@ -1,6 +1,7 @@
 import { isLocale, type Locale } from '@cheezious/config';
 import type { Prisma, PrismaClient } from '@cheezious/database';
 import { ApiError } from '@cheezious/validation';
+import type { Response } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
 
@@ -19,8 +20,11 @@ function parseLocale(value: unknown): Locale {
   return value;
 }
 
-function setPublicCache(res: import('express').Response, seconds = 120): void {
-  res.setHeader('Cache-Control', `public, max-age=0, s-maxage=${seconds}, stale-while-revalidate=${seconds * 10}`);
+function setPublicCache(res: Response, seconds = 120): void {
+  res.setHeader(
+    'Cache-Control',
+    `public, max-age=0, s-maxage=${seconds}, stale-while-revalidate=${seconds * 10}`,
+  );
 }
 
 const listQuery = z.object({
@@ -109,7 +113,15 @@ export function publicContentRoutes(): Router {
           people: {
             select: {
               role: true,
-              person: { select: { id: true, name: true, slug: true, role: true, portrait: { select: imageSelect } } },
+              person: {
+                select: {
+                  id: true,
+                  name: true,
+                  slug: true,
+                  role: true,
+                  portrait: { select: imageSelect },
+                },
+              },
             },
           },
           relatedFrom: {
@@ -141,7 +153,10 @@ export function publicContentRoutes(): Router {
     asyncHandler(async (req, res) => {
       const locale = parseLocale(req.params.locale);
       const query = listQuery
-        .extend({ year: z.coerce.number().int().min(1990).max(2100).optional(), category: z.string().max(80).optional() })
+        .extend({
+          year: z.coerce.number().int().min(1990).max(2100).optional(),
+          category: z.string().max(80).optional(),
+        })
         .parse(req.query);
 
       const where: Prisma.PressReleaseWhereInput = {
@@ -194,14 +209,28 @@ export function publicContentRoutes(): Router {
           // A media contact is published deliberately; unpublished contacts are
           // filtered out rather than exposed with the release.
           mediaContact: {
-            select: { id: true, name: true, role: true, email: true, phone: true, isPublished: true },
+            select: {
+              id: true,
+              name: true,
+              role: true,
+              email: true,
+              phone: true,
+              isPublished: true,
+            },
           },
           attachments: {
             orderBy: { sortOrder: 'asc' },
             select: {
               label: true,
               asset: {
-                select: { id: true, storageKey: true, originalName: true, mimeType: true, byteSize: true, visibility: true },
+                select: {
+                  id: true,
+                  storageKey: true,
+                  originalName: true,
+                  mimeType: true,
+                  byteSize: true,
+                  visibility: true,
+                },
               },
             },
           },
@@ -217,7 +246,11 @@ export function publicContentRoutes(): Router {
           // Only assets cleared for public download are offered.
           attachments: release.attachments.filter((a) => a.asset.visibility === 'PUBLIC_DOWNLOAD'),
         },
-        alternates: await localeAlternates(req.ctx.prisma, 'pressRelease', release.translationGroupId),
+        alternates: await localeAlternates(
+          req.ctx.prisma,
+          'pressRelease',
+          release.translationGroupId,
+        ),
       });
     }),
   );
@@ -263,7 +296,15 @@ export function publicContentRoutes(): Router {
         contacts: await req.ctx.prisma.mediaContact.findMany({
           where: { locale, isPublished: true },
           orderBy: { sortOrder: 'asc' },
-          select: { id: true, name: true, role: true, email: true, phone: true, region: true, topics: true },
+          select: {
+            id: true,
+            name: true,
+            role: true,
+            email: true,
+            phone: true,
+            region: true,
+            topics: true,
+          },
         }),
       });
     }),
@@ -380,7 +421,11 @@ export function publicContentRoutes(): Router {
 
       setPublicCache(res);
       res.json({
-        person: { ...person, relatedStories: person.storyLinks.map((link) => link.story), storyLinks: undefined },
+        person: {
+          ...person,
+          relatedStories: person.storyLinks.map((link) => link.story),
+          storyLinks: undefined,
+        },
         alternates: await localeAlternates(req.ctx.prisma, 'person', person.translationGroupId),
       });
     }),
@@ -458,7 +503,12 @@ export function publicContentRoutes(): Router {
             isPublished: true,
             ...(query.featured ? { isFeatured: true } : {}),
             ...(query.fromYear || query.toYear
-              ? { year: { ...(query.fromYear ? { gte: query.fromYear } : {}), ...(query.toYear ? { lte: query.toYear } : {}) } }
+              ? {
+                  year: {
+                    ...(query.fromYear ? { gte: query.fromYear } : {}),
+                    ...(query.toYear ? { lte: query.toYear } : {}),
+                  },
+                }
               : {}),
           },
           orderBy: [{ year: 'asc' }, { sortOrder: 'asc' }],
@@ -629,7 +679,9 @@ export function publicContentRoutes(): Router {
     '/:locale/impact',
     asyncHandler(async (req, res) => {
       const locale = parseLocale(req.params.locale);
-      const { year } = z.object({ year: z.coerce.number().int().min(1990).max(2100).optional() }).parse(req.query);
+      const { year } = z
+        .object({ year: z.coerce.number().int().min(1990).max(2100).optional() })
+        .parse(req.query);
 
       const pillars = await req.ctx.prisma.impactPillar.findMany({
         where: { locale, isPublished: true },
@@ -821,7 +873,12 @@ export function publicContentRoutes(): Router {
           versions: {
             orderBy: { effectiveDate: 'desc' },
             take: 10,
-            select: { version: true, effectiveDate: true, supersededAt: true, summaryOfChanges: true },
+            select: {
+              version: true,
+              effectiveDate: true,
+              supersededAt: true,
+              summaryOfChanges: true,
+            },
           },
         },
       });
@@ -926,7 +983,9 @@ const reportListSelect = {
     select: {
       label: true,
       locale: true,
-      asset: { select: { id: true, storageKey: true, mimeType: true, byteSize: true, originalName: true } },
+      asset: {
+        select: { id: true, storageKey: true, mimeType: true, byteSize: true, originalName: true },
+      },
     },
   },
 } satisfies Prisma.ReportSelect;
@@ -941,7 +1000,9 @@ const policyListSelect = {
   publishedAt: true,
   updatedAt: true,
   isDemoContent: true,
-  document: { select: { id: true, storageKey: true, mimeType: true, byteSize: true, originalName: true } },
+  document: {
+    select: { id: true, storageKey: true, mimeType: true, byteSize: true, originalName: true },
+  },
 } satisfies Prisma.PolicySelect;
 
 /** Published locale variants of a record, used for hreflang. */
@@ -956,7 +1017,10 @@ async function localeAlternates(
     entity === 'story'
       ? await prisma.story.findMany({ where: common, select: { locale: true, slug: true } })
       : entity === 'pressRelease'
-        ? await prisma.pressRelease.findMany({ where: common, select: { locale: true, slug: true } })
+        ? await prisma.pressRelease.findMany({
+            where: common,
+            select: { locale: true, slug: true },
+          })
         : entity === 'person'
           ? await prisma.person.findMany({ where: common, select: { locale: true, slug: true } })
           : await prisma.policy.findMany({ where: common, select: { locale: true, slug: true } });
@@ -965,7 +1029,11 @@ async function localeAlternates(
 }
 
 /** Distinct publication years, used to build year filters. */
-async function availableYears(prisma: PrismaClient, table: string, locale: Locale): Promise<number[]> {
+async function availableYears(
+  prisma: PrismaClient,
+  table: string,
+  locale: Locale,
+): Promise<number[]> {
   const rows = await prisma.$queryRawUnsafe<Array<{ year: number }>>(
     `SELECT DISTINCT EXTRACT(YEAR FROM "publishedAt")::int AS year
      FROM "${table}"

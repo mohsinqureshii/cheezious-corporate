@@ -4,8 +4,8 @@ import { formatDate, formatRelativeTime } from '@cheezious/utilities';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { API_URL } from '@/lib/api';
 import { EmptyState } from '@/components/ui';
+import { API_URL } from '@/lib/api';
 
 /**
  * Active sessions.
@@ -60,14 +60,20 @@ export function SessionList({ sessions: initial }: { sessions: SessionRow[] }) {
   return (
     <div className="space-y-04">
       {error ? (
-        <div className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04" role="alert">
+        <div
+          className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04"
+          role="alert"
+        >
           <p className="text-body-01 text-content-primary">{error}</p>
         </div>
       ) : null}
 
       <ul className="divide-y divide-border-subtle border border-border-subtle bg-surface-base">
         {sessions.map((session) => (
-          <li key={session.id} className="flex flex-wrap items-start justify-between gap-04 px-05 py-04">
+          <li
+            key={session.id}
+            className="flex flex-wrap items-start justify-between gap-04 px-05 py-04"
+          >
             <div className="min-w-0">
               <p className="flex items-center gap-02 text-body-compact text-content-primary">
                 {describeDevice(session.userAgent)}
@@ -78,8 +84,10 @@ export function SessionList({ sessions: initial }: { sessions: SessionRow[] }) {
                 Last active {formatRelativeTime(session.lastActiveAt)}
               </p>
               <p className="mt-01 text-helper-01 text-content-tertiary">
-                Signed in {formatDate(session.createdAt, 'en', { dateStyle: 'medium', timeStyle: 'short' })} ·
-                expires {formatDate(session.expiresAt, 'en', { dateStyle: 'medium', timeStyle: 'short' })}
+                Signed in{' '}
+                {formatDate(session.createdAt, 'en', { dateStyle: 'medium', timeStyle: 'short' })} ·
+                expires{' '}
+                {formatDate(session.expiresAt, 'en', { dateStyle: 'medium', timeStyle: 'short' })}
               </p>
             </div>
 

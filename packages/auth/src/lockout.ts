@@ -69,7 +69,13 @@ export async function isIpThrottled(
 
 export async function recordFailedLogin(
   prisma: PrismaClient,
-  params: { email: string; userId?: string; ipAddress?: string; userAgent?: string; reason: string },
+  params: {
+    email: string;
+    userId?: string;
+    ipAddress?: string;
+    userAgent?: string;
+    reason: string;
+  },
   config: LockoutConfig,
 ): Promise<void> {
   await prisma.loginAttempt.create({

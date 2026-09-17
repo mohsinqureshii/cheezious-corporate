@@ -40,7 +40,14 @@ export interface HeaderProps {
   };
 }
 
-export function Header({ locale, primary, utility, overlay = false, consumerSiteUrl, labels }: HeaderProps) {
+export function Header({
+  locale,
+  primary,
+  utility,
+  overlay = false,
+  consumerSiteUrl,
+  labels,
+}: HeaderProps) {
   const pathname = usePathname();
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -192,7 +199,12 @@ export function Header({ locale, primary, utility, overlay = false, consumerSite
                               isOpen ? 'rotate-180' : '',
                             ].join(' ')}
                           >
-                            <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                            <path
+                              d="M1 1l4 4 4-4"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                            />
                           </svg>
                         </button>
                       ) : (
@@ -200,7 +212,9 @@ export function Header({ locale, primary, utility, overlay = false, consumerSite
                           href={href ?? '#'}
                           className={[
                             'block rounded px-3 py-2 text-body-sm font-medium no-underline transition-colors duration-quick',
-                            isTransparent ? 'text-paper/90 hover:text-paper' : 'text-ink-soft hover:text-ink',
+                            isTransparent
+                              ? 'text-paper/90 hover:text-paper'
+                              : 'text-ink-soft hover:text-ink',
                           ].join(' ')}
                         >
                           {section.label}
@@ -224,7 +238,12 @@ export function Header({ locale, primary, utility, overlay = false, consumerSite
               >
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
                   <circle cx="8" cy="8" r="5.5" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M12.5 12.5L16 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  <path
+                    d="M12.5 12.5L16 16"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </Link>
 
@@ -260,7 +279,13 @@ export function Header({ locale, primary, utility, overlay = false, consumerSite
               >
                 {labels.orderNow}
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
-                  <path d="M2 9L9 2M9 2H4M9 2v5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M2 9L9 2M9 2H4M9 2v5"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
                 <span className="sr-only"> (opens the Cheezious ordering site in a new tab)</span>
               </a>
@@ -278,12 +303,32 @@ export function Header({ locale, primary, utility, overlay = false, consumerSite
                 <span className="sr-only">{mobileOpen ? labels.closeMenu : labels.openMenu}</span>
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">
                   {mobileOpen ? (
-                    <path d="M5 5l12 12M17 5L5 17" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                    <path
+                      d="M5 5l12 12M17 5L5 17"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                    />
                   ) : (
                     <>
-                      <path d="M3 6h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                      <path d="M3 11h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                      <path d="M3 16h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                      <path
+                        d="M3 6h16"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M3 11h16"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M3 16h16"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      />
                     </>
                   )}
                 </svg>

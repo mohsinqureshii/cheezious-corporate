@@ -24,7 +24,12 @@ interface DashboardResponse {
     today: WorkItem[];
     thisWeek: WorkItem[];
     recentlyPublished: WorkItem[];
-    failedJobs: Array<{ id: string; entityType: string; entityId: string; lastError: string | null }>;
+    failedJobs: Array<{
+      id: string;
+      entityType: string;
+      entityId: string;
+      lastError: string | null;
+    }>;
   };
 }
 
@@ -157,7 +162,10 @@ export function scheduledPage() {
 
         <div className="space-y-06 p-06">
           {failedJobs.length > 0 ? (
-            <div className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04" role="alert">
+            <div
+              className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04"
+              role="alert"
+            >
               <p className="text-heading-compact text-content-primary">
                 {failedJobs.length} scheduled publish failed
               </p>
@@ -203,7 +211,10 @@ export function recentPage() {
 
     return (
       <>
-        <PageHeader title="Recently updated" description="What has changed across the site lately." />
+        <PageHeader
+          title="Recently updated"
+          description="What has changed across the site lately."
+        />
 
         <div className="space-y-06 p-06">
           <WorkSection

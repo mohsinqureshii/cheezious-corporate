@@ -38,7 +38,12 @@ export interface CreateLoggerOptions {
   base?: Record<string, unknown>;
 }
 
-export function createLogger({ name, level = 'info', pretty = false, base }: CreateLoggerOptions): Logger {
+export function createLogger({
+  name,
+  level = 'info',
+  pretty = false,
+  base,
+}: CreateLoggerOptions): Logger {
   const options: LoggerOptions = {
     name,
     level,

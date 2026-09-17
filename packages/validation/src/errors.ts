@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { type z } from 'zod';
 
 /**
  * A single error model shared by every API module, so clients never have to

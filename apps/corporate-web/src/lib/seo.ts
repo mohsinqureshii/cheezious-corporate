@@ -106,7 +106,9 @@ export function toNextMetadata(
       locale: resolved.openGraph.locale,
       type: resolved.openGraph.type as 'website' | 'article',
       images: resolved.openGraph.images,
-      ...(resolved.openGraph.publishedTime ? { publishedTime: resolved.openGraph.publishedTime } : {}),
+      ...(resolved.openGraph.publishedTime
+        ? { publishedTime: resolved.openGraph.publishedTime }
+        : {}),
       ...(resolved.openGraph.modifiedTime ? { modifiedTime: resolved.openGraph.modifiedTime } : {}),
     },
 
@@ -140,7 +142,9 @@ export function buildPageSeo(
   // Without a per-page image, links to this page would share with no preview at
   // all. The site-wide default is used instead, managed in the CMS.
   const defaultOgImageKey = settings['seo.defaultOgImageKey'] as string | undefined;
-  const fallbackImageUrl = defaultOgImageKey ? (mediaUrl(defaultOgImageKey) ?? undefined) : undefined;
+  const fallbackImageUrl = defaultOgImageKey
+    ? (mediaUrl(defaultOgImageKey) ?? undefined)
+    : undefined;
 
   const fallbackDescription =
     page.summary ??
@@ -215,7 +219,8 @@ export function buildRouteSeo(options: {
   const settings = options.settings ?? {};
   const defaultOgImageKey = settings['seo.defaultOgImageKey'] as string | undefined;
   const fallbackImageUrl =
-    options.imageUrl ?? (defaultOgImageKey ? (mediaUrl(defaultOgImageKey) ?? undefined) : undefined);
+    options.imageUrl ??
+    (defaultOgImageKey ? (mediaUrl(defaultOgImageKey) ?? undefined) : undefined);
 
   return toNextMetadata(
     {

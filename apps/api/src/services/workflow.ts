@@ -69,7 +69,10 @@ export class WorkflowService {
     const prefix = PERMISSION_PREFIX[entityType] ?? entityType;
     const transition = findTransition(from, action);
     if (!transition) {
-      throw new ApiError('INVALID_TRANSITION', `Cannot ${humanise(action)} content that is ${humanise(from)}.`);
+      throw new ApiError(
+        'INVALID_TRANSITION',
+        `Cannot ${humanise(action)} content that is ${humanise(from)}.`,
+      );
     }
     return `${prefix}.${transition.requires}` as Permission;
   }
@@ -89,9 +92,16 @@ export class WorkflowService {
       );
     }
 
-    const permission = this.permissionFor(request.entityType, request.action, request.currentStatus);
+    const permission = this.permissionFor(
+      request.entityType,
+      request.action,
+      request.currentStatus,
+    );
     if (!ability.can(permission)) {
-      throw new ApiError('FORBIDDEN', `You do not have permission to ${humanise(request.action)} this content.`);
+      throw new ApiError(
+        'FORBIDDEN',
+        `You do not have permission to ${humanise(request.action)} this content.`,
+      );
     }
 
     if (request.action === 'SCHEDULE') {

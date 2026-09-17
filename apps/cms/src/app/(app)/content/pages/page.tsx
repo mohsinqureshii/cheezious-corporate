@@ -57,7 +57,10 @@ export default async function PagesListPage({
       <>
         <PageHeader title="Pages" />
         <div className="p-06">
-          <div className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04" role="alert">
+          <div
+            className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04"
+            role="alert"
+          >
             <p className="text-heading-compact">Pages could not be loaded</p>
             <p className="mt-01 text-body-01 text-content-secondary">
               The API did not respond. Try reloading in a moment.

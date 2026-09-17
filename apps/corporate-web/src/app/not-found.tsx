@@ -13,8 +13,8 @@ export default function RootNotFound() {
       <p className="eyebrow">Error 404</p>
       <h1 className="mt-5 text-display-md text-ink">This page could not be found</h1>
       <p className="mt-6 max-w-prose text-body-lg text-ink-soft">
-        The address may be out of date. Continue from the Cheezious corporate homepage, or search for what you
-        were looking for.
+        The address may be out of date. Continue from the Cheezious corporate homepage, or search
+        for what you were looking for.
       </p>
       <div className="mt-10 flex flex-wrap gap-4">
         <Link

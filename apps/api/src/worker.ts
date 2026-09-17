@@ -1,5 +1,5 @@
 import { apiSchema, parseEnv } from '@cheezious/config';
-import { createPrismaClient, type Prisma, type PrismaClient } from '@cheezious/database';
+import { createPrismaClient, type Prisma } from '@cheezious/database';
 import { createLogger } from '@cheezious/logger';
 import { extractTextFromBlocks } from '@cheezious/page-builder';
 import { sanitizeHtml } from '@cheezious/validation';
@@ -100,7 +100,12 @@ async function drainJobs(): Promise<void> {
         data: { status: 'SUCCEEDED', finishedAt: new Date(), lastError: null },
       });
       logger.info(
-        { jobId: job.id, kind: job.kind, entityId: job.entityId, durationMs: Date.now() - startedAt },
+        {
+          jobId: job.id,
+          kind: job.kind,
+          entityId: job.entityId,
+          durationMs: Date.now() - startedAt,
+        },
         'job succeeded',
       );
     } catch (error) {
@@ -139,7 +144,15 @@ async function claimNextJob() {
   const candidate = await prisma.publishingJob.findFirst({
     where: { status: 'PENDING', runAt: { lte: new Date() } },
     orderBy: { runAt: 'asc' },
-    select: { id: true, kind: true, entityType: true, entityId: true, payload: true, attempts: true, maxAttempts: true },
+    select: {
+      id: true,
+      kind: true,
+      entityType: true,
+      entityId: true,
+      payload: true,
+      attempts: true,
+      maxAttempts: true,
+    },
   });
   if (!candidate) return null;
 
@@ -195,10 +208,15 @@ function delegateFor(entityType: string) {
   if (!config) throw new Error(`${entityType} cannot be scheduled.`);
   return {
     config,
-    model: (prisma as unknown as Record<string, {
-      findUnique: (args: unknown) => Promise<Record<string, unknown> | null>;
-      update: (args: unknown) => Promise<Record<string, unknown>>;
-    }>)[config.delegate]!,
+    model: (
+      prisma as unknown as Record<
+        string,
+        {
+          findUnique: (args: unknown) => Promise<Record<string, unknown> | null>;
+          update: (args: unknown) => Promise<Record<string, unknown>>;
+        }
+      >
+    )[config.delegate]!,
   };
 }
 
@@ -241,9 +259,9 @@ async function publishScheduled(job: Job): Promise<void> {
       },
     });
 
-    const delegate = (tx as unknown as Record<string, { update: (args: unknown) => Promise<unknown> }>)[
-      config.delegate
-    ]!;
+    const delegate = (
+      tx as unknown as Record<string, { update: (args: unknown) => Promise<unknown> }>
+    )[config.delegate]!;
 
     await delegate.update({
       where: { id: job.entityId },
@@ -398,7 +416,10 @@ async function syncSearch(entityType: string, entityId: string, status: string):
         summary: page.summary,
         body: sanitizeHtml(
           extractTextFromBlocks(
-            page.blocks.map((block) => ({ blockKey: block.blockKey, data: block.data as Record<string, unknown> })),
+            page.blocks.map((block) => ({
+              blockKey: block.blockKey,
+              data: block.data as Record<string, unknown>,
+            })),
           ),
         ),
         url: page.path,
@@ -445,7 +466,10 @@ async function reindexAll(): Promise<void> {
       summary: page.summary,
       body: sanitizeHtml(
         extractTextFromBlocks(
-          page.blocks.map((block) => ({ blockKey: block.blockKey, data: block.data as Record<string, unknown> })),
+          page.blocks.map((block) => ({
+            blockKey: block.blockKey,
+            data: block.data as Record<string, unknown>,
+          })),
         ),
       ),
       url: page.path,
@@ -502,7 +526,13 @@ async function scanContentHealth(): Promise<void> {
 
   for (const page of pages) {
     const href = `/content/pages/${page.id}`;
-    const base = { entityType: 'page', entityId: page.id, entityLabel: page.title, locale: page.locale, href };
+    const base = {
+      entityType: 'page',
+      entityId: page.id,
+      entityLabel: page.title,
+      locale: page.locale,
+      href,
+    };
 
     if (!page.seo?.description && !page.summary) {
       issues.push({
@@ -651,7 +681,10 @@ async function reconcileIssues(detected: DetectedIssue[]): Promise<void> {
     });
   }
 
-  logger.info({ created: created.length, resolved: resolved.length }, 'content health issues reconciled');
+  logger.info(
+    { created: created.length, resolved: resolved.length },
+    'content health issues reconciled',
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -659,7 +692,10 @@ async function reconcileIssues(detected: DetectedIssue[]): Promise<void> {
 // ---------------------------------------------------------------------------
 
 /** The working copy, as it will be served once published. */
-async function buildSnapshot(entityType: string, entityId: string): Promise<Record<string, unknown>> {
+async function buildSnapshot(
+  entityType: string,
+  entityId: string,
+): Promise<Record<string, unknown>> {
   if (entityType === 'page') {
     const page = await prisma.page.findUnique({
       where: { id: entityId },
@@ -699,7 +735,9 @@ async function notifyJobFailure(job: Job): Promise<void> {
     where: {
       status: 'ACTIVE',
       deletedAt: null,
-      roles: { some: { role: { permissions: { some: { permission: { key: 'pages.publish' } } } } } },
+      roles: {
+        some: { role: { permissions: { some: { permission: { key: 'pages.publish' } } } } },
+      },
     },
     select: { id: true },
     take: 10,

@@ -9,13 +9,7 @@
 import { absoluteUrl, LOCALES, type SeoLocale } from './metadata';
 
 export type ChangeFrequency =
-  | 'always'
-  | 'hourly'
-  | 'daily'
-  | 'weekly'
-  | 'monthly'
-  | 'yearly'
-  | 'never';
+  'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
 
 export interface SitemapEntry {
   /** Locale-prefixed path, e.g. /en/company/leadership. */
@@ -36,7 +30,10 @@ export interface SitemapEntry {
  * homepage and newsroom are recrawled promptly while policy archives are not
  * crawled daily for no reason.
  */
-export const SITEMAP_DEFAULTS: Record<string, { priority: number; changeFrequency: ChangeFrequency }> = {
+export const SITEMAP_DEFAULTS: Record<
+  string,
+  { priority: number; changeFrequency: ChangeFrequency }
+> = {
   home: { priority: 1.0, changeFrequency: 'daily' },
   sectionIndex: { priority: 0.8, changeFrequency: 'weekly' },
   standard: { priority: 0.6, changeFrequency: 'monthly' },

@@ -53,7 +53,11 @@ function Stat({
   const isDark = tone === 'dark';
   const isAccent = tone === 'accent';
   const numeric = Number(statistic.value.replace(/[^0-9.]/g, ''));
-  const canAnimate = statistic.animate !== false && !statistic.isPlaceholder && Number.isFinite(numeric) && numeric > 0;
+  const canAnimate =
+    statistic.animate !== false &&
+    !statistic.isPlaceholder &&
+    Number.isFinite(numeric) &&
+    numeric > 0;
 
   return (
     <div>
@@ -65,9 +69,13 @@ function Stat({
           statistic.isPlaceholder ? 'opacity-50' : '',
         ].join(' ')}
       >
-        {statistic.prefix ? <span className="text-[0.55em] align-top">{statistic.prefix}</span> : null}
+        {statistic.prefix ? (
+          <span className="text-[0.55em] align-top">{statistic.prefix}</span>
+        ) : null}
         {canAnimate ? <CountUp value={numeric} display={statistic.value} /> : statistic.value}
-        {statistic.suffix ? <span className="text-[0.55em] align-top">{statistic.suffix}</span> : null}
+        {statistic.suffix ? (
+          <span className="text-[0.55em] align-top">{statistic.suffix}</span>
+        ) : null}
       </p>
       <p
         className={[
@@ -93,11 +101,20 @@ export function KPIGrid({ data, context: _context }: { data: BlockData; context:
   const columns = (data.columns as string) ?? '3';
 
   const columnClass =
-    columns === '2' ? 'sm:grid-cols-2' : columns === '4' ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3';
+    columns === '2'
+      ? 'sm:grid-cols-2'
+      : columns === '4'
+        ? 'sm:grid-cols-2 lg:grid-cols-4'
+        : 'sm:grid-cols-2 lg:grid-cols-3';
 
   return (
     <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} intro={data.intro as string} tone={tone} />
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+      />
       <div
         className={[
           'grid gap-x-gutter gap-y-12',
@@ -123,7 +140,11 @@ export function KPIBand({ data, context: _context }: { data: BlockData; context:
 
   return (
     <Section tone={tone} spacing="compact" width="wide">
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} tone={tone} />
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        tone={tone}
+      />
       <div className="grid gap-x-gutter gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
         {statistics.map((statistic, index) => (
           <Stat key={index} statistic={statistic} tone={tone} size="xl" />
@@ -148,16 +169,25 @@ export function KPIEditorial({ data, context }: { data: BlockData; context: Bloc
         </div>
         <div className="lg:col-span-6 lg:col-start-7">
           {data.heading ? (
-            <h2 className={['text-display-sm', tone === 'dark' ? 'text-paper' : 'text-ink'].join(' ')}>
+            <h2
+              className={['text-display-sm', tone === 'dark' ? 'text-paper' : 'text-ink'].join(' ')}
+            >
               {String(data.heading)}
             </h2>
           ) : null}
           {data.body ? (
-            <p className={['mt-5 text-body-lg', tone === 'dark' ? 'text-paper/75' : 'text-ink-soft'].join(' ')}>
+            <p
+              className={[
+                'mt-5 text-body-lg',
+                tone === 'dark' ? 'text-paper/75' : 'text-ink-soft',
+              ].join(' ')}
+            >
               {String(data.body)}
             </p>
           ) : null}
-          {link ? <div className="mt-7">{<ActionLink link={link} variant="ghost" tone={tone} />}</div> : null}
+          {link ? (
+            <div className="mt-7">{<ActionLink link={link} variant="ghost" tone={tone} />}</div>
+          ) : null}
         </div>
       </div>
     </Section>
@@ -180,7 +210,12 @@ export function BusinessPillars({ data, context }: { data: BlockData; context: B
   if (layout === 'editorial') {
     return (
       <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
-        <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} intro={data.intro as string} tone={tone} />
+        <SectionHeader
+          eyebrow={data.eyebrow as string}
+          heading={data.heading as string}
+          intro={data.intro as string}
+          tone={tone}
+        />
         <div className="border-t border-ink-line">
           {pillars.map((pillar, index) => {
             const link = resolveLink(pillar.link as never, context.locale, context.pathById);
@@ -211,7 +246,12 @@ export function BusinessPillars({ data, context }: { data: BlockData; context: B
 
   return (
     <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} intro={data.intro as string} tone={tone} />
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+      />
       <div className="grid gap-x-gutter gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
         {pillars.map((pillar, index) => {
           const media = image(context, pillar.image);
@@ -220,17 +260,33 @@ export function BusinessPillars({ data, context }: { data: BlockData; context: B
           return (
             <div key={index} className="border-t border-ink-line pt-6">
               {media ? (
-                <BlockImage image={media} sizes="(max-width: 640px) 100vw, 33vw" aspectRatio="3:2" className="mb-6" />
+                <BlockImage
+                  image={media}
+                  sizes="(max-width: 640px) 100vw, 33vw"
+                  aspectRatio="3:2"
+                  className="mb-6"
+                />
               ) : null}
-              <h3 className={['text-heading-md', tone === 'dark' ? 'text-paper' : 'text-ink'].join(' ')}>
+              <h3
+                className={['text-heading-md', tone === 'dark' ? 'text-paper' : 'text-ink'].join(
+                  ' ',
+                )}
+              >
                 {pillar.title}
               </h3>
               {pillar.description ? (
-                <p className={['mt-3 text-body-sm', tone === 'dark' ? 'text-paper/70' : 'text-ink-soft'].join(' ')}>
+                <p
+                  className={[
+                    'mt-3 text-body-sm',
+                    tone === 'dark' ? 'text-paper/70' : 'text-ink-soft',
+                  ].join(' ')}
+                >
                   {pillar.description}
                 </p>
               ) : null}
-              {link ? <div className="mt-5">{<ActionLink link={link} variant="ghost" tone={tone} />}</div> : null}
+              {link ? (
+                <div className="mt-5">{<ActionLink link={link} variant="ghost" tone={tone} />}</div>
+              ) : null}
             </div>
           );
         })}
@@ -245,7 +301,13 @@ export function BusinessPillars({ data, context }: { data: BlockData; context: B
  * Rendered as an ordered list so the sequence is conveyed structurally, not only
  * by the arrows — which a screen reader would not announce.
  */
-export function OperationsFlow({ data, context: _context }: { data: BlockData; context: BlockContext }) {
+export function OperationsFlow({
+  data,
+  context: _context,
+}: {
+  data: BlockData;
+  context: BlockContext;
+}) {
   const tone = (data.tone as Tone) ?? 'light';
   const steps = (data.steps as Array<{ label: string; description?: string }>) ?? [];
   const isVertical = data.orientation === 'vertical';
@@ -253,7 +315,12 @@ export function OperationsFlow({ data, context: _context }: { data: BlockData; c
 
   return (
     <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} intro={data.intro as string} tone={tone} />
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+      />
       <ol
         className={[
           'grid gap-6',
@@ -270,9 +337,15 @@ export function OperationsFlow({ data, context: _context }: { data: BlockData; c
             >
               {index + 1}
             </div>
-            <h3 className={['mt-4 text-heading-sm', isDark ? 'text-paper' : 'text-ink'].join(' ')}>{step.label}</h3>
+            <h3 className={['mt-4 text-heading-sm', isDark ? 'text-paper' : 'text-ink'].join(' ')}>
+              {step.label}
+            </h3>
             {step.description ? (
-              <p className={['mt-2 text-body-sm', isDark ? 'text-paper/65' : 'text-ink-muted'].join(' ')}>
+              <p
+                className={['mt-2 text-body-sm', isDark ? 'text-paper/65' : 'text-ink-muted'].join(
+                  ' ',
+                )}
+              >
                 {step.description}
               </p>
             ) : null}
@@ -329,10 +402,18 @@ export function Timeline({
 
   return (
     <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} intro={data.intro as string} tone={tone} />
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+      />
       <ol className="border-t border-ink-line">
         {shown.map((event) => (
-          <li key={event.id} className="grid gap-x-gutter gap-y-4 border-b border-ink-line py-10 lg:grid-cols-12">
+          <li
+            key={event.id}
+            className="grid gap-x-gutter gap-y-4 border-b border-ink-line py-10 lg:grid-cols-12"
+          >
             <div className="lg:col-span-3">
               <p
                 className={[
@@ -346,18 +427,33 @@ export function Timeline({
               {event.category ? <p className="eyebrow mt-2">{event.category}</p> : null}
             </div>
 
-            <div className={['lg:col-span-5', event.media && data.showMedia !== false ? '' : 'lg:col-span-8'].join(' ')}>
+            <div
+              className={[
+                'lg:col-span-5',
+                event.media && data.showMedia !== false ? '' : 'lg:col-span-8',
+              ].join(' ')}
+            >
               <h3 className={['text-heading-lg', isDark ? 'text-paper' : 'text-ink'].join(' ')}>
                 {event.headline}
                 {event.isDemoContent ? <PlaceholderBadge tone={tone} /> : null}
               </h3>
               {event.description ? (
-                <p className={['mt-3 max-w-prose text-body-md', isDark ? 'text-paper/70' : 'text-ink-soft'].join(' ')}>
+                <p
+                  className={[
+                    'mt-3 max-w-prose text-body-md',
+                    isDark ? 'text-paper/70' : 'text-ink-soft',
+                  ].join(' ')}
+                >
                   {event.description}
                 </p>
               ) : null}
               {event.location ? (
-                <p className={['mt-3 text-body-sm', isDark ? 'text-paper/50' : 'text-ink-faint'].join(' ')}>
+                <p
+                  className={[
+                    'mt-3 text-body-sm',
+                    isDark ? 'text-paper/50' : 'text-ink-faint',
+                  ].join(' ')}
+                >
                   {event.location}
                 </p>
               ) : null}
@@ -365,7 +461,11 @@ export function Timeline({
 
             {event.media && data.showMedia !== false ? (
               <div className="lg:col-span-4">
-                <BlockImage image={event.media} sizes="(max-width: 1024px) 100vw, 33vw" aspectRatio="3:2" />
+                <BlockImage
+                  image={event.media}
+                  sizes="(max-width: 1024px) 100vw, 33vw"
+                  aspectRatio="3:2"
+                />
               </div>
             ) : null}
           </li>
@@ -443,9 +543,15 @@ export function PakistanFootprint({
       <div className="grid gap-x-gutter gap-y-12 lg:grid-cols-12">
         {regions.map((region) => (
           <div key={region.id} className="lg:col-span-4">
-            <h3 className={['text-heading-md', isDark ? 'text-paper' : 'text-ink'].join(' ')}>{region.name}</h3>
+            <h3 className={['text-heading-md', isDark ? 'text-paper' : 'text-ink'].join(' ')}>
+              {region.name}
+            </h3>
             {region.summary ? (
-              <p className={['mt-2 text-body-sm', isDark ? 'text-paper/60' : 'text-ink-muted'].join(' ')}>
+              <p
+                className={['mt-2 text-body-sm', isDark ? 'text-paper/60' : 'text-ink-muted'].join(
+                  ' ',
+                )}
+              >
                 {region.summary}
               </p>
             ) : null}
@@ -466,7 +572,9 @@ export function PakistanFootprint({
                 return (
                   <li key={city.id} className="border-b border-ink-line py-3.5">
                     <div className="flex items-baseline justify-between gap-4">
-                      <span className={['text-body-md', isDark ? 'text-paper' : 'text-ink'].join(' ')}>
+                      <span
+                        className={['text-body-md', isDark ? 'text-paper' : 'text-ink'].join(' ')}
+                      >
                         {city.name}
                       </span>
                       {figures.length > 0 ? (
@@ -486,7 +594,10 @@ export function PakistanFootprint({
                         {city.corporateLocations.map((location) => (
                           <li
                             key={location.id}
-                            className={['text-body-xs', isDark ? 'text-paper/45' : 'text-ink-faint'].join(' ')}
+                            className={[
+                              'text-body-xs',
+                              isDark ? 'text-paper/45' : 'text-ink-faint',
+                            ].join(' ')}
                           >
                             {location.name}
                           </li>
@@ -505,9 +616,14 @@ export function PakistanFootprint({
         Stated rather than left implicit: a visitor comparing this to a public
         restaurant count should know why the numbers may differ.
       */}
-      <p className={['mt-10 max-w-prose text-body-xs', isDark ? 'text-paper/45' : 'text-ink-faint'].join(' ')}>
-        Figures shown are those approved for publication. Where a figure is not shown, it has not yet been confirmed.
-        This is a corporate footprint, not a restaurant locator.
+      <p
+        className={[
+          'mt-10 max-w-prose text-body-xs',
+          isDark ? 'text-paper/45' : 'text-ink-faint',
+        ].join(' ')}
+      >
+        Figures shown are those approved for publication. Where a figure is not shown, it has not
+        yet been confirmed. This is a corporate footprint, not a restaurant locator.
       </p>
     </Section>
   );

@@ -50,8 +50,12 @@ export const editorialSplit = baseBlock.extend({
   links: z.array(linkRef).max(3).default([]),
 });
 
-export const editorialImageText = editorialSplit.extend({ mediaPosition: mediaPosition.default('left') });
-export const editorialTextImage = editorialSplit.extend({ mediaPosition: mediaPosition.default('right') });
+export const editorialImageText = editorialSplit.extend({
+  mediaPosition: mediaPosition.default('left'),
+});
+export const editorialTextImage = editorialSplit.extend({
+  mediaPosition: mediaPosition.default('right'),
+});
 
 export const fullBleedImage = z.object({
   image: mediaRef,

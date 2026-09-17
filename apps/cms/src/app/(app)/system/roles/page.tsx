@@ -16,9 +16,12 @@ export const metadata = { title: 'Roles & permissions' };
 export default async function RolesPage() {
   const { session, cookie } = await requireUsableSession();
 
-  const data = await cmsFetch<{ roles: Role[]; catalogue: PermissionGroup[] }>('/api/cms/system/roles', {
-    cookie,
-  }).catch(() => null);
+  const data = await cmsFetch<{ roles: Role[]; catalogue: PermissionGroup[] }>(
+    '/api/cms/system/roles',
+    {
+      cookie,
+    },
+  ).catch(() => null);
 
   if (!data) {
     return (

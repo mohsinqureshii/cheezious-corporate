@@ -14,16 +14,16 @@ import {
 } from './middleware';
 import { authRoutes } from './modules/auth.routes';
 import { careersRoutes } from './modules/careers.routes';
-import { cmsDashboardRoutes } from './modules/cms-dashboard.routes';
 import { cmsContentRoutes } from './modules/cms-content.routes';
+import { cmsDashboardRoutes } from './modules/cms-dashboard.routes';
 import { cmsMediaRoutes } from './modules/cms-media.routes';
 import { cmsPagesRoutes } from './modules/cms-pages.routes';
-import { cmsSubmissionsRoutes } from './modules/cms-submissions.routes';
 import { cmsStructureRoutes } from './modules/cms-structure.routes';
+import { cmsSubmissionsRoutes } from './modules/cms-submissions.routes';
 import { cmsSystemRoutes } from './modules/cms-system.routes';
 import { mediaRoutes } from './modules/media.routes';
-import { publicRoutes } from './modules/public.routes';
 import { publicContentRoutes } from './modules/public-content.routes';
+import { publicRoutes } from './modules/public.routes';
 import { submissionsRoutes } from './modules/submissions.routes';
 
 /**
@@ -57,7 +57,8 @@ export function createApp(ctx: AppContext): Express {
       },
       crossOriginResourcePolicy: { policy: 'cross-origin' },
       referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-      hsts: ctx.env.NODE_ENV === 'production' ? { maxAge: 31_536_000, includeSubDomains: true } : false,
+      hsts:
+        ctx.env.NODE_ENV === 'production' ? { maxAge: 31_536_000, includeSubDomains: true } : false,
     }),
   );
 
@@ -77,7 +78,12 @@ export function createApp(ctx: AppContext): Express {
       credentials: true,
       methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id', 'x-internal-key'],
-      exposedHeaders: ['x-request-id', 'x-ratelimit-limit', 'x-ratelimit-remaining', 'x-ratelimit-reset'],
+      exposedHeaders: [
+        'x-request-id',
+        'x-ratelimit-limit',
+        'x-ratelimit-remaining',
+        'x-ratelimit-reset',
+      ],
       maxAge: 600,
     }),
   );

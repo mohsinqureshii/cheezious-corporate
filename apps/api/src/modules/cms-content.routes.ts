@@ -13,7 +13,14 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import { AuditService } from '../lib/audit';
-import { asyncHandler, clientIp, param, rateLimit, requireAuth, requirePermission } from '../middleware';
+import {
+  asyncHandler,
+  clientIp,
+  param,
+  rateLimit,
+  requireAuth,
+  requirePermission,
+} from '../middleware';
 import { VersioningService } from '../services/versioning';
 import { WorkflowService } from '../services/workflow';
 
@@ -305,7 +312,13 @@ function registerCollection(router: Router, config: CollectionConfig): void {
         // address forever — someone would delete a draft called "Annual
         // Report" and never be able to use the name again.
         const released = config.slugField
-          ? { [config.slugField]: `${String(existing[config.slugField] ?? existing.id)}-deleted-${Date.now()}`.slice(0, 190) }
+          ? {
+              [config.slugField]:
+                `${String(existing[config.slugField] ?? existing.id)}-deleted-${Date.now()}`.slice(
+                  0,
+                  190,
+                ),
+            }
           : {};
 
         await model.update({
@@ -369,7 +382,11 @@ function registerCollection(router: Router, config: CollectionConfig): void {
 
       workflow.assertAllowed(request, req.ability);
 
-      const actor = { id: req.principal!.id, email: req.principal!.email, ipAddress: clientIp(req) };
+      const actor = {
+        id: req.principal!.id,
+        email: req.principal!.email,
+        ipAddress: clientIp(req),
+      };
 
       const outcome = await req.ctx.prisma.$transaction(async (tx) => {
         const result = await workflow.apply(request, actor, tx, {
@@ -440,7 +457,9 @@ function registerCollection(router: Router, config: CollectionConfig): void {
       // Restoring writes a new revision rather than rewinding: the history
       // between then and now is still there afterwards.
       const restorable = Object.fromEntries(
-        config.versionedFields.filter((field) => field in snapshot).map((field) => [field, snapshot[field]]),
+        config.versionedFields
+          .filter((field) => field in snapshot)
+          .map((field) => [field, snapshot[field]]),
       );
 
       const updated = await req.ctx.prisma.$transaction(async (tx) => {
@@ -498,7 +517,10 @@ function baseWhere(config: CollectionConfig): Record<string, unknown> {
   };
 }
 
-function buildWhere(config: CollectionConfig, query: z.infer<typeof listQuery>): Record<string, unknown> {
+function buildWhere(
+  config: CollectionConfig,
+  query: z.infer<typeof listQuery>,
+): Record<string, unknown> {
   return {
     ...baseWhere(config),
     ...(query.locale && config.localized ? { locale: query.locale } : {}),
@@ -518,8 +540,14 @@ function buildWhere(config: CollectionConfig, query: z.infer<typeof listQuery>):
   };
 }
 
-function buildOrderBy(config: CollectionConfig, query: z.infer<typeof listQuery>): Record<string, string> {
-  const field = query.sortBy && config.sortableFields.includes(query.sortBy) ? query.sortBy : config.defaultSort;
+function buildOrderBy(
+  config: CollectionConfig,
+  query: z.infer<typeof listQuery>,
+): Record<string, string> {
+  const field =
+    query.sortBy && config.sortableFields.includes(query.sortBy)
+      ? query.sortBy
+      : config.defaultSort;
   return { [field]: query.sortDir };
 }
 
@@ -544,7 +572,11 @@ async function prepareWrite(
   // permission to edit.
   for (const guard of config.guardedFields ?? []) {
     const value = data[guard.field];
-    if (typeof value === 'string' && guard.values.includes(value) && !req.ability.can(guard.permission)) {
+    if (
+      typeof value === 'string' &&
+      guard.values.includes(value) &&
+      !req.ability.can(guard.permission)
+    ) {
       throw new ApiError(
         'FORBIDDEN',
         `You do not have permission to set ${config.label.toLowerCase()} ${guard.field} to ${value.toLowerCase()}.`,
@@ -559,8 +591,10 @@ async function prepareWrite(
   }
 
   if (config.slugField) {
-    const label = (data[config.labelField] ?? options.existing?.[config.labelField]) as string | undefined;
-    const requested = (data[config.slugField] as string | undefined) ?? (options.creating ? label : undefined);
+    const label = (data[config.labelField] ?? options.existing?.[config.labelField]) as
+      string | undefined;
+    const requested =
+      (data[config.slugField] as string | undefined) ?? (options.creating ? label : undefined);
 
     if (requested) {
       const locale = (data.locale ?? options.existing?.locale ?? 'en') as string;
@@ -578,13 +612,16 @@ async function prepareWrite(
     // The key is derived once, on create, and never rewritten afterwards:
     // renaming a category must not silently break whatever refers to it.
     if (config.deriveKeyFromSlug && !data.key) {
-      data.key = (data[config.slugField ?? 'slug'] as string | undefined) ?? slugify(String(data[config.labelField] ?? ''));
+      data.key =
+        (data[config.slugField ?? 'slug'] as string | undefined) ??
+        slugify(String(data[config.labelField] ?? ''));
     }
 
     // A new record starts its own translation group; linking a translation is a
     // separate, explicit action.
     if (config.localized && !data.translationGroupId) {
-      data.translationGroupId = (data.translationOfGroupId as string | undefined) ?? crypto.randomUUID();
+      data.translationGroupId =
+        (data.translationOfGroupId as string | undefined) ?? crypto.randomUUID();
     }
     delete data.translationOfGroupId;
     if (config.hasCreatedBy) data.createdById = req.principal!.id;
@@ -625,26 +662,39 @@ async function uniqueSlug(
   }
 
   // Fifty taken variants means something is wrong with the input, not the data.
-  throw ApiError.validation([{ field: config.slugField as string, message: 'Choose a different, more specific title.' }]);
+  throw ApiError.validation([
+    { field: config.slugField as string, message: 'Choose a different, more specific title.' },
+  ]);
 }
 
 /** The fields captured in a version and published to the public site. */
-function snapshotOf(config: CollectionConfig, record: Record<string, unknown>): Record<string, unknown> {
+function snapshotOf(
+  config: CollectionConfig,
+  record: Record<string, unknown>,
+): Record<string, unknown> {
   return Object.fromEntries(config.versionedFields.map((field) => [field, record[field] ?? null]));
 }
 
 /** The fields worth diffing in the audit log — never the whole record. */
-function pickAudited(config: CollectionConfig, record: Record<string, unknown>): Record<string, unknown> {
+function pickAudited(
+  config: CollectionConfig,
+  record: Record<string, unknown>,
+): Record<string, unknown> {
   return Object.fromEntries(config.auditedFields.map((field) => [field, record[field] ?? null]));
 }
 
 /** Who to tell when something is submitted for review. */
-async function reviewerIdsFor(tx: Prisma.TransactionClient, publishPermission: Permission): Promise<string[]> {
+async function reviewerIdsFor(
+  tx: Prisma.TransactionClient,
+  publishPermission: Permission,
+): Promise<string[]> {
   const users = await tx.user.findMany({
     where: {
       status: 'ACTIVE',
       deletedAt: null,
-      roles: { some: { role: { permissions: { some: { permission: { key: publishPermission } } } } } },
+      roles: {
+        some: { role: { permissions: { some: { permission: { key: publishPermission } } } } },
+      },
     },
     select: { id: true },
     take: 25,

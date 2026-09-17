@@ -94,8 +94,14 @@ const config: Config = {
         'body-compact': ['0.875rem', { lineHeight: '1.125rem', letterSpacing: '0.16px' }],
         'body-01': ['0.875rem', { lineHeight: '1.25rem', letterSpacing: '0.16px' }],
         'body-02': ['1rem', { lineHeight: '1.5rem' }],
-        'heading-compact': ['0.875rem', { lineHeight: '1.125rem', letterSpacing: '0.16px', fontWeight: '600' }],
-        'heading-01': ['0.875rem', { lineHeight: '1.125rem', letterSpacing: '0.16px', fontWeight: '600' }],
+        'heading-compact': [
+          '0.875rem',
+          { lineHeight: '1.125rem', letterSpacing: '0.16px', fontWeight: '600' },
+        ],
+        'heading-01': [
+          '0.875rem',
+          { lineHeight: '1.125rem', letterSpacing: '0.16px', fontWeight: '600' },
+        ],
         'heading-02': ['1rem', { lineHeight: '1.375rem', letterSpacing: '0px', fontWeight: '600' }],
         'heading-03': ['1.25rem', { lineHeight: '1.75rem', fontWeight: '400' }],
         'heading-04': ['1.75rem', { lineHeight: '2.25rem', fontWeight: '400' }],

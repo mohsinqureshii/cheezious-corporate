@@ -39,7 +39,9 @@ interface FormsResponse {
 export default async function FormsPage() {
   const { cookie } = await requireUsableSession();
 
-  const data = await cmsFetch<FormsResponse>('/api/cms/structure/forms', { cookie }).catch(() => null);
+  const data = await cmsFetch<FormsResponse>('/api/cms/structure/forms', { cookie }).catch(
+    () => null,
+  );
 
   if (!data) {
     return (
@@ -54,7 +56,10 @@ export default async function FormsPage() {
 
   return (
     <>
-      <PageHeader title="Forms" description="What each form collects, and how much of it has arrived." />
+      <PageHeader
+        title="Forms"
+        description="What each form collects, and how much of it has arrived."
+      />
 
       <div className="space-y-06 p-06">
         {data.forms.length === 0 ? (
@@ -70,7 +75,9 @@ export default async function FormsPage() {
                   <h2 className="text-heading-compact text-content-primary">{form.name}</h2>
                   <p className="mt-01 font-mono text-helper-01 text-content-tertiary">{form.key}</p>
                   {form.description ? (
-                    <p className="mt-02 max-w-2xl text-body-01 text-content-secondary">{form.description}</p>
+                    <p className="mt-02 max-w-2xl text-body-01 text-content-secondary">
+                      {form.description}
+                    </p>
                   ) : null}
                 </div>
 
@@ -78,7 +85,9 @@ export default async function FormsPage() {
                   <span
                     className={[
                       'tag',
-                      form.isEnabled ? 'bg-status-successSubtle text-content-primary' : 'bg-gray-20 text-content-primary',
+                      form.isEnabled
+                        ? 'bg-status-successSubtle text-content-primary'
+                        : 'bg-gray-20 text-content-primary',
                     ].join(' ')}
                   >
                     {form.isEnabled ? 'Accepting submissions' : 'Closed'}
@@ -105,11 +114,17 @@ export default async function FormsPage() {
                       <td>
                         <span className="text-content-primary">{field.label}</span>
                         {field.helpText ? (
-                          <span className="block text-helper-01 text-content-tertiary">{field.helpText}</span>
+                          <span className="block text-helper-01 text-content-tertiary">
+                            {field.helpText}
+                          </span>
                         ) : null}
                       </td>
-                      <td className="font-mono text-helper-01 text-content-secondary">{field.name}</td>
-                      <td className="text-content-secondary">{field.type.toLowerCase().replace(/_/g, ' ')}</td>
+                      <td className="font-mono text-helper-01 text-content-secondary">
+                        {field.name}
+                      </td>
+                      <td className="text-content-secondary">
+                        {field.type.toLowerCase().replace(/_/g, ' ')}
+                      </td>
                       <td className="text-content-secondary">{field.isRequired ? 'Yes' : 'No'}</td>
                     </tr>
                   ))}

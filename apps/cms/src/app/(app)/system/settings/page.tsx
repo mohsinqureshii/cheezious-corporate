@@ -21,10 +21,11 @@ export const metadata = { title: 'Settings' };
 export default async function SettingsPage() {
   const { cookie } = await requireUsableSession();
 
-  const data = await cmsFetch<{ site: SiteSetting[]; globals: GlobalSetting[]; flags: FeatureFlag[] }>(
-    '/api/cms/system/settings',
-    { cookie },
-  ).catch(() => null);
+  const data = await cmsFetch<{
+    site: SiteSetting[];
+    globals: GlobalSetting[];
+    flags: FeatureFlag[];
+  }>('/api/cms/system/settings', { cookie }).catch(() => null);
 
   if (!data) {
     return (
@@ -42,7 +43,10 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <PageHeader title="Settings" description="How the platform and the public site are configured." />
+      <PageHeader
+        title="Settings"
+        description="How the platform and the public site are configured."
+      />
       <SettingsPanels site={data.site} globals={data.globals} flags={data.flags} />
     </>
   );

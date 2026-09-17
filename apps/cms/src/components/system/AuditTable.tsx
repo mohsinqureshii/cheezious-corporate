@@ -88,7 +88,9 @@ export function AuditTable({ rows, meta, actionFacets, initialQuery }: AuditTabl
       key: 'action',
       header: 'Action',
       width: '160px',
-      render: (row) => <span className="tag bg-gray-20 text-content-primary">{humanize(row.action)}</span>,
+      render: (row) => (
+        <span className="tag bg-gray-20 text-content-primary">{humanize(row.action)}</span>
+      ),
     },
     {
       key: 'entity',
@@ -115,7 +117,9 @@ export function AuditTable({ rows, meta, actionFacets, initialQuery }: AuditTabl
               className="mt-01 text-helper-01 text-interactive underline underline-offset-2"
               aria-expanded={expanded === row.id}
             >
-              {expanded === row.id ? 'Hide changes' : `${Object.keys(row.changes).length} field(s) changed`}
+              {expanded === row.id
+                ? 'Hide changes'
+                : `${Object.keys(row.changes).length} field(s) changed`}
             </button>
           ) : null}
           {expanded === row.id && row.changes ? (
@@ -137,7 +141,13 @@ export function AuditTable({ rows, meta, actionFacets, initialQuery }: AuditTabl
     },
   ];
 
-  const filtered = Boolean(initialQuery.q || initialQuery.action || initialQuery.entityType || initialQuery.from || initialQuery.to);
+  const filtered = Boolean(
+    initialQuery.q ||
+    initialQuery.action ||
+    initialQuery.entityType ||
+    initialQuery.from ||
+    initialQuery.to,
+  );
 
   return (
     <div className="p-06">
@@ -203,13 +213,20 @@ export function AuditTable({ rows, meta, actionFacets, initialQuery }: AuditTabl
           />
 
           {filtered ? (
-            <button type="button" className="btn-ghost btn-sm" onClick={() => startTransition(() => router.push(pathname))}>
+            <button
+              type="button"
+              className="btn-ghost btn-sm"
+              onClick={() => startTransition(() => router.push(pathname))}
+            >
               Clear filters
             </button>
           ) : null}
         </FilterBar>
 
-        <div className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined} aria-busy={isPending}>
+        <div
+          className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined}
+          aria-busy={isPending}
+        >
           <DataTable
             caption="Audit log"
             columns={columns}
@@ -234,8 +251,8 @@ export function AuditTable({ rows, meta, actionFacets, initialQuery }: AuditTabl
       </div>
 
       <p className="mt-04 max-w-2xl text-helper-01 text-content-tertiary">
-        Entries are never edited or removed, and personal data is recorded as having changed rather than as what
-        it changed to.
+        Entries are never edited or removed, and personal data is recorded as having changed rather
+        than as what it changed to.
       </p>
     </div>
   );

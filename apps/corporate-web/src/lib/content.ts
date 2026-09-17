@@ -88,7 +88,13 @@ export interface NavigationItem {
   isCallToAction: boolean;
   sortOrder: number;
   page: { id: string; path: string; status: string; navLabel: string | null; title: string } | null;
-  featuredStory: { id: string; title: string; slug: string; excerpt: string | null; heroImage: MediaImage | null } | null;
+  featuredStory: {
+    id: string;
+    title: string;
+    slug: string;
+    excerpt: string | null;
+    heroImage: MediaImage | null;
+  } | null;
   featuredImage: MediaImage | null;
   featuredEyebrow: string | null;
   featuredHeadline: string | null;
@@ -143,7 +149,12 @@ export interface JobSummary {
   openingsCount: number | null;
   category: { name: string; slug: string } | null;
   department: { name: string; slug: string } | null;
-  location: { name: string; slug: string; isRemote: boolean; city: { name: string; slug: string } | null } | null;
+  location: {
+    name: string;
+    slug: string;
+    isRemote: boolean;
+    city: { name: string; slug: string } | null;
+  } | null;
 }
 
 export interface PersonSummary {
@@ -202,10 +213,13 @@ export async function getPagePaths(locale: Locale): Promise<
 }
 
 export async function getNavigation(locale: Locale): Promise<NavigationGroup[]> {
-  const data = await apiFetch<{ navigations: NavigationGroup[] }>(`/api/public/${locale}/navigation`, {
-    revalidate: 600,
-    tags: [CACHE_TAGS.navigation],
-  });
+  const data = await apiFetch<{ navigations: NavigationGroup[] }>(
+    `/api/public/${locale}/navigation`,
+    {
+      revalidate: 600,
+      tags: [CACHE_TAGS.navigation],
+    },
+  );
   return data.navigations;
 }
 
@@ -217,16 +231,26 @@ export async function getFooter(locale: Locale): Promise<FooterData> {
 }
 
 export async function getSettings(locale: Locale): Promise<Record<string, unknown>> {
-  const data = await apiFetch<{ settings: Record<string, unknown> }>(`/api/public/${locale}/settings`, {
-    revalidate: 600,
-    tags: [CACHE_TAGS.settings],
-  });
+  const data = await apiFetch<{ settings: Record<string, unknown> }>(
+    `/api/public/${locale}/settings`,
+    {
+      revalidate: 600,
+      tags: [CACHE_TAGS.settings],
+    },
+  );
   return data.settings;
 }
 
 export async function getStories(
   locale: Locale,
-  params: { kind?: string; category?: string; tag?: string; featured?: boolean; page?: number; pageSize?: number } = {},
+  params: {
+    kind?: string;
+    category?: string;
+    tag?: string;
+    featured?: boolean;
+    page?: number;
+    pageSize?: number;
+  } = {},
 ): Promise<{ items: StorySummary[]; total: number; page: number; pageSize: number }> {
   return apiFetch(`/api/public/${locale}/stories`, {
     searchParams: params as never,
@@ -236,10 +260,13 @@ export async function getStories(
 }
 
 export async function getStory(locale: Locale, slug: string) {
-  return apiFetchOptional<{ story: StorySummary & { body: string | null; related: StorySummary[] }; alternates: Record<string, string> }>(
-    `/api/public/${locale}/stories/${encodeURIComponent(slug)}`,
-    { revalidate: 300, tags: [CACHE_TAGS.collection('stories')] },
-  );
+  return apiFetchOptional<{
+    story: StorySummary & { body: string | null; related: StorySummary[] };
+    alternates: Record<string, string>;
+  }>(`/api/public/${locale}/stories/${encodeURIComponent(slug)}`, {
+    revalidate: 300,
+    tags: [CACHE_TAGS.collection('stories')],
+  });
 }
 
 export async function getPressReleases(
@@ -248,22 +275,37 @@ export async function getPressReleases(
 ) {
   return apiFetch<{ items: Array<Record<string, unknown>>; total: number; years: number[] }>(
     `/api/public/${locale}/press-releases`,
-    { searchParams: params as never, revalidate: 120, tags: [CACHE_TAGS.collection('pressReleases')] },
+    {
+      searchParams: params as never,
+      revalidate: 120,
+      tags: [CACHE_TAGS.collection('pressReleases')],
+    },
   );
 }
 
 export async function getPressRelease(locale: Locale, slug: string) {
-  return apiFetchOptional<{ pressRelease: Record<string, unknown>; alternates: Record<string, string> }>(
-    `/api/public/${locale}/press-releases/${encodeURIComponent(slug)}`,
-    { revalidate: 300, tags: [CACHE_TAGS.collection('pressReleases')] },
-  );
+  return apiFetchOptional<{
+    pressRelease: Record<string, unknown>;
+    alternates: Record<string, string>;
+  }>(`/api/public/${locale}/press-releases/${encodeURIComponent(slug)}`, {
+    revalidate: 300,
+    tags: [CACHE_TAGS.collection('pressReleases')],
+  });
 }
 
 export async function getLeadership(locale: Locale) {
-  return apiFetch<{ groups: Array<{ id: string; name: string; slug: string; summary: string | null; people: PersonSummary[] }> }>(
-    `/api/public/${locale}/leadership`,
-    { revalidate: 600, tags: [CACHE_TAGS.collection('people')] },
-  );
+  return apiFetch<{
+    groups: Array<{
+      id: string;
+      name: string;
+      slug: string;
+      summary: string | null;
+      people: PersonSummary[];
+    }>;
+  }>(`/api/public/${locale}/leadership`, {
+    revalidate: 600,
+    tags: [CACHE_TAGS.collection('people')],
+  });
 }
 
 export async function getPerson(locale: Locale, slug: string) {
@@ -279,27 +321,50 @@ export async function getJobs(
 ) {
   // Job listings change whenever HR opens or closes a role, so they carry a
   // short revalidation window.
-  return apiFetch<{ items: JobSummary[]; total: number; page: number; pageSize: number; facets: Record<string, unknown> }>(
-    `/api/public/${locale}/jobs`,
-    { searchParams: params, revalidate: 60, tags: [CACHE_TAGS.collection('jobs')] },
-  );
+  return apiFetch<{
+    items: JobSummary[];
+    total: number;
+    page: number;
+    pageSize: number;
+    facets: Record<string, unknown>;
+  }>(`/api/public/${locale}/jobs`, {
+    searchParams: params,
+    revalidate: 60,
+    tags: [CACHE_TAGS.collection('jobs')],
+  });
 }
 
 export async function getJob(locale: Locale, slug: string) {
-  return apiFetchOptional<{ job: Record<string, unknown>; alternates: Record<string, string>; similar: JobSummary[] }>(
-    `/api/public/${locale}/jobs/${encodeURIComponent(slug)}`,
-    { revalidate: 60, tags: [CACHE_TAGS.collection('jobs')] },
-  );
+  return apiFetchOptional<{
+    job: Record<string, unknown>;
+    alternates: Record<string, string>;
+    similar: JobSummary[];
+  }>(`/api/public/${locale}/jobs/${encodeURIComponent(slug)}`, {
+    revalidate: 60,
+    tags: [CACHE_TAGS.collection('jobs')],
+  });
 }
 
 export async function getCareerCategories(locale: Locale) {
-  return apiFetch<{ categories: Array<{ id: string; key: string; name: string; slug: string; summary: string | null; openRoles: number }> }>(
-    `/api/public/${locale}/careers/categories`,
-    { revalidate: 120, tags: [CACHE_TAGS.collection('jobs')] },
-  );
+  return apiFetch<{
+    categories: Array<{
+      id: string;
+      key: string;
+      name: string;
+      slug: string;
+      summary: string | null;
+      openRoles: number;
+    }>;
+  }>(`/api/public/${locale}/careers/categories`, {
+    revalidate: 120,
+    tags: [CACHE_TAGS.collection('jobs')],
+  });
 }
 
-export async function getTimeline(locale: Locale, params: { featured?: boolean; fromYear?: number; toYear?: number } = {}) {
+export async function getTimeline(
+  locale: Locale,
+  params: { featured?: boolean; fromYear?: number; toYear?: number } = {},
+) {
   return apiFetch<{ events: Array<Record<string, unknown>> }>(`/api/public/${locale}/timeline`, {
     searchParams: params as never,
     revalidate: 600,
@@ -322,19 +387,30 @@ export async function getImpact(locale: Locale, params: { year?: number } = {}) 
   });
 }
 
-export async function getReports(locale: Locale, params: Record<string, string | number | undefined> = {}) {
-  return apiFetch<{ items: Array<Record<string, unknown>>; total: number; facets: { years: number[]; types: string[] } }>(
-    `/api/public/${locale}/reports`,
-    { searchParams: params, revalidate: 600, tags: [CACHE_TAGS.collection('reports')] },
-  );
+export async function getReports(
+  locale: Locale,
+  params: Record<string, string | number | undefined> = {},
+) {
+  return apiFetch<{
+    items: Array<Record<string, unknown>>;
+    total: number;
+    facets: { years: number[]; types: string[] };
+  }>(`/api/public/${locale}/reports`, {
+    searchParams: params,
+    revalidate: 600,
+    tags: [CACHE_TAGS.collection('reports')],
+  });
 }
 
 export async function getPolicies(locale: Locale, params: { category?: string } = {}) {
-  return apiFetch<{ categories: Array<Record<string, unknown>> }>(`/api/public/${locale}/policies`, {
-    searchParams: params as never,
-    revalidate: 600,
-    tags: [CACHE_TAGS.collection('policies')],
-  });
+  return apiFetch<{ categories: Array<Record<string, unknown>> }>(
+    `/api/public/${locale}/policies`,
+    {
+      searchParams: params as never,
+      revalidate: 600,
+      tags: [CACHE_TAGS.collection('policies')],
+    },
+  );
 }
 
 export interface SitemapEntryRecord {
@@ -393,26 +469,42 @@ export async function getAwards(locale: Locale) {
   });
 }
 
-export async function getEmployeeStories(locale: Locale, params: { page?: number; pageSize?: number } = {}) {
+export async function getEmployeeStories(
+  locale: Locale,
+  params: { page?: number; pageSize?: number } = {},
+) {
   return apiFetch<{ items: Array<Record<string, unknown>>; total: number }>(
     `/api/public/${locale}/employee-stories`,
-    { searchParams: params as never, revalidate: 300, tags: [CACHE_TAGS.collection('employeeStories')] },
+    {
+      searchParams: params as never,
+      revalidate: 300,
+      tags: [CACHE_TAGS.collection('employeeStories')],
+    },
   );
 }
 
 export async function getIngredients(locale: Locale) {
-  return apiFetch<{ categories: Array<Record<string, unknown>> }>(`/api/public/${locale}/ingredients`, {
-    revalidate: 600,
-    tags: [CACHE_TAGS.collection('ingredients')],
-  });
+  return apiFetch<{ categories: Array<Record<string, unknown>> }>(
+    `/api/public/${locale}/ingredients`,
+    {
+      revalidate: 600,
+      tags: [CACHE_TAGS.collection('ingredients')],
+    },
+  );
 }
 
-export async function getMediaLibrary(locale: Locale, params: Record<string, string | boolean | undefined> = {}) {
-  return apiFetch<{ assets: Array<Record<string, unknown>> }>(`/api/public/${locale}/media-library`, {
-    searchParams: params as never,
-    revalidate: 600,
-    tags: [CACHE_TAGS.collection('media')],
-  });
+export async function getMediaLibrary(
+  locale: Locale,
+  params: Record<string, string | boolean | undefined> = {},
+) {
+  return apiFetch<{ assets: Array<Record<string, unknown>> }>(
+    `/api/public/${locale}/media-library`,
+    {
+      searchParams: params as never,
+      revalidate: 600,
+      tags: [CACHE_TAGS.collection('media')],
+    },
+  );
 }
 
 export async function search(

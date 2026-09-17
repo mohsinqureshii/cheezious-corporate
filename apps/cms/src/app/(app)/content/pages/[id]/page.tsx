@@ -16,8 +16,19 @@ export const dynamic = 'force-dynamic';
 
 interface EditorResponse {
   page: EditorPage;
-  versions: Array<{ id: string; versionNumber: number; createdAt: string; note: string | null; createdBy: { name: string } | null }>;
-  availableTransitions: Array<{ action: string; label: string; description: string; confirm?: boolean }>;
+  versions: Array<{
+    id: string;
+    versionNumber: number;
+    createdAt: string;
+    note: string | null;
+    createdBy: { name: string } | null;
+  }>;
+  availableTransitions: Array<{
+    action: string;
+    label: string;
+    description: string;
+    confirm?: boolean;
+  }>;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {

@@ -1,6 +1,5 @@
-import Link from 'next/link';
-
 import { formatDate, formatRelativeTime } from '@cheezious/utilities';
+import Link from 'next/link';
 
 import { EmptyState, StatusTag, UnpublishedChangesTag } from '@/components/ui';
 
@@ -55,13 +54,17 @@ export function WorkList({
                 {item.title}
               </Link>
               {item.path ? (
-                <p className="mt-01 truncate font-mono text-helper-01 text-content-tertiary">{item.path}</p>
+                <p className="mt-01 truncate font-mono text-helper-01 text-content-tertiary">
+                  {item.path}
+                </p>
               ) : null}
             </div>
 
             <div className="flex flex-wrap items-center gap-02">
               <StatusTag status={item.status} size="sm" />
-              {item.hasUnpublishedChanges && item.status === 'PUBLISHED' ? <UnpublishedChangesTag /> : null}
+              {item.hasUnpublishedChanges && item.status === 'PUBLISHED' ? (
+                <UnpublishedChangesTag />
+              ) : null}
               {item.locale ? (
                 <span className="text-label-01 uppercase text-content-tertiary">{item.locale}</span>
               ) : null}
@@ -78,7 +81,8 @@ export function WorkList({
               </>
             ) : item.updatedAt ? (
               <>
-                Last edited <time dateTime={item.updatedAt}>{formatRelativeTime(item.updatedAt)}</time>
+                Last edited{' '}
+                <time dateTime={item.updatedAt}>{formatRelativeTime(item.updatedAt)}</time>
                 {item.updatedBy ? ` by ${item.updatedBy.name}` : ''}
               </>
             ) : null}
@@ -110,7 +114,9 @@ export function WorkSection({
       <div className="flex flex-wrap items-baseline justify-between gap-03 border-b border-border-subtle px-05 py-04">
         <div>
           <h2 className="text-heading-compact text-content-primary">{title}</h2>
-          {description ? <p className="mt-01 text-helper-01 text-content-secondary">{description}</p> : null}
+          {description ? (
+            <p className="mt-01 text-helper-01 text-content-secondary">{description}</p>
+          ) : null}
         </div>
         <span className="text-body-compact tabular text-content-secondary">{items.length}</span>
       </div>

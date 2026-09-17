@@ -1,5 +1,6 @@
 import { BLOCK_SPECS } from '@cheezious/page-builder';
 import type { Prisma, PrismaClient } from '@prisma/client';
+
 import { zodToJsonSchema } from './lib/json-schema';
 
 /**

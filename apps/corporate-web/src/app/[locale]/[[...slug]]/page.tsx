@@ -58,7 +58,11 @@ function pathFromSlug(slug: string[] | undefined): string {
   return slug && slug.length > 0 ? `/${slug.join('/')}` : '/';
 }
 
-export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<RouteParams>;
+}): Promise<Metadata> {
   const { locale: localeParam, slug } = await params;
   if (!isLocale(localeParam)) return {};
 
@@ -186,7 +190,13 @@ function PreviewBanner({ locale }: { locale: Locale }) {
  * confirmed the content is a genuine question-and-answer list.
  */
 function buildStructuredData(
-  page: { path: string; title: string; summary: string | null; parent: { path: string; title: string; navLabel: string | null } | null; blocks: Array<{ blockKey: string; data: Record<string, unknown> }> },
+  page: {
+    path: string;
+    title: string;
+    summary: string | null;
+    parent: { path: string; title: string; navLabel: string | null } | null;
+    blocks: Array<{ blockKey: string; data: Record<string, unknown> }>;
+  },
   locale: Locale,
   settings: Record<string, unknown>,
   images: Map<string, MediaImage>,
@@ -204,7 +214,9 @@ function buildStructuredData(
         description: (settings['site.defaultDescription'] as string) ?? undefined,
         sameAs: social.map((link) => link.url),
         addressCountry: 'PK',
-        ...(settings['contact.corporateEmail'] ? { contactEmail: settings['contact.corporateEmail'] as string } : {}),
+        ...(settings['contact.corporateEmail']
+          ? { contactEmail: settings['contact.corporateEmail'] as string }
+          : {}),
       }),
       buildWebSite({
         name: siteName,

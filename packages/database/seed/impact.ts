@@ -9,7 +9,10 @@ import type { PrismaClient } from '@prisma/client';
  * exactly the behaviour a corporate impact section needs: the platform must not
  * be capable of inventing a meals-donated number.
  */
-export async function seedImpactAndPublications(prisma: PrismaClient, actorId: string): Promise<void> {
+export async function seedImpactAndPublications(
+  prisma: PrismaClient,
+  actorId: string,
+): Promise<void> {
   const pillars = [
     {
       key: 'PEOPLE',
@@ -84,7 +87,8 @@ export async function seedImpactAndPublications(prisma: PrismaClient, actorId: s
           name: metric.name,
           unit: metric.unit,
           suffix: metric.unit === '%' ? '%' : null,
-          description: 'Placeholder description. Replace with an approved definition of this metric.',
+          description:
+            'Placeholder description. Replace with an approved definition of this metric.',
           methodology:
             'Methodology not yet documented. A metric cannot be published until its methodology is recorded here.',
           // Deliberately false and value-less: publishing requires a human to
@@ -97,7 +101,9 @@ export async function seedImpactAndPublications(prisma: PrismaClient, actorId: s
     }
   }
 
-  const peoplePillar = await prisma.impactPillar.findFirst({ where: { key: 'PEOPLE', locale: 'en' } });
+  const peoplePillar = await prisma.impactPillar.findFirst({
+    where: { key: 'PEOPLE', locale: 'en' },
+  });
   if (peoplePillar) {
     await prisma.impactStory.upsert({
       where: { locale_slug: { locale: 'en', slug: 'community-programme-placeholder' } },
@@ -130,18 +136,44 @@ export async function seedImpactAndPublications(prisma: PrismaClient, actorId: s
   for (const [index, category] of reportCategories.entries()) {
     await prisma.reportCategory.upsert({
       where: { key: category.key },
-      create: { key: category.key, name: category.name, slug: slugify(category.name), summary: category.summary, sortOrder: index },
+      create: {
+        key: category.key,
+        name: category.name,
+        slug: slugify(category.name),
+        summary: category.summary,
+        sortOrder: index,
+      },
       update: { name: category.name, sortOrder: index },
     });
   }
 
-  const corporateReports = await prisma.reportCategory.findUniqueOrThrow({ where: { key: 'CORPORATE' } });
+  const corporateReports = await prisma.reportCategory.findUniqueOrThrow({
+    where: { key: 'CORPORATE' },
+  });
   const impactReports = await prisma.reportCategory.findUniqueOrThrow({ where: { key: 'IMPACT' } });
 
   const reports = [
-    { slug: 'company-profile-placeholder', title: '[Placeholder] Company Profile', type: 'COMPANY_PROFILE', year: 2026, categoryId: corporateReports.id },
-    { slug: 'fact-sheet-placeholder', title: '[Placeholder] Corporate Fact Sheet', type: 'FACT_SHEET', year: 2026, categoryId: corporateReports.id },
-    { slug: 'impact-report-2025-placeholder', title: '[Placeholder] Impact Report 2025', type: 'IMPACT_REPORT', year: 2025, categoryId: impactReports.id },
+    {
+      slug: 'company-profile-placeholder',
+      title: '[Placeholder] Company Profile',
+      type: 'COMPANY_PROFILE',
+      year: 2026,
+      categoryId: corporateReports.id,
+    },
+    {
+      slug: 'fact-sheet-placeholder',
+      title: '[Placeholder] Corporate Fact Sheet',
+      type: 'FACT_SHEET',
+      year: 2026,
+      categoryId: corporateReports.id,
+    },
+    {
+      slug: 'impact-report-2025-placeholder',
+      title: '[Placeholder] Impact Report 2025',
+      type: 'IMPACT_REPORT',
+      year: 2025,
+      categoryId: impactReports.id,
+    },
   ];
 
   for (const [index, report] of reports.entries()) {
@@ -178,12 +210,20 @@ export async function seedImpactAndPublications(prisma: PrismaClient, actorId: s
   for (const [index, category] of policyCategories.entries()) {
     await prisma.policyCategory.upsert({
       where: { key: category.key },
-      create: { key: category.key, name: category.name, slug: slugify(category.name), summary: category.summary, sortOrder: index },
+      create: {
+        key: category.key,
+        name: category.name,
+        slug: slugify(category.name),
+        summary: category.summary,
+        sortOrder: index,
+      },
       update: { name: category.name, sortOrder: index },
     });
   }
 
-  const governance = await prisma.policyCategory.findUniqueOrThrow({ where: { key: 'GOVERNANCE' } });
+  const governance = await prisma.policyCategory.findUniqueOrThrow({
+    where: { key: 'GOVERNANCE' },
+  });
   const suppliers = await prisma.policyCategory.findUniqueOrThrow({ where: { key: 'SUPPLIERS' } });
   const privacy = await prisma.policyCategory.findUniqueOrThrow({ where: { key: 'PRIVACY' } });
 
@@ -196,9 +236,17 @@ export async function seedImpactAndPublications(prisma: PrismaClient, actorId: s
    */
   const policies = [
     { slug: 'code-of-conduct', title: 'Code of Conduct', categoryId: governance.id },
-    { slug: 'supplier-code-of-conduct', title: 'Supplier Code of Conduct', categoryId: suppliers.id },
+    {
+      slug: 'supplier-code-of-conduct',
+      title: 'Supplier Code of Conduct',
+      categoryId: suppliers.id,
+    },
     { slug: 'privacy-policy', title: 'Privacy Policy', categoryId: privacy.id },
-    { slug: 'information-security-policy', title: 'Information Security Policy', categoryId: privacy.id },
+    {
+      slug: 'information-security-policy',
+      title: 'Information Security Policy',
+      categoryId: privacy.id,
+    },
     { slug: 'speak-up-policy', title: 'Speak Up Policy', categoryId: governance.id },
   ];
 
@@ -227,5 +275,8 @@ export async function seedImpactAndPublications(prisma: PrismaClient, actorId: s
 }
 
 function slugify(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }

@@ -112,22 +112,35 @@ export function ContentHealthList({
           <button
             key={severity}
             type="button"
-            onClick={() => setParam('severity', initialQuery.severity === severity ? null : severity)}
+            onClick={() =>
+              setParam('severity', initialQuery.severity === severity ? null : severity)
+            }
             className={[
               'panel p-05 text-start transition-colors duration-fast',
-              initialQuery.severity === severity ? 'border-interactive' : 'hover:border-border-strong',
+              initialQuery.severity === severity
+                ? 'border-interactive'
+                : 'hover:border-border-strong',
             ].join(' ')}
           >
-            <span className="block text-heading-04 tabular text-content-primary">{totals[severity] ?? 0}</span>
+            <span className="block text-heading-04 tabular text-content-primary">
+              {totals[severity] ?? 0}
+            </span>
             <span className="block text-body-compact text-content-secondary">
-              {severity === 'ERROR' ? 'Need fixing' : severity === 'WARNING' ? 'Worth fixing' : 'Worth knowing'}
+              {severity === 'ERROR'
+                ? 'Need fixing'
+                : severity === 'WARNING'
+                  ? 'Worth fixing'
+                  : 'Worth knowing'}
             </span>
           </button>
         ))}
       </div>
 
       {error ? (
-        <div className="mb-05 border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04" role="alert">
+        <div
+          className="mb-05 border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04"
+          role="alert"
+        >
           <p className="text-body-01 text-content-primary">{error}</p>
         </div>
       ) : null}
@@ -156,13 +169,18 @@ export function ContentHealthList({
               type="checkbox"
               className="checkbox"
               checked={initialQuery.includeDismissed}
-              onChange={(event) => setParam('includeDismissed', event.target.checked ? 'true' : null)}
+              onChange={(event) =>
+                setParam('includeDismissed', event.target.checked ? 'true' : null)
+              }
             />
             Include dismissed
           </label>
         </FilterBar>
 
-        <div className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined} aria-busy={isPending}>
+        <div
+          className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined}
+          aria-busy={isPending}
+        >
           {items.length === 0 ? (
             <EmptyState
               title="Nothing to fix"
@@ -187,12 +205,17 @@ export function ContentHealthList({
                         >
                           {TYPE_LABELS[issue.type] ?? issue.type}
                         </span>
-                        <span className="text-label-01 uppercase text-content-tertiary">{issue.locale}</span>
+                        <span className="text-label-01 uppercase text-content-tertiary">
+                          {issue.locale}
+                        </span>
                       </p>
 
                       <p className="mt-02 text-body-compact text-content-primary">
                         {issue.href ? (
-                          <Link href={issue.href} className="text-interactive no-underline hover:underline">
+                          <Link
+                            href={issue.href}
+                            className="text-interactive no-underline hover:underline"
+                          >
                             {issue.entityLabel}
                           </Link>
                         ) : (
@@ -201,17 +224,25 @@ export function ContentHealthList({
                       </p>
 
                       {issue.detail ? (
-                        <p className="mt-01 text-helper-01 text-content-secondary">{issue.detail}</p>
+                        <p className="mt-01 text-helper-01 text-content-secondary">
+                          {issue.detail}
+                        </p>
                       ) : null}
 
                       <p className="mt-01 text-helper-01 text-content-tertiary">
                         Found {formatRelativeTime(issue.detectedAt)}
-                        {issue.dismissedAt ? ` · dismissed: ${issue.dismissReason ?? 'no reason given'}` : ''}
+                        {issue.dismissedAt
+                          ? ` · dismissed: ${issue.dismissReason ?? 'no reason given'}`
+                          : ''}
                       </p>
                     </div>
 
                     {!issue.dismissedAt ? (
-                      <button type="button" className="btn-ghost btn-sm" onClick={() => setDismissing(issue.id)}>
+                      <button
+                        type="button"
+                        className="btn-ghost btn-sm"
+                        onClick={() => setDismissing(issue.id)}
+                      >
                         Dismiss
                         <span className="sr-only"> the issue on {issue.entityLabel}</span>
                       </button>
@@ -229,13 +260,25 @@ export function ContentHealthList({
                           className="input"
                           value={reason}
                           onChange={(event) => setReason(event.target.value)}
+                          // A dialog takes focus when it opens: WAI-ARIA asks for it, and without
+                          // it a keyboard user is left behind the overlay with nothing focused.
+                          // eslint-disable-next-line jsx-a11y/no-autofocus
                           autoFocus
                         />
                       </span>
-                      <button type="button" className="btn-secondary btn-sm" disabled={!reason.trim()} onClick={() => dismiss(issue.id)}>
+                      <button
+                        type="button"
+                        className="btn-secondary btn-sm"
+                        disabled={!reason.trim()}
+                        onClick={() => dismiss(issue.id)}
+                      >
                         Dismiss
                       </button>
-                      <button type="button" className="btn-ghost btn-sm" onClick={() => setDismissing(null)}>
+                      <button
+                        type="button"
+                        className="btn-ghost btn-sm"
+                        onClick={() => setDismissing(null)}
+                      >
                         Cancel
                       </button>
                     </div>
@@ -247,7 +290,12 @@ export function ContentHealthList({
         </div>
 
         {meta.total > meta.pageSize ? (
-          <Pagination page={meta.page} pageSize={meta.pageSize} total={meta.total} onPageChange={(next) => setParam('page', String(next))} />
+          <Pagination
+            page={meta.page}
+            pageSize={meta.pageSize}
+            total={meta.total}
+            onPageChange={(next) => setParam('page', String(next))}
+          />
         ) : null}
       </div>
     </div>

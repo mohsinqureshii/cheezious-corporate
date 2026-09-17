@@ -4,12 +4,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { ArticleLayout } from '@/components/editorial/ArticleLayout';
 import { StoryCard } from '@/components/blocks/collections';
 import { Section, SectionHeader } from '@/components/blocks/primitives';
+import { ArticleLayout } from '@/components/editorial/ArticleLayout';
 import { getSettings, getStory } from '@/lib/content';
-import { mediaUrl } from '@/lib/urls';
 import { buildRouteSeo, siteUrl } from '@/lib/seo';
+import { mediaUrl } from '@/lib/urls';
 
 /**
  * A newsroom story.
@@ -26,7 +26,11 @@ interface RouteParams {
   slug: string;
 }
 
-export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<RouteParams>;
+}): Promise<Metadata> {
   const { locale: localeParam, slug } = await params;
   if (!isLocale(localeParam)) return {};
 

@@ -1,12 +1,20 @@
 import { PAGINATION } from '@cheezious/config';
-import type { Prisma } from '@cheezious/database';
+import type { PrismaClient, Prisma } from '@cheezious/database';
 import { normalizePath } from '@cheezious/utilities';
 import { ApiError } from '@cheezious/validation';
+import type { Request } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
 
 import { AuditService } from '../lib/audit';
-import { asyncHandler, clientIp, param, rateLimit, requireAuth, requirePermission } from '../middleware';
+import {
+  asyncHandler,
+  clientIp,
+  param,
+  rateLimit,
+  requireAuth,
+  requirePermission,
+} from '../middleware';
 
 /**
  * Site structure and operations.
@@ -22,8 +30,6 @@ import { asyncHandler, clientIp, param, rateLimit, requireAuth, requirePermissio
  * trusting the caller.
  */
 
-const REDIRECT_STATUS = [301, 302, 307, 308] as const;
-
 export function cmsStructureRoutes(): Router {
   const router = Router();
   router.use(requireAuth());
@@ -37,7 +43,10 @@ export function cmsStructureRoutes(): Router {
     requirePermission('navigation.manage'),
     asyncHandler(async (req, res) => {
       const query = z
-        .object({ locale: z.enum(['en', 'ur']).optional(), location: z.string().max(40).optional() })
+        .object({
+          locale: z.enum(['en', 'ur']).optional(),
+          location: z.string().max(40).optional(),
+        })
         .parse(req.query);
 
       const navigations = await req.ctx.prisma.navigation.findMany({
@@ -63,7 +72,9 @@ export function cmsStructureRoutes(): Router {
               isVisible: true,
               featuredEyebrow: true,
               featuredHeadline: true,
-              page: { select: { id: true, title: true, path: true, status: true, deletedAt: true } },
+              page: {
+                select: { id: true, title: true, path: true, status: true, deletedAt: true },
+              },
             },
           },
         },
@@ -125,10 +136,20 @@ export function cmsStructureRoutes(): Router {
       assertItemIsUsable(input);
 
       const item = await req.ctx.prisma.navigationItem.create({
-        data: { ...input, navigationId: navigation.id } as Prisma.NavigationItemUncheckedCreateInput,
+        data: {
+          ...input,
+          navigationId: navigation.id,
+        } as Prisma.NavigationItemUncheckedCreateInput,
       });
 
-      await audit(req, 'CREATE', 'navigationItem', item.id, item.label, `Added to ${navigation.label}`);
+      await audit(
+        req,
+        'CREATE',
+        'navigationItem',
+        item.id,
+        item.label,
+        `Added to ${navigation.label}`,
+      );
       res.status(201).json({ item });
     }),
   );
@@ -155,7 +176,14 @@ export function cmsStructureRoutes(): Router {
         data: input as Prisma.NavigationItemUncheckedUpdateInput,
       });
 
-      await audit(req, 'UPDATE', 'navigationItem', item.id, item.label, 'Updated a navigation item');
+      await audit(
+        req,
+        'UPDATE',
+        'navigationItem',
+        item.id,
+        item.label,
+        'Updated a navigation item',
+      );
       res.json({ item });
     }),
   );
@@ -176,7 +204,14 @@ export function cmsStructureRoutes(): Router {
       }
 
       await req.ctx.prisma.navigationItem.delete({ where: { id: existing.id } });
-      await audit(req, 'DELETE', 'navigationItem', existing.id, existing.label, 'Removed a navigation item');
+      await audit(
+        req,
+        'DELETE',
+        'navigationItem',
+        existing.id,
+        existing.label,
+        'Removed a navigation item',
+      );
       res.status(204).end();
     }),
   );
@@ -190,7 +225,13 @@ export function cmsStructureRoutes(): Router {
       const { items } = z
         .object({
           items: z
-            .array(z.object({ id: z.string().cuid(), parentId: z.string().cuid().nullable(), sortOrder: z.number().int().min(0) }))
+            .array(
+              z.object({
+                id: z.string().cuid(),
+                parentId: z.string().cuid().nullable(),
+                sortOrder: z.number().int().min(0),
+              }),
+            )
             .max(200),
         })
         .parse(req.body);
@@ -210,7 +251,14 @@ export function cmsStructureRoutes(): Router {
         ),
       );
 
-      await audit(req, 'UPDATE', 'navigation', navigation.id, navigation.label, `Reordered ${items.length} item(s)`);
+      await audit(
+        req,
+        'UPDATE',
+        'navigation',
+        navigation.id,
+        navigation.label,
+        `Reordered ${items.length} item(s)`,
+      );
       res.json({ ok: true });
     }),
   );
@@ -257,13 +305,24 @@ export function cmsStructureRoutes(): Router {
         where: { locale },
         data: {
           ...input,
-          ...(input.socialLinks ? { socialLinks: input.socialLinks as unknown as Prisma.InputJsonValue } : {}),
-          ...(input.legalLinks ? { legalLinks: input.legalLinks as unknown as Prisma.InputJsonValue } : {}),
+          ...(input.socialLinks
+            ? { socialLinks: input.socialLinks as unknown as Prisma.InputJsonValue }
+            : {}),
+          ...(input.legalLinks
+            ? { legalLinks: input.legalLinks as unknown as Prisma.InputJsonValue }
+            : {}),
           updatedById: req.principal!.id,
         },
       });
 
-      await audit(req, 'UPDATE', 'footerConfiguration', footer.id, `Footer (${locale})`, 'Updated the footer');
+      await audit(
+        req,
+        'UPDATE',
+        'footerConfiguration',
+        footer.id,
+        `Footer (${locale})`,
+        'Updated the footer',
+      );
       res.json({ footer });
     }),
   );
@@ -310,7 +369,12 @@ export function cmsStructureRoutes(): Router {
 
       res.json({
         items,
-        meta: { page: query.page, pageSize: query.pageSize, total, totalPages: Math.max(1, Math.ceil(total / query.pageSize)) },
+        meta: {
+          page: query.page,
+          pageSize: query.pageSize,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / query.pageSize)),
+        },
         facets: { automatic },
       });
     }),
@@ -319,7 +383,9 @@ export function cmsStructureRoutes(): Router {
   const redirectInput = z.object({
     source: z.string().min(1).max(500),
     destination: z.string().min(1).max(500),
-    statusCode: z.union([z.literal(301), z.literal(302), z.literal(307), z.literal(308)]).optional(),
+    statusCode: z
+      .union([z.literal(301), z.literal(302), z.literal(307), z.literal(308)])
+      .optional(),
     locale: z.enum(['en', 'ur']).nullish(),
     isEnabled: z.boolean().optional(),
     note: z.string().max(400).nullish(),
@@ -351,7 +417,14 @@ export function cmsStructureRoutes(): Router {
         },
       });
 
-      await audit(req, 'CREATE', 'redirect', redirect.id, `${source} → ${destination}`, 'Created a redirect');
+      await audit(
+        req,
+        'CREATE',
+        'redirect',
+        redirect.id,
+        `${source} → ${destination}`,
+        'Created a redirect',
+      );
       res.status(201).json({ redirect });
     }),
   );
@@ -363,7 +436,9 @@ export function cmsStructureRoutes(): Router {
     asyncHandler(async (req, res) => {
       const input = redirectInput.partial().parse(req.body);
 
-      const existing = await req.ctx.prisma.redirect.findUnique({ where: { id: param(req, 'id') } });
+      const existing = await req.ctx.prisma.redirect.findUnique({
+        where: { id: param(req, 'id') },
+      });
       if (!existing) throw ApiError.notFound('Redirect');
 
       const source = input.source ? normalizePath(input.source) : existing.source;
@@ -380,10 +455,22 @@ export function cmsStructureRoutes(): Router {
         data: { ...input, source, destination },
       });
 
-      await audit(req, 'UPDATE', 'redirect', redirect.id, `${source} → ${destination}`, 'Updated a redirect', {
-        before: { source: existing.source, destination: existing.destination, isEnabled: existing.isEnabled },
-        after: { source, destination, isEnabled: redirect.isEnabled },
-      });
+      await audit(
+        req,
+        'UPDATE',
+        'redirect',
+        redirect.id,
+        `${source} → ${destination}`,
+        'Updated a redirect',
+        {
+          before: {
+            source: existing.source,
+            destination: existing.destination,
+            isEnabled: existing.isEnabled,
+          },
+          after: { source, destination, isEnabled: redirect.isEnabled },
+        },
+      );
       res.json({ redirect });
     }),
   );
@@ -474,7 +561,12 @@ export function cmsStructureRoutes(): Router {
       // personal data.
       res.json({
         items,
-        meta: { page: query.page, pageSize: query.pageSize, total, totalPages: Math.max(1, Math.ceil(total / query.pageSize)) },
+        meta: {
+          page: query.page,
+          pageSize: query.pageSize,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / query.pageSize)),
+        },
       });
     }),
   );
@@ -521,8 +613,16 @@ export function cmsStructureRoutes(): Router {
       res.json({
         locales,
         counts: {
-          pages: pageCounts.map((row) => ({ locale: row.locale, status: row.translationStatus, count: row._count })),
-          stories: storyCounts.map((row) => ({ locale: row.locale, status: row.translationStatus, count: row._count })),
+          pages: pageCounts.map((row) => ({
+            locale: row.locale,
+            status: row.translationStatus,
+            count: row._count,
+          })),
+          stories: storyCounts.map((row) => ({
+            locale: row.locale,
+            status: row.translationStatus,
+            count: row._count,
+          })),
         },
         untranslatedPages,
       });
@@ -571,8 +671,19 @@ export function cmsStructureRoutes(): Router {
 
       res.json({
         items,
-        meta: { page: query.page, pageSize: query.pageSize, total, totalPages: Math.max(1, Math.ceil(total / query.pageSize)) },
-        facets: { byType: byType.map((row) => ({ type: row.type, severity: row.severity, count: row._count })) },
+        meta: {
+          page: query.page,
+          pageSize: query.pageSize,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / query.pageSize)),
+        },
+        facets: {
+          byType: byType.map((row) => ({
+            type: row.type,
+            severity: row.severity,
+            count: row._count,
+          })),
+        },
       });
     }),
   );
@@ -584,7 +695,9 @@ export function cmsStructureRoutes(): Router {
     asyncHandler(async (req, res) => {
       const { reason } = z.object({ reason: z.string().min(1).max(400) }).parse(req.body);
 
-      const issue = await req.ctx.prisma.contentHealthIssue.findUnique({ where: { id: param(req, 'id') } });
+      const issue = await req.ctx.prisma.contentHealthIssue.findUnique({
+        where: { id: param(req, 'id') },
+      });
       if (!issue) throw ApiError.notFound('Issue');
 
       // Dismissing needs a reason, so "we know, and here is why" survives the
@@ -594,7 +707,14 @@ export function cmsStructureRoutes(): Router {
         data: { dismissedAt: new Date(), dismissedById: req.principal!.id, dismissReason: reason },
       });
 
-      await audit(req, 'UPDATE', 'contentHealthIssue', issue.id, issue.entityLabel, `Dismissed: ${reason}`);
+      await audit(
+        req,
+        'UPDATE',
+        'contentHealthIssue',
+        issue.id,
+        issue.entityLabel,
+        `Dismissed: ${reason}`,
+      );
       res.json({ ok: true });
     }),
   );
@@ -642,7 +762,9 @@ export function cmsStructureRoutes(): Router {
       const configuredKeys = new Map(
         configured.map((integration) => [
           integration.id,
-          integration.config && typeof integration.config === 'object' && !Array.isArray(integration.config)
+          integration.config &&
+          typeof integration.config === 'object' &&
+          !Array.isArray(integration.config)
             ? Object.keys(integration.config as Record<string, unknown>)
             : [],
         ]),
@@ -694,18 +816,24 @@ export function cmsStructureRoutes(): Router {
 // ---------------------------------------------------------------------------
 
 /** A navigation item has to be able to lead somewhere. */
-function assertItemIsUsable(item: { kind?: string; pageId?: string | null; externalUrl?: string | null }): void {
+function assertItemIsUsable(item: {
+  kind?: string;
+  pageId?: string | null;
+  externalUrl?: string | null;
+}): void {
   if (item.kind === 'PAGE' && !item.pageId) {
     throw ApiError.validation([{ field: 'pageId', message: 'Choose the page this links to.' }]);
   }
   if (item.kind === 'EXTERNAL' && !item.externalUrl) {
-    throw ApiError.validation([{ field: 'externalUrl', message: 'Enter the address this links to.' }]);
+    throw ApiError.validation([
+      { field: 'externalUrl', message: 'Enter the address this links to.' },
+    ]);
   }
 }
 
 /** Walk up the parents; a cycle would render the menu forever. */
 async function assertNoCycle(
-  prisma: import('@cheezious/database').PrismaClient,
+  prisma: PrismaClient,
   itemId: string,
   parentId: string,
 ): Promise<void> {
@@ -733,13 +861,15 @@ async function assertNoCycle(
  * would push people into editing the old one by hand.
  */
 async function assertRedirectIsSafe(
-  prisma: import('@cheezious/database').PrismaClient,
+  prisma: PrismaClient,
   source: string,
   destination: string,
   excludeId?: string,
 ): Promise<void> {
   if (source === destination) {
-    throw ApiError.validation([{ field: 'destination', message: 'A redirect cannot point at itself.' }]);
+    throw ApiError.validation([
+      { field: 'destination', message: 'A redirect cannot point at itself.' },
+    ]);
   }
 
   const clash = await prisma.redirect.findFirst({
@@ -762,19 +892,25 @@ async function assertRedirectIsSafe(
 
     if (next.destination === source) {
       throw ApiError.validation([
-        { field: 'destination', message: 'That would create a redirect loop back to this address.' },
+        {
+          field: 'destination',
+          message: 'That would create a redirect loop back to this address.',
+        },
       ]);
     }
     current = next.destination;
   }
 
   throw ApiError.validation([
-    { field: 'destination', message: 'That extends a redirect chain too far. Point it at the final address.' },
+    {
+      field: 'destination',
+      message: 'That extends a redirect chain too far. Point it at the final address.',
+    },
   ]);
 }
 
 async function audit(
-  req: import('express').Request,
+  req: Request,
   action: 'CREATE' | 'UPDATE' | 'DELETE',
   entityType: string,
   entityId: string,

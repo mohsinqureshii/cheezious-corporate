@@ -50,10 +50,24 @@ export default function GlobalError({
           >
             Something went wrong
           </p>
-          <h1 style={{ margin: '1rem 0 0', fontSize: '2rem', lineHeight: 1.1, letterSpacing: '-0.02em' }}>
+          <h1
+            style={{
+              margin: '1rem 0 0',
+              fontSize: '2rem',
+              lineHeight: 1.1,
+              letterSpacing: '-0.02em',
+            }}
+          >
             This page could not be displayed
           </h1>
-          <p style={{ margin: '1.5rem 0 0', fontSize: '1.0625rem', lineHeight: 1.6, color: '#3A3A33' }}>
+          <p
+            style={{
+              margin: '1.5rem 0 0',
+              fontSize: '1.0625rem',
+              lineHeight: 1.6,
+              color: '#3A3A33',
+            }}
+          >
             The problem has been logged. Try again in a moment, or continue from the homepage.
           </p>
 

@@ -75,7 +75,11 @@ export async function cmsFetch<T>(path: string, options: RequestOptions = {}): P
 
     try {
       const body = (await response.json()) as {
-        error?: { code?: string; message?: string; fields?: Array<{ field: string; message: string }> };
+        error?: {
+          code?: string;
+          message?: string;
+          fields?: Array<{ field: string; message: string }>;
+        };
       };
       code = body.error?.code ?? code;
       message = body.error?.message ?? message;

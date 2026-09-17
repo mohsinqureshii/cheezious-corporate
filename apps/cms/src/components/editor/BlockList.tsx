@@ -71,7 +71,9 @@ export function BlockList({
               <div
                 className={[
                   'border bg-surface-base transition-colors duration-fast',
-                  isSelected ? 'border-interactive' : 'border-border-subtle hover:border-border-strong',
+                  isSelected
+                    ? 'border-interactive'
+                    : 'border-border-subtle hover:border-border-strong',
                   block.isHidden ? 'opacity-60' : '',
                 ].join(' ')}
               >
@@ -97,7 +99,9 @@ export function BlockList({
                         <span className="tag bg-gray-20 text-content-secondary">Hidden</span>
                       ) : null}
                       {block.anchor ? (
-                        <span className="tag bg-status-infoSubtle text-status-info">#{block.anchor}</span>
+                        <span className="tag bg-status-infoSubtle text-status-info">
+                          #{block.anchor}
+                        </span>
                       ) : null}
                     </span>
 
@@ -112,10 +116,19 @@ export function BlockList({
                     <div className="flex shrink-0 items-center gap-01">
                       <IconButton
                         label={`Move ${spec?.name ?? 'block'} up`}
-                        disabled={index === 0 || isHero || blocks[index - 1] ? getBlockSpec(blocks[index - 1]!.blockKey)?.category === 'hero' : false}
+                        disabled={
+                          index === 0 || isHero || blocks[index - 1]
+                            ? getBlockSpec(blocks[index - 1]!.blockKey)?.category === 'hero'
+                            : false
+                        }
                         onClick={() => onMove(block.key, -1)}
                       >
-                        <path d="M4 10l4-4 4 4" stroke="currentColor" strokeWidth="1.4" fill="none" />
+                        <path
+                          d="M4 10l4-4 4 4"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          fill="none"
+                        />
                       </IconButton>
 
                       <IconButton
@@ -123,26 +136,60 @@ export function BlockList({
                         disabled={index === blocks.length - 1 || isHero}
                         onClick={() => onMove(block.key, 1)}
                       >
-                        <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.4" fill="none" />
+                        <path
+                          d="M4 6l4 4 4-4"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          fill="none"
+                        />
                       </IconButton>
 
                       <IconButton
-                        label={block.isHidden ? `Show ${spec?.name ?? 'block'}` : `Hide ${spec?.name ?? 'block'}`}
+                        label={
+                          block.isHidden
+                            ? `Show ${spec?.name ?? 'block'}`
+                            : `Hide ${spec?.name ?? 'block'}`
+                        }
                         onClick={() => onToggleVisibility(block.key)}
                       >
                         {block.isHidden ? (
-                          <path d="M2 8s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4zM3 3l10 10" stroke="currentColor" strokeWidth="1.2" fill="none" />
+                          <path
+                            d="M2 8s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4zM3 3l10 10"
+                            stroke="currentColor"
+                            strokeWidth="1.2"
+                            fill="none"
+                          />
                         ) : (
                           <>
-                            <path d="M2 8s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4z" stroke="currentColor" strokeWidth="1.2" fill="none" />
-                            <circle cx="8" cy="8" r="1.5" stroke="currentColor" strokeWidth="1.2" fill="none" />
+                            <path
+                              d="M2 8s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4z"
+                              stroke="currentColor"
+                              strokeWidth="1.2"
+                              fill="none"
+                            />
+                            <circle
+                              cx="8"
+                              cy="8"
+                              r="1.5"
+                              stroke="currentColor"
+                              strokeWidth="1.2"
+                              fill="none"
+                            />
                           </>
                         )}
                       </IconButton>
 
                       {!spec?.singleton ? (
-                        <IconButton label={`Duplicate ${spec?.name ?? 'block'}`} onClick={() => onDuplicate(block.key)}>
-                          <path d="M5 5h7v7H5zM3 3h7v1H4v6H3z" stroke="currentColor" strokeWidth="1.1" fill="none" />
+                        <IconButton
+                          label={`Duplicate ${spec?.name ?? 'block'}`}
+                          onClick={() => onDuplicate(block.key)}
+                        >
+                          <path
+                            d="M5 5h7v7H5zM3 3h7v1H4v6H3z"
+                            stroke="currentColor"
+                            strokeWidth="1.1"
+                            fill="none"
+                          />
                         </IconButton>
                       ) : null}
 
@@ -152,12 +199,21 @@ export function BlockList({
                         onClick={() => {
                           // A block can hold a lot of work; removing it is
                           // confirmed rather than instant.
-                          if (window.confirm(`Remove the ${spec?.name ?? 'block'} block? This cannot be undone once you save.`)) {
+                          if (
+                            window.confirm(
+                              `Remove the ${spec?.name ?? 'block'} block? This cannot be undone once you save.`,
+                            )
+                          ) {
                             onRemove(block.key);
                           }
                         }}
                       >
-                        <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.4" fill="none" />
+                        <path
+                          d="M4 4l8 8M12 4l-8 8"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          fill="none"
+                        />
                       </IconButton>
                     </div>
                   ) : null}
@@ -233,7 +289,11 @@ function previewOf(data: Record<string, unknown>): string {
   for (const key of candidates) {
     const value = data[key];
     if (typeof value === 'string' && value.trim().length > 0) {
-      return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+      return value
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 120);
     }
   }
 
@@ -243,7 +303,8 @@ function previewOf(data: Record<string, unknown>): string {
 
   for (const key of ['statistics', 'pillars', 'steps', 'items', 'entries']) {
     const value = data[key];
-    if (Array.isArray(value) && value.length > 0) return `${value.length} item${value.length === 1 ? '' : 's'}`;
+    if (Array.isArray(value) && value.length > 0)
+      return `${value.length} item${value.length === 1 ? '' : 's'}`;
   }
 
   return '';

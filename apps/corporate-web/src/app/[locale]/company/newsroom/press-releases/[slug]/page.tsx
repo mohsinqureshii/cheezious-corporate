@@ -4,12 +4,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { ArticleLayout } from '@/components/editorial/ArticleLayout';
 import { Section, SectionHeader } from '@/components/blocks/primitives';
+import { ArticleLayout } from '@/components/editorial/ArticleLayout';
 import { getPressRelease, getSettings } from '@/lib/content';
-import { mediaUrl } from '@/lib/urls';
-import { buildRouteSeo, siteUrl } from '@/lib/seo';
 import type { MediaImage } from '@/lib/content';
+import { buildRouteSeo, siteUrl } from '@/lib/seo';
+import { mediaUrl } from '@/lib/urls';
 
 /**
  * A press release.
@@ -32,7 +32,13 @@ interface RouteParams {
 
 interface Attachment {
   label: string | null;
-  asset: { id: string; storageKey: string; originalName: string; mimeType: string; byteSize: number };
+  asset: {
+    id: string;
+    storageKey: string;
+    originalName: string;
+    mimeType: string;
+    byteSize: number;
+  };
 }
 
 interface PressRelease {
@@ -49,11 +55,20 @@ interface PressRelease {
   seoDescription: string | null;
   category: { name: string; slug: string } | null;
   image: MediaImage | null;
-  mediaContact: { name: string; role: string | null; email: string | null; phone: string | null } | null;
+  mediaContact: {
+    name: string;
+    role: string | null;
+    email: string | null;
+    phone: string | null;
+  } | null;
   attachments: Attachment[];
 }
 
-export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<RouteParams>;
+}): Promise<Metadata> {
   const { locale: localeParam, slug } = await params;
   if (!isLocale(localeParam)) return {};
 
@@ -148,12 +163,20 @@ export default async function PressReleasePage({ params }: { params: Promise<Rou
                 const href = mediaUrl(attachment.asset.storageKey);
                 if (!href) return null;
                 return (
-                  <li key={attachment.asset.id} className="flex flex-wrap items-baseline justify-between gap-4 py-4">
-                    <a href={href} className="text-body-md text-ink no-underline underline-offset-4 hover:underline" download>
+                  <li
+                    key={attachment.asset.id}
+                    className="flex flex-wrap items-baseline justify-between gap-4 py-4"
+                  >
+                    <a
+                      href={href}
+                      className="text-body-md text-ink no-underline underline-offset-4 hover:underline"
+                      download
+                    >
                       {attachment.label ?? attachment.asset.originalName}
                     </a>
                     <span className="text-body-xs uppercase tracking-widest text-ink-faint">
-                      {attachment.asset.mimeType.split('/')[1]} · {formatBytes(attachment.asset.byteSize)}
+                      {attachment.asset.mimeType.split('/')[1]} ·{' '}
+                      {formatBytes(attachment.asset.byteSize)}
                     </span>
                   </li>
                 );
@@ -164,18 +187,28 @@ export default async function PressReleasePage({ params }: { params: Promise<Rou
 
         {release.mediaContact ? (
           <Section tone="muted" width="narrow" spacing="compact">
-            <SectionHeader eyebrow="Media enquiries" heading={release.mediaContact.name} headingLevel={3} />
+            <SectionHeader
+              eyebrow="Media enquiries"
+              heading={release.mediaContact.name}
+              headingLevel={3}
+            />
             {release.mediaContact.role ? (
               <p className="mt-2 text-body-sm text-ink-muted">{release.mediaContact.role}</p>
             ) : null}
             <p className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-body-sm">
               {release.mediaContact.email ? (
-                <a href={`mailto:${release.mediaContact.email}`} className="text-ink underline underline-offset-4">
+                <a
+                  href={`mailto:${release.mediaContact.email}`}
+                  className="text-ink underline underline-offset-4"
+                >
                   {release.mediaContact.email}
                 </a>
               ) : null}
               {release.mediaContact.phone ? (
-                <a href={`tel:${release.mediaContact.phone.replace(/\s+/g, '')}`} className="text-ink underline underline-offset-4">
+                <a
+                  href={`tel:${release.mediaContact.phone.replace(/\s+/g, '')}`}
+                  className="text-ink underline underline-offset-4"
+                >
                   {release.mediaContact.phone}
                 </a>
               ) : null}
@@ -185,7 +218,10 @@ export default async function PressReleasePage({ params }: { params: Promise<Rou
           <Section width="narrow" spacing="compact">
             <p className="text-body-sm text-ink-muted">
               For media enquiries, see the{' '}
-              <Link href={`/${locale}/company/newsroom/media-contacts`} className="text-ink underline underline-offset-4">
+              <Link
+                href={`/${locale}/company/newsroom/media-contacts`}
+                className="text-ink underline underline-offset-4"
+              >
                 press office
               </Link>
               .

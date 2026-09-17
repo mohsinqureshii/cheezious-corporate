@@ -74,7 +74,9 @@ export const timeline = baseBlock.extend({
   showMedia: z.boolean().default(true),
 });
 
-export const milestoneTimeline = timeline.extend({ limit: z.number().int().min(2).max(12).default(5) });
+export const milestoneTimeline = timeline.extend({
+  limit: z.number().int().min(2).max(12).default(5),
+});
 
 export const regionMap = baseBlock.extend({
   /** The corporate footprint map — business presence, not a restaurant locator. */
@@ -87,7 +89,12 @@ export const regionMap = baseBlock.extend({
 export const pakistanFootprint = regionMap;
 
 export const logoWall = baseBlock.extend({
-  logos: z.array(z.object({ image: mediaRef, name: z.string().max(120), url: z.string().url().optional() })).min(2).max(30),
+  logos: z
+    .array(
+      z.object({ image: mediaRef, name: z.string().max(120), url: z.string().url().optional() }),
+    )
+    .min(2)
+    .max(30),
   grayscale: z.boolean().default(true),
 });
 

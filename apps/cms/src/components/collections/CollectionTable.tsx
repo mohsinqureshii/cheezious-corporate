@@ -14,7 +14,12 @@ import {
   UnpublishedChangesTag,
   type Column,
 } from '@/components/ui';
-import { collectionHref, displayValue, type CollectionDescriptor, type RecordRow } from '@/lib/collections';
+import {
+  collectionHref,
+  displayValue,
+  type CollectionDescriptor,
+  type RecordRow,
+} from '@/lib/collections';
 import type { ListMeta, StatusFacet } from '@/lib/types';
 
 /**
@@ -82,7 +87,9 @@ export function CollectionTable({
             render: (row: RecordRow) => (
               <span className="flex flex-wrap items-center gap-02">
                 <StatusTag status={String(row.status)} size="sm" />
-                {row.hasUnpublishedChanges === true && row.status === 'PUBLISHED' ? <UnpublishedChangesTag /> : null}
+                {row.hasUnpublishedChanges === true && row.status === 'PUBLISHED' ? (
+                  <UnpublishedChangesTag />
+                ) : null}
               </span>
             ),
           } satisfies Column<RecordRow>,
@@ -106,7 +113,10 @@ export function CollectionTable({
       align: 'end',
       width: '90px',
       render: (row: RecordRow) => (
-        <Link href={collectionHref(collection.path, row.id)} className="text-interactive no-underline hover:underline">
+        <Link
+          href={collectionHref(collection.path, row.id)}
+          className="text-interactive no-underline hover:underline"
+        >
           Edit
           <span className="sr-only"> {String(row[collection.labelField] ?? '')}</span>
         </Link>
@@ -114,7 +124,9 @@ export function CollectionTable({
     },
   ];
 
-  const filtered = Boolean(initialQuery.q || initialQuery.status || initialQuery.locale || initialQuery.published);
+  const filtered = Boolean(
+    initialQuery.q || initialQuery.status || initialQuery.locale || initialQuery.published,
+  );
 
   return (
     <div className="p-06">
@@ -198,13 +210,20 @@ export function CollectionTable({
           ) : null}
 
           {filtered ? (
-            <button type="button" className="btn-ghost btn-sm" onClick={() => startTransition(() => router.push(pathname))}>
+            <button
+              type="button"
+              className="btn-ghost btn-sm"
+              onClick={() => startTransition(() => router.push(pathname))}
+            >
               Clear filters
             </button>
           ) : null}
         </FilterBar>
 
-        <div className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined} aria-busy={isPending}>
+        <div
+          className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined}
+          aria-busy={isPending}
+        >
           <DataTable
             caption={collection.labelPlural}
             columns={columns}
@@ -221,7 +240,14 @@ export function CollectionTable({
                 <EmptyState
                   title={`No ${collection.labelPlural.toLowerCase()} yet`}
                   description={`Nothing has been created here.`}
-                  action={canCreate ? { label: `Create ${collection.label.toLowerCase()}`, href: `${pathname}/new` } : undefined}
+                  action={
+                    canCreate
+                      ? {
+                          label: `Create ${collection.label.toLowerCase()}`,
+                          href: `${pathname}/new`,
+                        }
+                      : undefined
+                  }
                 />
               )
             }

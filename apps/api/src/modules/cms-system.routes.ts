@@ -1,5 +1,5 @@
 import { generateTemporaryPassword, hashPassword, revokeAllSessionsForUser } from '@cheezious/auth';
-import { Prisma } from '@cheezious/database';
+import { type Prisma } from '@cheezious/database';
 import {
   ALL_PERMISSIONS,
   HIGH_RISK_PERMISSIONS,
@@ -12,7 +12,14 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import { AuditService } from '../lib/audit';
-import { asyncHandler, clientIp, param, rateLimit, requireAuth, requirePermission } from '../middleware';
+import {
+  asyncHandler,
+  clientIp,
+  param,
+  rateLimit,
+  requireAuth,
+  requirePermission,
+} from '../middleware';
 
 /**
  * System administration: users, roles, audit and settings.
@@ -82,7 +89,12 @@ export function cmsSystemRoutes(): Router {
 
       res.json({
         items,
-        meta: { page: query.page, pageSize: query.pageSize, total, totalPages: Math.max(1, Math.ceil(total / query.pageSize)) },
+        meta: {
+          page: query.page,
+          pageSize: query.pageSize,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / query.pageSize)),
+        },
       });
     }),
   );
@@ -121,7 +133,10 @@ export function cmsSystemRoutes(): Router {
       if (roles.length !== input.roleIds.length) throw ApiError.notFound('Role');
 
       // Only a super administrator can create another one.
-      if (roles.some((role) => role.key === 'SUPER_ADMIN') && !req.principal!.roles.includes('SUPER_ADMIN')) {
+      if (
+        roles.some((role) => role.key === 'SUPER_ADMIN') &&
+        !req.principal!.roles.includes('SUPER_ADMIN')
+      ) {
         throw new ApiError('FORBIDDEN', 'Only a super administrator can grant that role.');
       }
 
@@ -137,7 +152,9 @@ export function cmsSystemRoutes(): Router {
           mustChangePassword: true,
           passwordChangedAt: new Date(),
           invitedById: req.principal!.id,
-          roles: { create: roles.map((role) => ({ roleId: role.id, assignedById: req.principal!.id })) },
+          roles: {
+            create: roles.map((role) => ({ roleId: role.id, assignedById: req.principal!.id })),
+          },
         },
         select: { id: true, name: true, email: true, status: true },
       });
@@ -158,7 +175,8 @@ export function cmsSystemRoutes(): Router {
       res.status(201).json({
         user,
         temporaryPassword,
-        message: 'Share this temporary password securely. The user must change it at first sign-in.',
+        message:
+          'Share this temporary password securely. The user must change it at first sign-in.',
       });
     }),
   );
@@ -191,7 +209,14 @@ export function cmsSystemRoutes(): Router {
       if (isSelf && input.status === 'DISABLED') {
         throw ApiError.conflict('You cannot disable your own account.');
       }
-      if (isSelf && input.roleIds && !input.roleIds.some((id) => target.roles.some((r) => r.role.id === id && r.role.key === 'SUPER_ADMIN')) && targetIsSuperAdmin) {
+      if (
+        isSelf &&
+        input.roleIds &&
+        !input.roleIds.some((id) =>
+          target.roles.some((r) => r.role.id === id && r.role.key === 'SUPER_ADMIN'),
+        ) &&
+        targetIsSuperAdmin
+      ) {
         throw ApiError.conflict('You cannot remove your own super administrator role.');
       }
 
@@ -209,7 +234,9 @@ export function cmsSystemRoutes(): Router {
         const losingSuperAdmin =
           input.status === 'DISABLED' ||
           (input.roleIds !== undefined &&
-            !target.roles.some((r) => r.role.key === 'SUPER_ADMIN' && input.roleIds!.includes(r.role.id)));
+            !target.roles.some(
+              (r) => r.role.key === 'SUPER_ADMIN' && input.roleIds!.includes(r.role.id),
+            ));
 
         if (losingSuperAdmin && remaining === 0) {
           throw ApiError.conflict(
@@ -242,7 +269,11 @@ export function cmsSystemRoutes(): Router {
         if (input.roleIds) {
           await tx.userRole.deleteMany({ where: { userId: target.id } });
           await tx.userRole.createMany({
-            data: input.roleIds.map((roleId) => ({ userId: target.id, roleId, assignedById: req.principal!.id })),
+            data: input.roleIds.map((roleId) => ({
+              userId: target.id,
+              roleId,
+              assignedById: req.principal!.id,
+            })),
           });
         }
 
@@ -262,7 +293,8 @@ export function cmsSystemRoutes(): Router {
           entityType: 'user',
           entityId: target.id,
           entityLabel: target.name,
-          summary: input.status === 'DISABLED' ? 'Disabled account and revoked sessions' : 'Updated user',
+          summary:
+            input.status === 'DISABLED' ? 'Disabled account and revoked sessions' : 'Updated user',
           before: { status: target.status, roles: target.roles.map((r) => r.role.name) },
           after: { status: updated.status },
         },
@@ -362,7 +394,10 @@ export function cmsSystemRoutes(): Router {
           });
           await tx.rolePermission.deleteMany({ where: { roleId: role.id } });
           await tx.rolePermission.createMany({
-            data: permissions.map((permission) => ({ roleId: role.id, permissionId: permission.id })),
+            data: permissions.map((permission) => ({
+              roleId: role.id,
+              permissionId: permission.id,
+            })),
           });
         }
       });
@@ -419,7 +454,12 @@ export function cmsSystemRoutes(): Router {
         ...(query.entityType ? { entityType: query.entityType } : {}),
         ...(query.actorId ? { actorId: query.actorId } : {}),
         ...(query.from || query.to
-          ? { createdAt: { ...(query.from ? { gte: query.from } : {}), ...(query.to ? { lte: query.to } : {}) } }
+          ? {
+              createdAt: {
+                ...(query.from ? { gte: query.from } : {}),
+                ...(query.to ? { lte: query.to } : {}),
+              },
+            }
           : {}),
         ...(query.q
           ? {
@@ -441,12 +481,21 @@ export function cmsSystemRoutes(): Router {
           include: { actor: { select: { id: true, name: true, email: true } } },
         }),
         req.ctx.prisma.auditLog.count({ where }),
-        req.ctx.prisma.auditLog.groupBy({ by: ['action'], _count: true, orderBy: { _count: { action: 'desc' } } }),
+        req.ctx.prisma.auditLog.groupBy({
+          by: ['action'],
+          _count: true,
+          orderBy: { _count: { action: 'desc' } },
+        }),
       ]);
 
       res.json({
         items,
-        meta: { page: query.page, pageSize: query.pageSize, total, totalPages: Math.max(1, Math.ceil(total / query.pageSize)) },
+        meta: {
+          page: query.page,
+          pageSize: query.pageSize,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / query.pageSize)),
+        },
         facets: { actions: actions.map((row) => ({ value: row.action, count: row._count })) },
       });
     }),
@@ -522,7 +571,9 @@ export function cmsSystemRoutes(): Router {
     asyncHandler(async (req, res) => {
       const { enabled } = z.object({ enabled: z.boolean() }).parse(req.body);
 
-      const flag = await req.ctx.prisma.featureFlag.findUnique({ where: { key: param(req, 'key') } });
+      const flag = await req.ctx.prisma.featureFlag.findUnique({
+        where: { key: param(req, 'key') },
+      });
       if (!flag) throw ApiError.notFound('Feature flag');
 
       await req.ctx.prisma.featureFlag.update({
@@ -568,7 +619,9 @@ export function cmsSystemRoutes(): Router {
   router.post(
     '/notifications/read',
     asyncHandler(async (req, res) => {
-      const { ids } = z.object({ ids: z.array(z.string().cuid()).max(100).optional() }).parse(req.body);
+      const { ids } = z
+        .object({ ids: z.array(z.string().cuid()).max(100).optional() })
+        .parse(req.body);
 
       const result = await req.ctx.prisma.notification.updateMany({
         where: { userId: req.principal!.id, readAt: null, ...(ids ? { id: { in: ids } } : {}) },

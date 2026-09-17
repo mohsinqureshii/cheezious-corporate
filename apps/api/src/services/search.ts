@@ -1,4 +1,9 @@
-import { Prisma, type Locale, type PrismaClient, type SearchDocumentType } from '@cheezious/database';
+import {
+  Prisma,
+  type Locale,
+  type PrismaClient,
+  type SearchDocumentType,
+} from '@cheezious/database';
 import { htmlToText, truncate } from '@cheezious/utilities';
 
 /**
@@ -89,7 +94,9 @@ export class SearchService {
     const summary = input.summary ? htmlToText(input.summary).slice(0, 600) : truncate(body, 300);
 
     await client.searchDocument.upsert({
-      where: { type_entityId_locale: { type: input.type, entityId: input.entityId, locale: input.locale } },
+      where: {
+        type_entityId_locale: { type: input.type, entityId: input.entityId, locale: input.locale },
+      },
       create: {
         type: input.type,
         entityId: input.entityId,
@@ -210,7 +217,11 @@ export class SearchService {
     return this.fuzzySearch(options, page, pageSize);
   }
 
-  private async fuzzySearch(options: SearchOptions, page: number, pageSize: number): Promise<SearchResults> {
+  private async fuzzySearch(
+    options: SearchOptions,
+    page: number,
+    pageSize: number,
+  ): Promise<SearchResults> {
     const offset = (page - 1) * pageSize;
     const types = options.types?.length ? options.types : null;
 
@@ -256,7 +267,9 @@ export class SearchService {
     query: string,
     config: string,
   ): Promise<Array<{ type: SearchDocumentType; count: number }>> {
-    const rows = await this.prisma.$queryRaw<Array<{ type: SearchDocumentType; count: bigint }>>(Prisma.sql`
+    const rows = await this.prisma.$queryRaw<
+      Array<{ type: SearchDocumentType; count: bigint }>
+    >(Prisma.sql`
       SELECT d."type", COUNT(*) AS count
       FROM "search_documents" d
       WHERE d."locale" = ${locale}::"Locale"
@@ -268,7 +281,11 @@ export class SearchService {
   }
 
   /** Type-ahead suggestions for the search overlay. */
-  async suggest(locale: Locale, query: string, limit = 6): Promise<Array<{ title: string; url: string; type: SearchDocumentType }>> {
+  async suggest(
+    locale: Locale,
+    query: string,
+    limit = 6,
+  ): Promise<Array<{ title: string; url: string; type: SearchDocumentType }>> {
     const trimmed = query.trim();
     if (trimmed.length < 2) return [];
 

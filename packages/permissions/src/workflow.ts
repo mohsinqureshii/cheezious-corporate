@@ -76,7 +76,15 @@ export const TRANSITIONS: readonly TransitionRule[] = [
     // page is the single most common action in a CMS. Because the public site
     // serves the published snapshot rather than the working copy, re-publishing
     // is how an editor's changes reach production at all.
-    from: ['APPROVED', 'SCHEDULED', 'UNPUBLISHED', 'DRAFT', 'IN_REVIEW', 'CHANGES_REQUESTED', 'PUBLISHED'],
+    from: [
+      'APPROVED',
+      'SCHEDULED',
+      'UNPUBLISHED',
+      'DRAFT',
+      'IN_REVIEW',
+      'CHANGES_REQUESTED',
+      'PUBLISHED',
+    ],
     to: 'PUBLISHED',
     requires: 'publish',
     label: 'Publish',
@@ -142,7 +150,10 @@ export class InvalidTransitionError extends Error {
   }
 }
 
-export function findTransition(from: ContentStatus, action: WorkflowAction): TransitionRule | undefined {
+export function findTransition(
+  from: ContentStatus,
+  action: WorkflowAction,
+): TransitionRule | undefined {
   return TRANSITIONS.find((t) => t.action === action && t.from.includes(from));
 }
 
@@ -158,7 +169,11 @@ export function nextStatus(from: ContentStatus, action: WorkflowAction): Content
 }
 
 /** The permission a given resource requires for a given action. */
-export function requiredPermission(resource: string, action: WorkflowAction, from: ContentStatus): Permission {
+export function requiredPermission(
+  resource: string,
+  action: WorkflowAction,
+  from: ContentStatus,
+): Permission {
   const transition = findTransition(from, action);
   if (!transition) throw new InvalidTransitionError(from, action);
   return `${resource}.${transition.requires}` as Permission;
@@ -183,9 +198,17 @@ export function isPubliclyVisible(status: ContentStatus): boolean {
 }
 
 /** Statuses that represent work still owed by a human. */
-export const OPEN_WORK_STATUSES: readonly ContentStatus[] = ['DRAFT', 'IN_REVIEW', 'CHANGES_REQUESTED', 'APPROVED'];
+export const OPEN_WORK_STATUSES: readonly ContentStatus[] = [
+  'DRAFT',
+  'IN_REVIEW',
+  'CHANGES_REQUESTED',
+  'APPROVED',
+];
 
-export const STATUS_META: Record<ContentStatus, { label: string; tone: 'neutral' | 'info' | 'warning' | 'success' | 'muted' }> = {
+export const STATUS_META: Record<
+  ContentStatus,
+  { label: string; tone: 'neutral' | 'info' | 'warning' | 'success' | 'muted' }
+> = {
   DRAFT: { label: 'Draft', tone: 'neutral' },
   IN_REVIEW: { label: 'In review', tone: 'info' },
   CHANGES_REQUESTED: { label: 'Changes requested', tone: 'warning' },

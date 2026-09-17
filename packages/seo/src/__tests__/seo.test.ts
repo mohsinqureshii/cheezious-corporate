@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { absoluteUrl, assessSeoQuality, deriveDescription, resolveSeo, truncateForSeo } from '../metadata';
+import {
+  absoluteUrl,
+  assessSeoQuality,
+  deriveDescription,
+  resolveSeo,
+  truncateForSeo,
+} from '../metadata';
 import { renderRobotsTxt, renderSitemap } from '../sitemap';
 import {
   buildArticle,
@@ -25,7 +31,11 @@ const context = {
 describe('SEO metadata', () => {
   it('builds a complete metadata set from editor overrides', () => {
     const seo = resolveSeo(
-      { title: 'Our Leadership', description: 'Meet the leadership team.', ogImageUrl: 'https://cdn/og.jpg' },
+      {
+        title: 'Our Leadership',
+        description: 'Meet the leadership team.',
+        ogImageUrl: 'https://cdn/og.jpg',
+      },
       context,
     );
     expect(seo.title).toBe('Our Leadership');
@@ -49,9 +59,15 @@ describe('SEO metadata', () => {
 
   it('emits hreflang alternates for both locales plus x-default', () => {
     const seo = resolveSeo({}, context);
-    expect(seo.alternates.languages['en-PK']).toBe('https://corporate.cheezious.com/en/company/leadership');
-    expect(seo.alternates.languages['ur-PK']).toBe('https://corporate.cheezious.com/ur/company/qiadat');
-    expect(seo.alternates.languages['x-default']).toBe('https://corporate.cheezious.com/en/company/leadership');
+    expect(seo.alternates.languages['en-PK']).toBe(
+      'https://corporate.cheezious.com/en/company/leadership',
+    );
+    expect(seo.alternates.languages['ur-PK']).toBe(
+      'https://corporate.cheezious.com/ur/company/qiadat',
+    );
+    expect(seo.alternates.languages['x-default']).toBe(
+      'https://corporate.cheezious.com/en/company/leadership',
+    );
   });
 
   it('honours an editor noindex and a deployment-wide noindex', () => {
@@ -83,7 +99,9 @@ describe('SEO metadata', () => {
   });
 
   it('derives a description from HTML body copy', () => {
-    const derived = deriveDescription('<p>Our <strong>supply chain</strong> moves food nationwide.</p>');
+    const derived = deriveDescription(
+      '<p>Our <strong>supply chain</strong> moves food nationwide.</p>',
+    );
     expect(derived).toBe('Our supply chain moves food nationwide.');
   });
 
@@ -156,7 +174,12 @@ describe('structured data', () => {
   });
 
   it('builds a Person node for a leadership profile', () => {
-    const node = buildPerson({ name: 'A Person', url: 'u', jobTitle: 'CFO', organizationName: 'Cheezious' });
+    const node = buildPerson({
+      name: 'A Person',
+      url: 'u',
+      jobTitle: 'CFO',
+      organizationName: 'Cheezious',
+    });
     expect(node?.jobTitle).toBe('CFO');
     expect(node?.worksFor).toMatchObject({ name: 'Cheezious' });
   });
@@ -212,9 +235,15 @@ describe('JobPosting structured data', () => {
   });
 
   it('maps internal employment types to schema.org values', () => {
-    expect(buildJobPosting({ ...base, employmentType: 'CONTRACT' })?.employmentType).toBe('CONTRACTOR');
-    expect(buildJobPosting({ ...base, employmentType: 'INTERNSHIP' })?.employmentType).toBe('INTERN');
-    expect(buildJobPosting({ ...base, employmentType: 'FULL_TIME' })?.employmentType).toBe('FULL_TIME');
+    expect(buildJobPosting({ ...base, employmentType: 'CONTRACT' })?.employmentType).toBe(
+      'CONTRACTOR',
+    );
+    expect(buildJobPosting({ ...base, employmentType: 'INTERNSHIP' })?.employmentType).toBe(
+      'INTERN',
+    );
+    expect(buildJobPosting({ ...base, employmentType: 'FULL_TIME' })?.employmentType).toBe(
+      'FULL_TIME',
+    );
   });
 
   it('uses applicantLocationRequirements for remote roles', () => {
@@ -224,7 +253,12 @@ describe('JobPosting structured data', () => {
   });
 
   it('uses jobLocation for on-site roles', () => {
-    const node = buildJobPosting({ ...base, workplaceType: 'ON_SITE', locality: 'Islamabad', region: 'Islamabad Capital Territory' });
+    const node = buildJobPosting({
+      ...base,
+      workplaceType: 'ON_SITE',
+      locality: 'Islamabad',
+      region: 'Islamabad Capital Territory',
+    });
     expect(node?.jobLocation).toMatchObject({
       address: { addressLocality: 'Islamabad', addressCountry: 'PK' },
     });
@@ -232,14 +266,27 @@ describe('JobPosting structured data', () => {
   });
 
   it('emits salary only when the range is complete and coherent', () => {
-    expect(buildJobPosting({ ...base, salaryMin: 100000, salaryMax: 150000, salaryCurrency: 'PKR' })?.baseSalary).toBeDefined();
-    expect(buildJobPosting({ ...base, salaryMin: 100000, salaryCurrency: 'PKR' })?.baseSalary).toBeUndefined();
-    expect(buildJobPosting({ ...base, salaryMin: 150000, salaryMax: 100000, salaryCurrency: 'PKR' })?.baseSalary).toBeUndefined();
-    expect(buildJobPosting({ ...base, salaryMin: 100000, salaryMax: 150000, salaryCurrency: null })?.baseSalary).toBeUndefined();
+    expect(
+      buildJobPosting({ ...base, salaryMin: 100000, salaryMax: 150000, salaryCurrency: 'PKR' })
+        ?.baseSalary,
+    ).toBeDefined();
+    expect(
+      buildJobPosting({ ...base, salaryMin: 100000, salaryCurrency: 'PKR' })?.baseSalary,
+    ).toBeUndefined();
+    expect(
+      buildJobPosting({ ...base, salaryMin: 150000, salaryMax: 100000, salaryCurrency: 'PKR' })
+        ?.baseSalary,
+    ).toBeUndefined();
+    expect(
+      buildJobPosting({ ...base, salaryMin: 100000, salaryMax: 150000, salaryCurrency: null })
+        ?.baseSalary,
+    ).toBeUndefined();
   });
 
   it('includes validThrough when there is an application deadline', () => {
-    expect(buildJobPosting({ ...base, validThrough: '2026-03-01' })?.validThrough).toBe('2026-03-01T00:00:00.000Z');
+    expect(buildJobPosting({ ...base, validThrough: '2026-03-01' })?.validThrough).toBe(
+      '2026-03-01T00:00:00.000Z',
+    );
   });
 });
 

@@ -84,13 +84,25 @@ function resolveTone(status: string): Tone {
   return SUBMISSION_TONES[status] ?? 'neutral';
 }
 
-export function StatusTag({ status, size = 'default' }: { status: ContentStatus | string; size?: 'default' | 'sm' }) {
+export function StatusTag({
+  status,
+  size = 'default',
+}: {
+  status: ContentStatus | string;
+  size?: 'default' | 'sm';
+}) {
   const meta = STATUS_META[status as ContentStatus];
   const label = meta?.label ?? humanize(status);
   const tone = resolveTone(status);
 
   return (
-    <span className={['tag', TONE_CLASSES[tone] ?? TONE_CLASSES.neutral, size === 'sm' ? 'text-[11px]' : ''].join(' ')}>
+    <span
+      className={[
+        'tag',
+        TONE_CLASSES[tone] ?? TONE_CLASSES.neutral,
+        size === 'sm' ? 'text-[11px]' : '',
+      ].join(' ')}
+    >
       <span
         aria-hidden="true"
         className={[
@@ -111,8 +123,14 @@ export function StatusTag({ status, size = 'default' }: { status: ContentStatus 
 /** Marks a published record that has edits not yet live. */
 export function UnpublishedChangesTag() {
   return (
-    <span className="tag bg-status-warningSubtle text-gray-90" title="This page has edits that are not live yet">
-      <span aria-hidden="true" className="inline-block h-1.5 w-1.5 rounded-full bg-status-warning" />
+    <span
+      className="tag bg-status-warningSubtle text-gray-90"
+      title="This page has edits that are not live yet"
+    >
+      <span
+        aria-hidden="true"
+        className="inline-block h-1.5 w-1.5 rounded-full bg-status-warning"
+      />
       Unpublished changes
     </span>
   );
@@ -263,7 +281,10 @@ export function DataTable<T extends { id: string }>({
                 ) : null}
 
                 {columns.map((column, index) => (
-                  <td key={column.key} className={column.align === 'end' ? 'text-right' : undefined}>
+                  <td
+                    key={column.key}
+                    className={column.align === 'end' ? 'text-right' : undefined}
+                  >
                     {/* The first column links to the record, so the primary
                         action is discoverable without hunting for an icon. */}
                     {index === 0 && rowHref ? (
@@ -334,9 +355,14 @@ export function ErrorState({
   onRetry?: () => void;
 }) {
   return (
-    <div className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04" role="alert">
+    <div
+      className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04"
+      role="alert"
+    >
       <p className="text-heading-compact text-content-primary">{title}</p>
-      {description ? <p className="mt-02 text-body-01 text-content-secondary">{description}</p> : null}
+      {description ? (
+        <p className="mt-02 text-body-01 text-content-secondary">{description}</p>
+      ) : null}
       {onRetry ? (
         <button type="button" onClick={onRetry} className="btn-tertiary btn-sm mt-04">
           Try again
@@ -397,7 +423,9 @@ export function InlineNotification({
     >
       <div className="flex-1">
         <p className="text-heading-compact text-content-primary">{title}</p>
-        {children ? <div className="mt-01 text-body-01 text-content-secondary">{children}</div> : null}
+        {children ? (
+          <div className="mt-01 text-body-01 text-content-secondary">{children}</div>
+        ) : null}
       </div>
       {onDismiss ? (
         <button
@@ -419,7 +447,13 @@ export function InlineNotification({
 // Filters and pagination
 // ---------------------------------------------------------------------------
 
-export function FilterBar({ children, resultCount }: { children: ReactNode; resultCount?: number }) {
+export function FilterBar({
+  children,
+  resultCount,
+}: {
+  children: ReactNode;
+  resultCount?: number;
+}) {
   return (
     <div className="flex flex-wrap items-center gap-03 border-b border-border-subtle bg-surface-base px-05 py-03">
       {children}
@@ -505,7 +539,11 @@ export function BulkActions({
       </p>
       <div className="flex items-center gap-03">
         {children}
-        <button type="button" onClick={onCancel} className="text-body-compact underline underline-offset-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-body-compact underline underline-offset-2"
+        >
           Cancel
         </button>
       </div>
@@ -536,7 +574,12 @@ export function ConfirmDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center bg-gray-100/50 p-05" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div
+      className="fixed inset-0 z-modal flex items-center justify-center bg-gray-100/50 p-05"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-title"
+    >
       <div className="absolute inset-0" onClick={onCancel} aria-hidden="true" />
 
       <div className="relative w-full max-w-md border border-border-subtle bg-surface-base shadow-modal">
@@ -549,7 +592,8 @@ export function ConfirmDialog({
           {requireTypedConfirmation ? (
             <div className="mt-05">
               <label htmlFor="confirm-input" className="field-label">
-                Type <span className="font-mono font-semibold">{requireTypedConfirmation}</span> to confirm
+                Type <span className="font-mono font-semibold">{requireTypedConfirmation}</span> to
+                confirm
               </label>
               <input id="confirm-input" className="input" autoComplete="off" />
             </div>
@@ -560,7 +604,11 @@ export function ConfirmDialog({
           <button type="button" onClick={onCancel} className="btn-tertiary">
             Cancel
           </button>
-          <button type="button" onClick={onConfirm} className={danger ? 'btn-danger' : 'btn-primary'}>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className={danger ? 'btn-danger' : 'btn-primary'}
+          >
             {confirmLabel}
           </button>
         </div>

@@ -31,7 +31,10 @@ export async function requireSession(): Promise<{ session: SessionResponse; cook
   return { session, cookie };
 }
 
-export async function requireUsableSession(): Promise<{ session: SessionResponse; cookie?: string }> {
+export async function requireUsableSession(): Promise<{
+  session: SessionResponse;
+  cookie?: string;
+}> {
   const { session, cookie } = await requireSession();
   if (session.user.mustChangePassword) redirect('/account/change-password');
   return { session, cookie };

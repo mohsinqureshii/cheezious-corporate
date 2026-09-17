@@ -17,7 +17,6 @@ import {
   type PageBlock,
 } from '@/lib/content';
 
-import { CTABand, CTAEditorial, ContactDirectory, FormBlock } from './cta';
 import {
   CareerPath,
   JobCategories,
@@ -28,6 +27,7 @@ import {
   StoryFeature,
   StoryGrid,
 } from './collections';
+import { CTABand, CTAEditorial, ContactDirectory, FormBlock } from './cta';
 import {
   BusinessPillars,
   KPIBand,
@@ -48,7 +48,14 @@ import {
   ThreeColumnEditorial,
   TwoColumnText,
 } from './editorial';
-import { HeroEditorial, HeroMedia, HeroMinimal, HeroVideo, IntroStatement, type BlockContext } from './heroes';
+import {
+  HeroEditorial,
+  HeroMedia,
+  HeroMinimal,
+  HeroVideo,
+  IntroStatement,
+  type BlockContext,
+} from './heroes';
 import { ImpactMetrics, ImpactPillars, JobSearchBlock } from './impact-and-jobs';
 
 /**
@@ -361,7 +368,9 @@ function renderBlock(
 
     // --- Careers ------------------------------------------------------------
     case 'JobSearch':
-      return <JobSearchBlock {...props} jobs={data.jobs?.items ?? []} total={data.jobs?.total ?? 0} />;
+      return (
+        <JobSearchBlock {...props} jobs={data.jobs?.items ?? []} total={data.jobs?.total ?? 0} />
+      );
     case 'JobCategories':
       return <JobCategories {...props} categories={data.careerCategories ?? []} />;
     case 'CareerPath':

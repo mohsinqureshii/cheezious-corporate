@@ -35,9 +35,15 @@ export function ChangePasswordForm({ forced = false }: ChangePasswordFormProps) 
   const [revoked, setRevoked] = useState(0);
 
   const mismatch = confirmPassword.length > 0 && confirmPassword !== newPassword;
-  const meetsLocalPolicy = evaluatePassword(newPassword).requirements.every((requirement) => requirement.met);
+  const meetsLocalPolicy = evaluatePassword(newPassword).requirements.every(
+    (requirement) => requirement.met,
+  );
   const canSubmit =
-    currentPassword.length > 0 && meetsLocalPolicy && !mismatch && confirmPassword.length > 0 && status !== 'submitting';
+    currentPassword.length > 0 &&
+    meetsLocalPolicy &&
+    !mismatch &&
+    confirmPassword.length > 0 &&
+    status !== 'submitting';
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -62,7 +68,9 @@ export function ChangePasswordForm({ forced = false }: ChangePasswordFormProps) 
       if (!response.ok) {
         setStatus('error');
         setFieldErrors(
-          Object.fromEntries((body.error?.fields ?? []).map((error) => [error.field, error.message])),
+          Object.fromEntries(
+            (body.error?.fields ?? []).map((error) => [error.field, error.message]),
+          ),
         );
         setMessage(
           body.error?.fields?.length
@@ -90,7 +98,10 @@ export function ChangePasswordForm({ forced = false }: ChangePasswordFormProps) 
 
   if (status === 'done' && !forced) {
     return (
-      <div className="border-s-[3px] border-status-success bg-status-successSubtle px-05 py-04" role="status">
+      <div
+        className="border-s-[3px] border-status-success bg-status-successSubtle px-05 py-04"
+        role="status"
+      >
         <p className="text-heading-compact text-content-primary">Your password has been changed</p>
         <p className="mt-01 text-body-01 text-content-secondary">
           {revoked > 0
@@ -104,7 +115,10 @@ export function ChangePasswordForm({ forced = false }: ChangePasswordFormProps) 
   return (
     <form onSubmit={handleSubmit} className="space-y-05" noValidate>
       {status === 'error' && message ? (
-        <div className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04" role="alert">
+        <div
+          className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04"
+          role="alert"
+        >
           <p className="text-body-01 text-content-primary">{message}</p>
         </div>
       ) : null}
@@ -120,7 +134,6 @@ export function ChangePasswordForm({ forced = false }: ChangePasswordFormProps) 
           onChange={(event) => setCurrentPassword(event.target.value)}
           required
           autoComplete="current-password"
-          autoFocus
           className="input"
           aria-invalid={fieldErrors.currentPassword ? true : undefined}
           aria-describedby={fieldErrors.currentPassword ? 'current-password-error' : undefined}

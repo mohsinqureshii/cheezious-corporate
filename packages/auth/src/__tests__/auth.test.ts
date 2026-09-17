@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { checkPasswordPolicy, hashPassword, needsRehash, safeCompare, verifyPassword } from '../password';
+import {
+  checkPasswordPolicy,
+  hashPassword,
+  needsRehash,
+  safeCompare,
+  verifyPassword,
+} from '../password';
 import { MemoryRateLimitStore, RateLimiter, RATE_LIMITS } from '../rate-limit';
 import {
   generateReference,
@@ -20,7 +26,10 @@ describe('password hashing', () => {
   });
 
   it('salts each hash so identical passwords do not collide', async () => {
-    const [a, b] = await Promise.all([hashPassword('same-password-12345'), hashPassword('same-password-12345')]);
+    const [a, b] = await Promise.all([
+      hashPassword('same-password-12345'),
+      hashPassword('same-password-12345'),
+    ]);
     expect(a).not.toBe(b);
   });
 
@@ -43,7 +52,9 @@ describe('password policy', () => {
   });
 
   it('rejects a password containing the user email or name', () => {
-    expect(checkPasswordPolicy('ayeshaK!2026xyz', { email: 'ayesha@cheezious.com' }).valid).toBe(false);
+    expect(checkPasswordPolicy('ayeshaK!2026xyz', { email: 'ayesha@cheezious.com' }).valid).toBe(
+      false,
+    );
     expect(checkPasswordPolicy('Ayesha!Khan2026', { name: 'Ayesha Khan' }).valid).toBe(false);
   });
 
@@ -83,7 +94,12 @@ describe('opaque tokens', () => {
 
 describe('preview tokens', () => {
   const secret = 'a-preview-secret-that-is-at-least-32-chars';
-  const payload = { entityType: 'page', entityId: 'page_1', locale: 'en', expiresAt: Date.now() + 60_000 };
+  const payload = {
+    entityType: 'page',
+    entityId: 'page_1',
+    locale: 'en',
+    expiresAt: Date.now() + 60_000,
+  };
 
   it('round-trips a signed payload', () => {
     const token = signPreviewPayload(payload, secret);

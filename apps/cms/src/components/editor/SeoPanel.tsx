@@ -29,7 +29,15 @@ export interface SeoPanelProps {
   onChange: (seo: Record<string, unknown>) => void;
 }
 
-export function SeoPanel({ seo, pageTitle, pageSummary, path, siteUrl, canEdit, onChange }: SeoPanelProps) {
+export function SeoPanel({
+  seo,
+  pageTitle,
+  pageSummary,
+  path,
+  siteUrl,
+  canEdit,
+  onChange,
+}: SeoPanelProps) {
   const title = (seo.title as string) ?? '';
   const description = (seo.description as string) ?? '';
   const canonicalUrl = (seo.canonicalUrl as string) ?? '';
@@ -53,7 +61,11 @@ export function SeoPanel({ seo, pageTitle, pageSummary, path, siteUrl, canEdit, 
       });
     }
     if (effectiveTitle.length < 15) {
-      found.push({ field: 'title', severity: 'warning', message: 'The title is very short. Add more context.' });
+      found.push({
+        field: 'title',
+        severity: 'warning',
+        message: 'The title is very short. Add more context.',
+      });
     }
 
     if (!effectiveDescription) {
@@ -172,12 +184,19 @@ export function SeoPanel({ seo, pageTitle, pageSummary, path, siteUrl, canEdit, 
           placeholder={pageSummary || 'Describe this page in a sentence or two.'}
           className="textarea"
         />
-        <CharacterCount value={effectiveDescription} ideal={LIMITS.descriptionIdeal} max={LIMITS.descriptionMax} min={LIMITS.descriptionMin} />
+        <CharacterCount
+          value={effectiveDescription}
+          ideal={LIMITS.descriptionIdeal}
+          max={LIMITS.descriptionMax}
+          min={LIMITS.descriptionMin}
+        />
         <p className="field-helper">Defaults to the page summary when left empty.</p>
       </div>
 
       <details className="border-t border-border-subtle pt-04">
-        <summary className="cursor-pointer text-body-compact text-content-primary">Social sharing</summary>
+        <summary className="cursor-pointer text-body-compact text-content-primary">
+          Social sharing
+        </summary>
         <div className="mt-04 space-y-04">
           <div>
             <label htmlFor="seo-og-title" className="field-label">
@@ -209,13 +228,16 @@ export function SeoPanel({ seo, pageTitle, pageSummary, path, siteUrl, canEdit, 
           </div>
 
           <p className="field-helper">
-            The social image is chosen from the media library. Without one, the site-wide default is used.
+            The social image is chosen from the media library. Without one, the site-wide default is
+            used.
           </p>
         </div>
       </details>
 
       <details className="border-t border-border-subtle pt-04">
-        <summary className="cursor-pointer text-body-compact text-content-primary">Advanced</summary>
+        <summary className="cursor-pointer text-body-compact text-content-primary">
+          Advanced
+        </summary>
         <div className="mt-04 space-y-04">
           <div>
             <label htmlFor="seo-canonical" className="field-label">
@@ -231,7 +253,8 @@ export function SeoPanel({ seo, pageTitle, pageSummary, path, siteUrl, canEdit, 
               className="input"
             />
             <p className="field-helper">
-              Only set this when this page duplicates another. Getting it wrong removes the page from search.
+              Only set this when this page duplicates another. Getting it wrong removes the page
+              from search.
             </p>
           </div>
 
@@ -246,9 +269,12 @@ export function SeoPanel({ seo, pageTitle, pageSummary, path, siteUrl, canEdit, 
               className="checkbox mt-01"
             />
             <span>
-              <span className="block text-body-compact text-content-primary">Hide from search engines</span>
+              <span className="block text-body-compact text-content-primary">
+                Hide from search engines
+              </span>
               <span className="block text-helper-01 text-content-secondary">
-                The page stays reachable by direct link but is excluded from search results and the sitemap.
+                The page stays reachable by direct link but is excluded from search results and the
+                sitemap.
               </span>
             </span>
           </label>
@@ -262,7 +288,9 @@ export function SeoPanel({ seo, pageTitle, pageSummary, path, siteUrl, canEdit, 
               className="checkbox mt-01"
             />
             <span>
-              <span className="block text-body-compact text-content-primary">Do not follow links</span>
+              <span className="block text-body-compact text-content-primary">
+                Do not follow links
+              </span>
               <span className="block text-helper-01 text-content-secondary">
                 Rarely needed. Tells search engines not to follow links from this page.
               </span>

@@ -51,7 +51,11 @@ export function mediaPage(options: {
           <PageHeader title={options.title} />
           <div className="p-06">
             <ErrorState
-              title={forbidden ? 'You do not have access to the media library' : 'This could not be loaded'}
+              title={
+                forbidden
+                  ? 'You do not have access to the media library'
+                  : 'This could not be loaded'
+              }
               description={
                 forbidden
                   ? 'An administrator can grant it if you need it.'

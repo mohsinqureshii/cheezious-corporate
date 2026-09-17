@@ -143,12 +143,15 @@ export function requirePermission(...permissions: Permission[]) {
     const allowed = permissions.some((permission) => req.ability.can(permission));
     if (!allowed) {
       req.ctx.logger.warn(
-        { requestId: req.requestId, actorId: req.principal.id, required: permissions, path: req.path },
+        {
+          requestId: req.requestId,
+          actorId: req.principal.id,
+          required: permissions,
+          path: req.path,
+        },
         'permission denied',
       );
-      return next(
-        new ApiError('FORBIDDEN', 'You do not have permission to do that.'),
-      );
+      return next(new ApiError('FORBIDDEN', 'You do not have permission to do that.'));
     }
 
     next();
@@ -213,7 +216,10 @@ export function rateLimit(name: RateLimitName) {
 
       if (!result.allowed) {
         res.setHeader('retry-after', String(result.retryAfterSeconds));
-        req.ctx.logger.warn({ requestId: req.requestId, key: name, identity }, 'rate limit exceeded');
+        req.ctx.logger.warn(
+          { requestId: req.requestId, key: name, identity },
+          'rate limit exceeded',
+        );
         return next(
           new ApiError('RATE_LIMITED', 'Too many requests. Please wait a moment and try again.'),
         );

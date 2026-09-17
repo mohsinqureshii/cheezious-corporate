@@ -1,12 +1,18 @@
 /** Small object/array helpers shared across packages. */
 
-export function pick<T extends object, K extends keyof T>(source: T, keys: readonly K[]): Pick<T, K> {
+export function pick<T extends object, K extends keyof T>(
+  source: T,
+  keys: readonly K[],
+): Pick<T, K> {
   const out = {} as Pick<T, K>;
   for (const key of keys) if (key in source) out[key] = source[key];
   return out;
 }
 
-export function omit<T extends object, K extends keyof T>(source: T, keys: readonly K[]): Omit<T, K> {
+export function omit<T extends object, K extends keyof T>(
+  source: T,
+  keys: readonly K[],
+): Omit<T, K> {
   const out = { ...source } as T;
   for (const key of keys) delete out[key];
   return out as Omit<T, K>;
@@ -16,7 +22,10 @@ export function compact<T>(items: ReadonlyArray<T | null | undefined | false>): 
   return items.filter((item): item is T => item !== null && item !== undefined && item !== false);
 }
 
-export function groupBy<T, K extends string | number>(items: readonly T[], keyOf: (item: T) => K): Record<K, T[]> {
+export function groupBy<T, K extends string | number>(
+  items: readonly T[],
+  keyOf: (item: T) => K,
+): Record<K, T[]> {
   const out = {} as Record<K, T[]>;
   for (const item of items) {
     const key = keyOf(item);

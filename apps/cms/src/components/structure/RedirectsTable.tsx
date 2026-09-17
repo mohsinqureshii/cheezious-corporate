@@ -83,23 +83,35 @@ export function RedirectsTable({
     {
       key: 'source',
       header: 'From',
-      render: (row) => <span className="block max-w-xs truncate font-mono text-helper-01">{row.source}</span>,
+      render: (row) => (
+        <span className="block max-w-xs truncate font-mono text-helper-01">{row.source}</span>
+      ),
       width: '26%',
     },
     {
       key: 'destination',
       header: 'To',
-      render: (row) => <span className="block max-w-xs truncate font-mono text-helper-01">{row.destination}</span>,
+      render: (row) => (
+        <span className="block max-w-xs truncate font-mono text-helper-01">{row.destination}</span>
+      ),
       width: '26%',
     },
-    { key: 'statusCode', header: 'Code', width: '80px', render: (row) => <span className="tabular">{row.statusCode}</span> },
+    {
+      key: 'statusCode',
+      header: 'Code',
+      width: '80px',
+      render: (row) => <span className="tabular">{row.statusCode}</span>,
+    },
     {
       key: 'origin',
       header: 'Origin',
       width: '130px',
       render: (row) =>
         row.isAutomatic ? (
-          <span className="tag bg-gray-20 text-content-primary" title="Created automatically when a page was renamed">
+          <span
+            className="tag bg-gray-20 text-content-primary"
+            title="Created automatically when a page was renamed"
+          >
             Automatic
           </span>
         ) : (
@@ -111,7 +123,10 @@ export function RedirectsTable({
       header: 'Followed',
       width: '130px',
       render: (row) => (
-        <span className="tabular text-content-secondary" title={row.lastHitAt ? `Last ${formatDate(row.lastHitAt)}` : 'Never followed'}>
+        <span
+          className="tabular text-content-secondary"
+          title={row.lastHitAt ? `Last ${formatDate(row.lastHitAt)}` : 'Never followed'}
+        >
           {row.hitCount}
         </span>
       ),
@@ -135,7 +150,11 @@ export function RedirectsTable({
             align: 'end' as const,
             width: '90px',
             render: (row: RedirectRow) => (
-              <button type="button" onClick={() => remove(row)} className="text-status-danger hover:underline">
+              <button
+                type="button"
+                onClick={() => remove(row)}
+                className="text-status-danger hover:underline"
+              >
                 Delete
                 <span className="sr-only"> the redirect from {row.source}</span>
               </button>
@@ -148,7 +167,10 @@ export function RedirectsTable({
   return (
     <div className="p-06">
       {error ? (
-        <div className="mb-05 border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04" role="alert">
+        <div
+          className="mb-05 border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04"
+          role="alert"
+        >
           <p className="text-body-01 text-content-primary">{error}</p>
         </div>
       ) : null}
@@ -190,13 +212,20 @@ export function RedirectsTable({
           </select>
 
           {canManage ? (
-            <button type="button" className="btn-primary btn-sm ms-auto" onClick={() => setCreating(true)}>
+            <button
+              type="button"
+              className="btn-primary btn-sm ms-auto"
+              onClick={() => setCreating(true)}
+            >
               Add a redirect
             </button>
           ) : null}
         </FilterBar>
 
-        <div className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined} aria-busy={isPending}>
+        <div
+          className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined}
+          aria-busy={isPending}
+        >
           <DataTable
             caption="Redirects"
             columns={columns}
@@ -211,11 +240,24 @@ export function RedirectsTable({
         </div>
 
         {meta.total > meta.pageSize ? (
-          <Pagination page={meta.page} pageSize={meta.pageSize} total={meta.total} onPageChange={(next) => setParam('page', String(next))} />
+          <Pagination
+            page={meta.page}
+            pageSize={meta.pageSize}
+            total={meta.total}
+            onPageChange={(next) => setParam('page', String(next))}
+          />
         ) : null}
       </div>
 
-      {creating ? <CreateRedirect onClose={() => setCreating(false)} onDone={() => { setCreating(false); router.refresh(); }} /> : null}
+      {creating ? (
+        <CreateRedirect
+          onClose={() => setCreating(false)}
+          onDone={() => {
+            setCreating(false);
+            router.refresh();
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -238,11 +280,22 @@ function CreateRedirect({ onClose, onDone }: { onClose: () => void; onDone: () =
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ source, destination, statusCode: Number(statusCode), note: note || null }),
+        body: JSON.stringify({
+          source,
+          destination,
+          statusCode: Number(statusCode),
+          note: note || null,
+        }),
       });
       if (!response.ok) {
-        const body = (await response.json()) as { error?: { message: string; fields?: Array<{ message: string }> } };
-        setError(body.error?.fields?.[0]?.message ?? body.error?.message ?? 'That redirect could not be created.');
+        const body = (await response.json()) as {
+          error?: { message: string; fields?: Array<{ message: string }> };
+        };
+        setError(
+          body.error?.fields?.[0]?.message ??
+            body.error?.message ??
+            'That redirect could not be created.',
+        );
         return;
       }
       onDone();
@@ -254,13 +307,24 @@ function CreateRedirect({ onClose, onDone }: { onClose: () => void; onDone: () =
   }
 
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center bg-gray-100/50 p-05" role="dialog" aria-modal="true" aria-label="Add a redirect">
+    <div
+      className="fixed inset-0 z-modal flex items-center justify-center bg-gray-100/50 p-05"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Add a redirect"
+    >
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
-      <form onSubmit={submit} className="relative w-full max-w-lg space-y-05 border border-border-subtle bg-surface-base p-06 shadow-modal">
+      <form
+        onSubmit={submit}
+        className="relative w-full max-w-lg space-y-05 border border-border-subtle bg-surface-base p-06 shadow-modal"
+      >
         <h2 className="text-heading-compact text-content-primary">Add a redirect</h2>
 
         {error ? (
-          <p className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-03 py-02 text-helper-01" role="alert">
+          <p
+            className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-03 py-02 text-helper-01"
+            role="alert"
+          >
             {error}
           </p>
         ) : null}
@@ -269,30 +333,55 @@ function CreateRedirect({ onClose, onDone }: { onClose: () => void; onDone: () =
           <label htmlFor="redirect-source" className="field-label">
             From
           </label>
-          <input id="redirect-source" className="input font-mono" value={source} required placeholder="/old-path" onChange={(event) => setSource(event.target.value)} autoFocus />
-          <p className="field-helper">The address people are arriving at, without the language prefix.</p>
+          <input
+            id="redirect-source"
+            className="input font-mono"
+            value={source}
+            required
+            placeholder="/old-path"
+            onChange={(event) => setSource(event.target.value)}
+            // A dialog takes focus when it opens: WAI-ARIA asks for it, and without
+            // it a keyboard user is left behind the overlay with nothing focused.
+            // eslint-disable-next-line jsx-a11y/no-autofocus
+            autoFocus
+          />
+          <p className="field-helper">
+            The address people are arriving at, without the language prefix.
+          </p>
         </div>
 
         <div>
           <label htmlFor="redirect-destination" className="field-label">
             To
           </label>
-          <input id="redirect-destination" className="input font-mono" value={destination} required placeholder="/new-path" onChange={(event) => setDestination(event.target.value)} />
+          <input
+            id="redirect-destination"
+            className="input font-mono"
+            value={destination}
+            required
+            placeholder="/new-path"
+            onChange={(event) => setDestination(event.target.value)}
+          />
         </div>
 
         <div>
           <label htmlFor="redirect-status" className="field-label">
             Kind
           </label>
-          <select id="redirect-status" className="select" value={statusCode} onChange={(event) => setStatusCode(event.target.value)}>
+          <select
+            id="redirect-status"
+            className="select"
+            value={statusCode}
+            onChange={(event) => setStatusCode(event.target.value)}
+          >
             <option value="301">Permanent (301)</option>
             <option value="302">Temporary (302)</option>
             <option value="307">Temporary, method preserved (307)</option>
             <option value="308">Permanent, method preserved (308)</option>
           </select>
           <p className="field-helper">
-            Permanent is right for a rename and is what search engines act on. Use temporary only if the old
-            address is coming back.
+            Permanent is right for a rename and is what search engines act on. Use temporary only if
+            the old address is coming back.
           </p>
         </div>
 
@@ -300,7 +389,13 @@ function CreateRedirect({ onClose, onDone }: { onClose: () => void; onDone: () =
           <label htmlFor="redirect-note" className="field-label">
             Note
           </label>
-          <input id="redirect-note" className="input" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Why this exists" />
+          <input
+            id="redirect-note"
+            className="input"
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="Why this exists"
+          />
         </div>
 
         <div className="flex gap-03">

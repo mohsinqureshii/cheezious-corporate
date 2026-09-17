@@ -31,9 +31,10 @@ export default async function UsersPage({
   };
 
   const [users, roles] = await Promise.all([
-    cmsFetch<{ items: UserRow[]; meta: ListMeta }>('/api/cms/system/users', { cookie, searchParams: query }).catch(
-      () => null,
-    ),
+    cmsFetch<{ items: UserRow[]; meta: ListMeta }>('/api/cms/system/users', {
+      cookie,
+      searchParams: query,
+    }).catch(() => null),
     cmsFetch<{ roles: RoleOption[] }>('/api/cms/system/roles', { cookie })
       .then((response) => response.roles)
       .catch(() => []),
@@ -55,13 +56,20 @@ export default async function UsersPage({
 
   return (
     <>
-      <PageHeader title="Users" description="Everyone with access to the CMS, and what they can do." />
+      <PageHeader
+        title="Users"
+        description="Everyone with access to the CMS, and what they can do."
+      />
       <UsersTable
         rows={users.items}
         meta={users.meta}
         roles={roles}
         canManage={session.user.permissions.includes('users.manage')}
-        initialQuery={{ q: query.q ?? '', status: query.status ?? '', roleKey: query.roleKey ?? '' }}
+        initialQuery={{
+          q: query.q ?? '',
+          status: query.status ?? '',
+          roleKey: query.roleKey ?? '',
+        }}
       />
     </>
   );

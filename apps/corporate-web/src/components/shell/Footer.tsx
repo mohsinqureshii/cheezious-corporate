@@ -1,8 +1,7 @@
-import { LOCALE_META, type Locale } from '@cheezious/config';
+import type { Locale } from '@cheezious/config';
 import Link from 'next/link';
 
 import { LocaleSwitch } from '@/components/shell/LocaleSwitch';
-
 import type { FooterData, NavigationItem } from '@/lib/content';
 
 /**
@@ -29,11 +28,17 @@ export interface FooterProps {
 
 export function Footer({ locale, data, consumerSiteUrl, labels }: FooterProps) {
   const year = new Date().getFullYear();
-  const copyright = (data.footer?.copyrightTemplate ?? 'Cheezious © {year}').replace('{year}', String(year));
+  const copyright = (data.footer?.copyrightTemplate ?? 'Cheezious © {year}').replace(
+    '{year}',
+    String(year),
+  );
   const otherLocale: Locale = locale === 'en' ? 'ur' : 'en';
 
   return (
-    <footer className="mt-section border-t border-ink-line bg-paper-sunken" aria-labelledby="footer-heading">
+    <footer
+      className="mt-section border-t border-ink-line bg-paper-sunken"
+      aria-labelledby="footer-heading"
+    >
       <h2 id="footer-heading" className="sr-only">
         Site footer
       </h2>
@@ -42,7 +47,10 @@ export function Footer({ locale, data, consumerSiteUrl, labels }: FooterProps) {
         {/* Identity and navigation groups ---------------------------------- */}
         <div className="grid grid-cols-12 gap-x-gutter gap-y-12">
           <div className="col-span-12 lg:col-span-3">
-            <Link href={`/${locale}/company`} className="inline-flex items-baseline gap-2 no-underline">
+            <Link
+              href={`/${locale}/company`}
+              className="inline-flex items-baseline gap-2 no-underline"
+            >
               <span className="text-heading-md font-bold tracking-tight text-ink">Cheezious</span>
               <span className="text-eyebrow uppercase text-ink-muted">{labels.corporate}</span>
             </Link>
@@ -67,7 +75,13 @@ export function Footer({ locale, data, consumerSiteUrl, labels }: FooterProps) {
               >
                 {labels.orderNow}
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none" aria-hidden="true">
-                  <path d="M2 9L9 2M9 2H4M9 2v5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  <path
+                    d="M2 9L9 2M9 2H4M9 2v5"
+                    stroke="currentColor"
+                    strokeWidth="1.4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
                 <span className="sr-only"> (opens in a new tab)</span>
               </a>
@@ -126,9 +140,7 @@ export function Footer({ locale, data, consumerSiteUrl, labels }: FooterProps) {
           </div>
 
           <div className="flex items-center gap-4">
-            <p className="text-body-xs text-ink-muted">
-              {data.footer?.regionLabel ?? 'Pakistan'}
-            </p>
+            <p className="text-body-xs text-ink-muted">{data.footer?.regionLabel ?? 'Pakistan'}</p>
             {data.footer?.showLocaleSwitch !== false ? (
               <>
                 <span aria-hidden="true" className="text-ink-line">

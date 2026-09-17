@@ -26,7 +26,10 @@ export async function hashPassword(plaintext: string): Promise<string> {
  * a corrupted row cannot turn into a 500 that distinguishes it from a wrong
  * password.
  */
-export async function verifyPassword(hash: string | null | undefined, plaintext: string): Promise<boolean> {
+export async function verifyPassword(
+  hash: string | null | undefined,
+  plaintext: string,
+): Promise<boolean> {
   if (!hash) {
     // Spend comparable time anyway so "no password set" is not observable by timing.
     await argon2.hash(plaintext, ARGON2_OPTIONS).catch(() => undefined);
@@ -56,22 +59,36 @@ export interface PasswordPolicyResult {
 }
 
 const COMMON_PASSWORDS = new Set([
-  'password', 'password1', 'password123', '12345678', '123456789', 'qwerty123',
-  'letmein', 'welcome1', 'admin123', 'changeme', 'cheezious', 'cheezious123',
+  'password',
+  'password1',
+  'password123',
+  '12345678',
+  '123456789',
+  'qwerty123',
+  'letmein',
+  'welcome1',
+  'admin123',
+  'changeme',
+  'cheezious',
+  'cheezious123',
 ]);
 
 /**
  * Password policy. Length is weighted far more heavily than character-class
  * rules, which is what actually resists offline attack.
  */
-export function checkPasswordPolicy(password: string, context: { email?: string; name?: string } = {}): PasswordPolicyResult {
+export function checkPasswordPolicy(
+  password: string,
+  context: { email?: string; name?: string } = {},
+): PasswordPolicyResult {
   const errors: string[] = [];
 
   if (password.length < 12) errors.push('Use at least 12 characters.');
   if (password.length > 200) errors.push('Use no more than 200 characters.');
 
   const lower = password.toLowerCase();
-  if (COMMON_PASSWORDS.has(lower)) errors.push('This password is too common. Choose something less predictable.');
+  if (COMMON_PASSWORDS.has(lower))
+    errors.push('This password is too common. Choose something less predictable.');
 
   const localPart = context.email?.split('@')[0]?.toLowerCase();
   if (localPart && localPart.length >= 3 && lower.includes(localPart)) {
@@ -87,7 +104,9 @@ export function checkPasswordPolicy(password: string, context: { email?: string;
   }
   if (/^(.)\1+$/.test(password)) errors.push('Do not use a single repeated character.');
 
-  const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((r) => r.test(password)).length;
+  const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((r) =>
+    r.test(password),
+  ).length;
   if (password.length < 16 && classes < 3) {
     errors.push('Use a longer password, or mix upper case, lower case, numbers and symbols.');
   }

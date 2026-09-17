@@ -29,10 +29,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <>
       <Header user={session.user} unreadNotifications={session.unreadNotifications} />
-      <Sidebar permissions={session.user.permissions} isActive={session.user.isActive} badges={badges} />
+      <Sidebar
+        permissions={session.user.permissions}
+        isActive={session.user.isActive}
+        badges={badges}
+      />
 
       <div className="pt-header lg:ps-sidebar">
-        <main id="cms-main" tabIndex={-1} className="min-h-[calc(100vh-theme(spacing.header))] focus:outline-none">
+        <main
+          id="cms-main"
+          tabIndex={-1}
+          className="min-h-[calc(100vh-theme(spacing.header))] focus:outline-none"
+        >
           {children}
         </main>
       </div>
@@ -56,7 +64,8 @@ async function loadBadges(cookie?: string): Promise<Record<string, number | null
       partnerships: dashboard.inbox.partnerships ?? null,
       contact: dashboard.inbox.contact ?? null,
       review: dashboard.reviewQueue
-        ? dashboard.reviewQueue.awaitingReview.length + dashboard.reviewQueue.awaitingApproval.length
+        ? dashboard.reviewQueue.awaitingReview.length +
+          dashboard.reviewQueue.awaitingApproval.length
         : null,
       health: dashboard.contentHealth?.totalIssues ?? null,
     };

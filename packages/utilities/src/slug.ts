@@ -7,7 +7,7 @@
  * modern browsers and search engines handle percent-encoded UTF-8 paths fine.
  */
 
-const ARABIC_SCRIPT = /[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]/;
+const ARABIC_SCRIPT = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/; // Arabic, Supplement, Presentation Forms A and B
 
 export function slugify(input: string, options: { maxLength?: number } = {}): string {
   const { maxLength = 96 } = options;
@@ -21,20 +21,25 @@ export function slugify(input: string, options: { maxLength?: number } = {}): st
     .replace(/[̀-ͯ]/g, '') // strip combining marks
     .toLowerCase();
 
-  slug = preserveScript
-    ? slug.replace(/[^\p{L}\p{N}]+/gu, '-')
-    : slug.replace(/[^a-z0-9]+/g, '-');
+  slug = preserveScript ? slug.replace(/[^\p{L}\p{N}]+/gu, '-') : slug.replace(/[^a-z0-9]+/g, '-');
 
   slug = slug.replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
 
   if (slug.length > maxLength) {
-    slug = slug.slice(0, maxLength).replace(/-+[^-]*$/, '').replace(/-+$/, '');
+    slug = slug
+      .slice(0, maxLength)
+      .replace(/-+[^-]*$/, '')
+      .replace(/-+$/, '');
   }
   return slug;
 }
 
 /** Produce a slug not present in `taken`, appending -2, -3, … as required. */
-export function uniqueSlug(base: string, taken: Iterable<string>, options: { maxLength?: number } = {}): string {
+export function uniqueSlug(
+  base: string,
+  taken: Iterable<string>,
+  options: { maxLength?: number } = {},
+): string {
   const existing = new Set(taken);
   const root = slugify(base, options) || 'item';
   if (!existing.has(root)) return root;

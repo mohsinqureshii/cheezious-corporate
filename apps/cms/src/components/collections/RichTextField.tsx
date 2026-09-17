@@ -45,7 +45,15 @@ export interface RichTextFieldProps {
   onChange: (value: string) => void;
 }
 
-export function RichTextField({ id, label, value, help, disabled, rows = 12, onChange }: RichTextFieldProps) {
+export function RichTextField({
+  id,
+  label,
+  value,
+  help,
+  disabled,
+  rows = 12,
+  onChange,
+}: RichTextFieldProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [preview, setPreview] = useState(false);
 
@@ -58,9 +66,10 @@ export function RichTextField({ id, label, value, help, disabled, rows = 12, onC
     const selected = value.slice(start, end);
     const [open, close] = action.wrap;
 
-    const insertion = action.block && start > 0 && value[start - 1] !== '\n'
-      ? `\n${open}${selected}${close}`
-      : `${open}${selected}${close}`;
+    const insertion =
+      action.block && start > 0 && value[start - 1] !== '\n'
+        ? `\n${open}${selected}${close}`
+        : `${open}${selected}${close}`;
 
     const next = value.slice(0, start) + insertion + value.slice(end);
     onChange(next);
@@ -69,7 +78,10 @@ export function RichTextField({ id, label, value, help, disabled, rows = 12, onC
     requestAnimationFrame(() => {
       textarea.focus();
       const caret = start + insertion.length - close.length;
-      textarea.setSelectionRange(selected ? caret : start + insertion.indexOf(selected || close), caret);
+      textarea.setSelectionRange(
+        selected ? caret : start + insertion.indexOf(selected || close),
+        caret,
+      );
     });
   }
 

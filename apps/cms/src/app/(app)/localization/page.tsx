@@ -42,9 +42,9 @@ const STATUS_LABELS: Record<string, string> = {
 export default async function LocalizationPage() {
   const { cookie } = await requireUsableSession();
 
-  const data = await cmsFetch<LocalizationResponse>('/api/cms/structure/localization', { cookie }).catch(
-    () => null,
-  );
+  const data = await cmsFetch<LocalizationResponse>('/api/cms/structure/localization', {
+    cookie,
+  }).catch(() => null);
 
   if (!data) {
     return (
@@ -71,7 +71,8 @@ export default async function LocalizationPage() {
             {data.locales.map((locale) => (
               <li key={locale.code} className="border border-border-subtle p-05">
                 <p className="text-body-compact text-content-primary">
-                  {locale.label} <span className="text-content-tertiary">({locale.nativeLabel})</span>
+                  {locale.label}{' '}
+                  <span className="text-content-tertiary">({locale.nativeLabel})</span>
                 </p>
                 <p className="mt-01 text-helper-01 text-content-secondary">
                   {locale.code.toUpperCase()} · {locale.direction.toUpperCase()}
@@ -88,14 +89,21 @@ export default async function LocalizationPage() {
 
           {(['pages', 'stories'] as const).map((kind) => (
             <div key={kind} className="mt-05">
-              <h3 className="text-label-01 uppercase tracking-wide text-content-tertiary">{kind}</h3>
+              <h3 className="text-label-01 uppercase tracking-wide text-content-tertiary">
+                {kind}
+              </h3>
               {data.counts[kind].length === 0 ? (
                 <p className="mt-02 text-body-01 text-content-secondary">Nothing yet.</p>
               ) : (
                 <ul className="mt-02 flex flex-wrap gap-03">
                   {data.counts[kind].map((row) => (
-                    <li key={`${row.locale}-${row.status}`} className="border border-border-subtle px-04 py-02">
-                      <span className="block text-heading-compact tabular text-content-primary">{row.count}</span>
+                    <li
+                      key={`${row.locale}-${row.status}`}
+                      className="border border-border-subtle px-04 py-02"
+                    >
+                      <span className="block text-heading-compact tabular text-content-primary">
+                        {row.count}
+                      </span>
                       <span className="block text-helper-01 text-content-secondary">
                         {row.locale.toUpperCase()} · {STATUS_LABELS[row.status] ?? row.status}
                       </span>
@@ -110,7 +118,9 @@ export default async function LocalizationPage() {
         <section className="panel">
           <div className="flex flex-wrap items-baseline justify-between gap-03 border-b border-border-subtle px-05 py-04">
             <div>
-              <h2 className="text-heading-compact text-content-primary">Published, but only in English</h2>
+              <h2 className="text-heading-compact text-content-primary">
+                Published, but only in English
+              </h2>
               <p className="mt-01 text-helper-01 text-content-secondary">
                 These are live and half the audience cannot read them.
               </p>
@@ -128,11 +138,19 @@ export default async function LocalizationPage() {
           ) : (
             <ul className="divide-y divide-border-subtle">
               {data.untranslatedPages.map((page) => (
-                <li key={page.id} className="flex flex-wrap items-center justify-between gap-03 px-05 py-03">
-                  <Link href={`/content/pages/${page.id}`} className="text-body-compact text-interactive no-underline hover:underline">
+                <li
+                  key={page.id}
+                  className="flex flex-wrap items-center justify-between gap-03 px-05 py-03"
+                >
+                  <Link
+                    href={`/content/pages/${page.id}`}
+                    className="text-body-compact text-interactive no-underline hover:underline"
+                  >
                     {page.title}
                   </Link>
-                  <span className="font-mono text-helper-01 text-content-tertiary">{page.path}</span>
+                  <span className="font-mono text-helper-01 text-content-tertiary">
+                    {page.path}
+                  </span>
                 </li>
               ))}
             </ul>

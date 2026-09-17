@@ -152,12 +152,22 @@ export async function seedSettings(prisma: PrismaClient): Promise<void> {
           description: setting.description ?? null,
           value: setting.values[locale] as never,
         },
-        update: { label: setting.label, description: setting.description ?? null, group: setting.group },
+        update: {
+          label: setting.label,
+          description: setting.description ?? null,
+          group: setting.group,
+        },
       });
     }
   }
 
-  const globals: Array<{ key: string; label: string; description: string; value: unknown; group: string }> = [
+  const globals: Array<{
+    key: string;
+    label: string;
+    description: string;
+    value: unknown;
+    group: string;
+  }> = [
     {
       key: 'organisation.legalName',
       label: 'Legal entity name',
@@ -189,7 +199,8 @@ export async function seedSettings(prisma: PrismaClient): Promise<void> {
     {
       key: 'privacy.submissionRetentionDays',
       label: 'Supplier and property submission retention (days)',
-      description: 'Supplier and property submissions become eligible for deletion after this period.',
+      description:
+        'Supplier and property submissions become eligible for deletion after this period.',
       value: 730,
       group: 'privacy',
     },
@@ -204,11 +215,36 @@ export async function seedSettings(prisma: PrismaClient): Promise<void> {
   }
 
   const flags: Array<{ key: string; label: string; description: string; enabled: boolean }> = [
-    { key: 'search.enabled', label: 'Corporate search', description: 'Public search across the corporate site.', enabled: true },
-    { key: 'locale.urdu', label: 'Urdu site', description: 'Serve the Urdu locale publicly.', enabled: true },
-    { key: 'careers.applications', label: 'Online applications', description: 'Accept job applications through the site.', enabled: true },
-    { key: 'newsroom.mediaCentre', label: 'Media centre', description: 'Public downloads of press and brand assets.', enabled: true },
-    { key: 'impact.progressBars', label: 'Impact progress', description: 'Show progress against published impact targets.', enabled: true },
+    {
+      key: 'search.enabled',
+      label: 'Corporate search',
+      description: 'Public search across the corporate site.',
+      enabled: true,
+    },
+    {
+      key: 'locale.urdu',
+      label: 'Urdu site',
+      description: 'Serve the Urdu locale publicly.',
+      enabled: true,
+    },
+    {
+      key: 'careers.applications',
+      label: 'Online applications',
+      description: 'Accept job applications through the site.',
+      enabled: true,
+    },
+    {
+      key: 'newsroom.mediaCentre',
+      label: 'Media centre',
+      description: 'Public downloads of press and brand assets.',
+      enabled: true,
+    },
+    {
+      key: 'impact.progressBars',
+      label: 'Impact progress',
+      description: 'Show progress against published impact targets.',
+      enabled: true,
+    },
   ];
 
   for (const flag of flags) {
@@ -230,7 +266,10 @@ export async function seedSettings(prisma: PrismaClient): Promise<void> {
         legalLinks: [
           { label: locale === 'en' ? 'Privacy' : 'رازداری', path: '/company/governance/privacy' },
           { label: locale === 'en' ? 'Terms' : 'شرائط', path: '/company/governance/terms' },
-          { label: locale === 'en' ? 'Accessibility' : 'رسائی', path: '/company/governance/accessibility' },
+          {
+            label: locale === 'en' ? 'Accessibility' : 'رسائی',
+            path: '/company/governance/accessibility',
+          },
           { label: locale === 'en' ? 'Cookies' : 'کوکیز', path: '/company/governance/cookies' },
         ],
       },

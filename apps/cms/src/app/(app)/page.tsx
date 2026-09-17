@@ -37,12 +37,23 @@ interface DashboardData {
     scheduled: PageCard[];
     recentlyEdited: PageCard[];
   } | null;
-  reviewQueue: { awaitingReview: PageCard[]; awaitingApproval: PageCard[]; agingCount: number } | null;
+  reviewQueue: {
+    awaitingReview: PageCard[];
+    awaitingApproval: PageCard[];
+    agingCount: number;
+  } | null;
   publishing: {
     today: PageCard[];
     thisWeek: PageCard[];
     recentlyPublished: PageCard[];
-    failedJobs: Array<{ id: string; kind: string; entityType: string | null; lastError: string | null; attempts: number; updatedAt: string }>;
+    failedJobs: Array<{
+      id: string;
+      kind: string;
+      entityType: string | null;
+      lastError: string | null;
+      attempts: number;
+      updatedAt: string;
+    }>;
   } | null;
   inbox: Record<string, number | null>;
   activity: {
@@ -57,8 +68,16 @@ interface DashboardData {
     }>;
     canSeeAuditLog: boolean;
   };
-  contentHealth: { issues: Array<{ type: string; label: string; count: number; severity: string }>; totalIssues: number } | null;
-  system: { pendingJobs: number; failedJobs: number; activeSessions: number; totalUsers: number } | null;
+  contentHealth: {
+    issues: Array<{ type: string; label: string; count: number; severity: string }>;
+    totalIssues: number;
+  } | null;
+  system: {
+    pendingJobs: number;
+    failedJobs: number;
+    activeSessions: number;
+    totalUsers: number;
+  } | null;
 }
 
 export default async function DashboardPage() {
@@ -79,7 +98,10 @@ export default async function DashboardPage() {
       <>
         <PageHeader title="Dashboard" />
         <div className="p-06">
-          <div className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04" role="alert">
+          <div
+            className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04"
+            role="alert"
+          >
             <p className="text-heading-compact">The dashboard could not be loaded</p>
             <p className="mt-01 text-body-01 text-content-secondary">
               The API did not respond. Your work is unaffected — try reloading in a moment.
@@ -91,11 +113,36 @@ export default async function DashboardPage() {
   }
 
   const inboxItems = [
-    { key: 'applications', label: 'Job applications', href: '/careers/applications', count: data.inbox.applications },
-    { key: 'suppliers', label: 'Supplier submissions', href: '/partners/suppliers', count: data.inbox.suppliers },
-    { key: 'properties', label: 'Property submissions', href: '/partners/properties', count: data.inbox.properties },
-    { key: 'partnerships', label: 'Partnership enquiries', href: '/partners/partnerships', count: data.inbox.partnerships },
-    { key: 'contact', label: 'Contact submissions', href: '/forms/contact', count: data.inbox.contact },
+    {
+      key: 'applications',
+      label: 'Job applications',
+      href: '/careers/applications',
+      count: data.inbox.applications,
+    },
+    {
+      key: 'suppliers',
+      label: 'Supplier submissions',
+      href: '/partners/suppliers',
+      count: data.inbox.suppliers,
+    },
+    {
+      key: 'properties',
+      label: 'Property submissions',
+      href: '/partners/properties',
+      count: data.inbox.properties,
+    },
+    {
+      key: 'partnerships',
+      label: 'Partnership enquiries',
+      href: '/partners/partnerships',
+      count: data.inbox.partnerships,
+    },
+    {
+      key: 'contact',
+      label: 'Contact submissions',
+      href: '/forms/contact',
+      count: data.inbox.contact,
+    },
     // A queue this user cannot read is omitted entirely rather than shown as zero.
   ].filter((item) => item.count !== null && item.count !== undefined);
 
@@ -134,13 +181,20 @@ export default async function DashboardPage() {
                       title: 'Nothing in progress',
                       description: 'Content you create or edit will appear here.',
                       action: createActions[0]
-                        ? { label: `Create ${createActions[0].label.toLowerCase()}`, href: createActions[0].href }
+                        ? {
+                            label: `Create ${createActions[0].label.toLowerCase()}`,
+                            href: createActions[0].href,
+                          }
                         : undefined,
                     }
                   : undefined
               }
             >
-              <Section label="Changes requested" pages={data.myWork.changesRequested} tone="warning" />
+              <Section
+                label="Changes requested"
+                pages={data.myWork.changesRequested}
+                tone="warning"
+              />
               <Section label="Drafts" pages={data.myWork.drafts} />
               <Section label="Scheduled" pages={data.myWork.scheduled} />
               {myWorkTotal === 0 ? (
@@ -155,12 +209,19 @@ export default async function DashboardPage() {
               action={{ label: 'Open queue', href: '/review' }}
               badge={
                 data.reviewQueue.agingCount > 0
-                  ? { label: `${data.reviewQueue.agingCount} waiting over a week`, tone: 'warning' as const }
+                  ? {
+                      label: `${data.reviewQueue.agingCount} waiting over a week`,
+                      tone: 'warning' as const,
+                    }
                   : undefined
               }
               empty={
-                data.reviewQueue.awaitingReview.length === 0 && data.reviewQueue.awaitingApproval.length === 0
-                  ? { title: 'Nothing awaiting review', description: 'Submitted content will appear here.' }
+                data.reviewQueue.awaitingReview.length === 0 &&
+                data.reviewQueue.awaitingApproval.length === 0
+                  ? {
+                      title: 'Nothing awaiting review',
+                      description: 'Submitted content will appear here.',
+                    }
                   : undefined
               }
             >
@@ -177,7 +238,10 @@ export default async function DashboardPage() {
                 data.publishing.today.length === 0 &&
                 data.publishing.thisWeek.length === 0 &&
                 data.publishing.recentlyPublished.length === 0
-                  ? { title: 'Nothing scheduled', description: 'Scheduled and recently published content appears here.' }
+                  ? {
+                      title: 'Nothing scheduled',
+                      description: 'Scheduled and recently published content appears here.',
+                    }
                   : undefined
               }
             >
@@ -221,7 +285,9 @@ export default async function DashboardPage() {
                       <span
                         className={[
                           'tabular text-heading-02',
-                          item.count && item.count > 0 ? 'text-content-primary' : 'text-content-tertiary',
+                          item.count && item.count > 0
+                            ? 'text-content-primary'
+                            : 'text-content-tertiary',
                         ].join(' ')}
                       >
                         {item.count ?? 0}
@@ -270,7 +336,9 @@ export default async function DashboardPage() {
                       />
                       {issue.label}
                     </span>
-                    <span className="tabular text-body-compact text-content-secondary">{issue.count}</span>
+                    <span className="tabular text-body-compact text-content-secondary">
+                      {issue.count}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -279,10 +347,17 @@ export default async function DashboardPage() {
 
           <Panel
             title="Recent activity"
-            action={data.activity.canSeeAuditLog ? { label: 'Audit log', href: '/system/audit' } : undefined}
+            action={
+              data.activity.canSeeAuditLog
+                ? { label: 'Audit log', href: '/system/audit' }
+                : undefined
+            }
             empty={
               data.activity.entries.length === 0
-                ? { title: 'No recent activity', description: 'Changes made in the CMS appear here.' }
+                ? {
+                    title: 'No recent activity',
+                    description: 'Changes made in the CMS appear here.',
+                  }
                 : undefined
             }
           >
@@ -290,9 +365,13 @@ export default async function DashboardPage() {
               {data.activity.entries.slice(0, 10).map((entry) => (
                 <li key={entry.id} className="px-05 py-03">
                   <p className="text-body-compact text-content-primary">
-                    <span className="font-medium">{entry.actor?.name ?? 'Someone'}</span> {entry.verb}{' '}
+                    <span className="font-medium">{entry.actor?.name ?? 'Someone'}</span>{' '}
+                    {entry.verb}{' '}
                     {entry.href ? (
-                      <Link href={entry.href} className="text-interactive no-underline hover:underline">
+                      <Link
+                        href={entry.href}
+                        className="text-interactive no-underline hover:underline"
+                      >
                         {entry.entityLabel ?? entry.entityType}
                       </Link>
                     ) : (
@@ -311,7 +390,11 @@ export default async function DashboardPage() {
             <Panel title="System">
               <dl className="grid grid-cols-2 gap-px bg-border-subtle">
                 <Stat label="Pending jobs" value={data.system.pendingJobs} />
-                <Stat label="Failed jobs" value={data.system.failedJobs} alert={data.system.failedJobs > 0} />
+                <Stat
+                  label="Failed jobs"
+                  value={data.system.failedJobs}
+                  alert={data.system.failedJobs > 0}
+                />
                 <Stat label="Active sessions" value={data.system.activeSessions} />
                 <Stat label="Active users" value={data.system.totalUsers} />
               </dl>
@@ -345,7 +428,9 @@ function Panel({
             <span
               className={[
                 'tag',
-                badge.tone === 'warning' ? 'bg-status-warningSubtle text-gray-90' : 'bg-status-infoSubtle text-status-info',
+                badge.tone === 'warning'
+                  ? 'bg-status-warningSubtle text-gray-90'
+                  : 'bg-status-infoSubtle text-status-info',
               ].join(' ')}
             >
               {badge.label}
@@ -353,7 +438,10 @@ function Panel({
           ) : null}
         </div>
         {action ? (
-          <Link href={action.href} className="text-body-compact text-interactive no-underline hover:underline">
+          <Link
+            href={action.href}
+            className="text-body-compact text-interactive no-underline hover:underline"
+          >
             {action.label}
           </Link>
         ) : null}
@@ -409,7 +497,9 @@ function Section({
               className="flex items-center justify-between gap-04 px-05 py-03 no-underline hover:bg-surface-hover"
             >
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-body-01 text-content-primary">{page.title}</span>
+                <span className="block truncate text-body-01 text-content-primary">
+                  {page.title}
+                </span>
                 <span className="block truncate text-helper-01 text-content-tertiary">
                   {page.path} · {page.locale.toUpperCase()}
                   {page.updatedBy ? ` · ${page.updatedBy.name}` : ''}
@@ -417,7 +507,9 @@ function Section({
               </span>
 
               <span className="flex shrink-0 items-center gap-02">
-                {page.hasUnpublishedChanges && page.status === 'PUBLISHED' ? <UnpublishedChangesTag /> : null}
+                {page.hasUnpublishedChanges && page.status === 'PUBLISHED' ? (
+                  <UnpublishedChangesTag />
+                ) : null}
                 <StatusTag status={page.status} size="sm" />
                 <span className="hidden w-24 text-end text-helper-01 text-content-tertiary sm:inline">
                   {showScheduled && page.scheduledFor

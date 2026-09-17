@@ -40,33 +40,176 @@ const RATIOS: Record<PlaceholderSpec['ratio'], [number, number]> = {
 };
 
 /** Corporate palette: charcoal, off-white and a restrained Cheezious yellow. */
-const TONES: Record<PlaceholderSpec['tone'], { background: string; foreground: string; accent: string }> = {
+const TONES: Record<
+  PlaceholderSpec['tone'],
+  { background: string; foreground: string; accent: string }
+> = {
   dark: { background: '#14140F', foreground: '#F5F4EF', accent: '#F2C230' },
   light: { background: '#EFEDE6', foreground: '#14140F', accent: '#C79A16' },
   accent: { background: '#F2C230', foreground: '#14140F', accent: '#14140F' },
 };
 
 const PLACEHOLDERS: PlaceholderSpec[] = [
-  { key: 'hero-corporate', title: 'Corporate hero', brief: 'Restaurant exterior at dusk, wide, people entering', ratio: '21:9', folder: '/restaurants', tone: 'dark' },
-  { key: 'hero-operations', title: 'Operations hero', brief: 'Distribution centre floor, product moving, staff at work', ratio: '21:9', folder: '/operations', tone: 'dark' },
-  { key: 'hero-people', title: 'People hero', brief: 'Team briefing before service, real colleagues, natural light', ratio: '21:9', folder: '/people', tone: 'dark' },
-  { key: 'hero-careers', title: 'Careers hero', brief: 'Restaurant manager on the floor mid-shift', ratio: '21:9', folder: '/people', tone: 'dark' },
-  { key: 'restaurant-exterior', title: 'Restaurant exterior', brief: 'Street-level restaurant frontage, daytime', ratio: '3:2', folder: '/restaurants', tone: 'light' },
-  { key: 'restaurant-interior', title: 'Restaurant interior', brief: 'Dining area in use, customers, no staged food', ratio: '3:2', folder: '/restaurants', tone: 'light' },
-  { key: 'kitchen-operations', title: 'Kitchen operations', brief: 'Kitchen line during service, hands and process', ratio: '3:2', folder: '/operations', tone: 'light' },
-  { key: 'warehouse', title: 'Warehouse', brief: 'Racking, pallets, cold-chain handling', ratio: '3:2', folder: '/operations', tone: 'light' },
-  { key: 'distribution', title: 'Distribution', brief: 'Delivery vehicle loading at the depot, early morning', ratio: '3:2', folder: '/operations', tone: 'light' },
-  { key: 'training', title: 'Training', brief: 'Training session in progress, trainer and colleagues', ratio: '3:2', folder: '/people', tone: 'light' },
-  { key: 'technology-team', title: 'Technology team', brief: 'Engineers working — screens incidental, not the subject', ratio: '3:2', folder: '/operations', tone: 'light' },
-  { key: 'customer-service', title: 'Customer service', brief: 'Customer care colleague on a call', ratio: '3:2', folder: '/people', tone: 'light' },
-  { key: 'supplier-operations', title: 'Supplier operations', brief: 'Supplier facility, production or handling', ratio: '3:2', folder: '/operations', tone: 'light' },
-  { key: 'community-programme', title: 'Community programme', brief: 'Community initiative in progress, participants visible', ratio: '3:2', folder: '/people', tone: 'light' },
-  { key: 'construction', title: 'Restaurant construction', brief: 'Restaurant fit-out under way, site in progress', ratio: '3:2', folder: '/restaurants', tone: 'light' },
-  { key: 'quality-control', title: 'Quality control', brief: 'Quality check being carried out, hands and instrument', ratio: '3:2', folder: '/operations', tone: 'light' },
-  { key: 'portrait-leadership', title: 'Leadership portrait', brief: 'Environmental portrait, workplace setting, eye-level', ratio: '4:5', folder: '/leadership', tone: 'light' },
-  { key: 'portrait-colleague', title: 'Colleague portrait', brief: 'Environmental portrait of a colleague at work', ratio: '4:5', folder: '/people', tone: 'light' },
-  { key: 'editorial-square', title: 'Editorial square', brief: 'Supporting editorial image, square crop', ratio: '1:1', folder: '/restaurants', tone: 'light' },
-  { key: 'og-default', title: 'Default social image', brief: 'Corporate social sharing image, 1200×630', ratio: '16:9', folder: '/brand', tone: 'dark' },
+  {
+    key: 'hero-corporate',
+    title: 'Corporate hero',
+    brief: 'Restaurant exterior at dusk, wide, people entering',
+    ratio: '21:9',
+    folder: '/restaurants',
+    tone: 'dark',
+  },
+  {
+    key: 'hero-operations',
+    title: 'Operations hero',
+    brief: 'Distribution centre floor, product moving, staff at work',
+    ratio: '21:9',
+    folder: '/operations',
+    tone: 'dark',
+  },
+  {
+    key: 'hero-people',
+    title: 'People hero',
+    brief: 'Team briefing before service, real colleagues, natural light',
+    ratio: '21:9',
+    folder: '/people',
+    tone: 'dark',
+  },
+  {
+    key: 'hero-careers',
+    title: 'Careers hero',
+    brief: 'Restaurant manager on the floor mid-shift',
+    ratio: '21:9',
+    folder: '/people',
+    tone: 'dark',
+  },
+  {
+    key: 'restaurant-exterior',
+    title: 'Restaurant exterior',
+    brief: 'Street-level restaurant frontage, daytime',
+    ratio: '3:2',
+    folder: '/restaurants',
+    tone: 'light',
+  },
+  {
+    key: 'restaurant-interior',
+    title: 'Restaurant interior',
+    brief: 'Dining area in use, customers, no staged food',
+    ratio: '3:2',
+    folder: '/restaurants',
+    tone: 'light',
+  },
+  {
+    key: 'kitchen-operations',
+    title: 'Kitchen operations',
+    brief: 'Kitchen line during service, hands and process',
+    ratio: '3:2',
+    folder: '/operations',
+    tone: 'light',
+  },
+  {
+    key: 'warehouse',
+    title: 'Warehouse',
+    brief: 'Racking, pallets, cold-chain handling',
+    ratio: '3:2',
+    folder: '/operations',
+    tone: 'light',
+  },
+  {
+    key: 'distribution',
+    title: 'Distribution',
+    brief: 'Delivery vehicle loading at the depot, early morning',
+    ratio: '3:2',
+    folder: '/operations',
+    tone: 'light',
+  },
+  {
+    key: 'training',
+    title: 'Training',
+    brief: 'Training session in progress, trainer and colleagues',
+    ratio: '3:2',
+    folder: '/people',
+    tone: 'light',
+  },
+  {
+    key: 'technology-team',
+    title: 'Technology team',
+    brief: 'Engineers working — screens incidental, not the subject',
+    ratio: '3:2',
+    folder: '/operations',
+    tone: 'light',
+  },
+  {
+    key: 'customer-service',
+    title: 'Customer service',
+    brief: 'Customer care colleague on a call',
+    ratio: '3:2',
+    folder: '/people',
+    tone: 'light',
+  },
+  {
+    key: 'supplier-operations',
+    title: 'Supplier operations',
+    brief: 'Supplier facility, production or handling',
+    ratio: '3:2',
+    folder: '/operations',
+    tone: 'light',
+  },
+  {
+    key: 'community-programme',
+    title: 'Community programme',
+    brief: 'Community initiative in progress, participants visible',
+    ratio: '3:2',
+    folder: '/people',
+    tone: 'light',
+  },
+  {
+    key: 'construction',
+    title: 'Restaurant construction',
+    brief: 'Restaurant fit-out under way, site in progress',
+    ratio: '3:2',
+    folder: '/restaurants',
+    tone: 'light',
+  },
+  {
+    key: 'quality-control',
+    title: 'Quality control',
+    brief: 'Quality check being carried out, hands and instrument',
+    ratio: '3:2',
+    folder: '/operations',
+    tone: 'light',
+  },
+  {
+    key: 'portrait-leadership',
+    title: 'Leadership portrait',
+    brief: 'Environmental portrait, workplace setting, eye-level',
+    ratio: '4:5',
+    folder: '/leadership',
+    tone: 'light',
+  },
+  {
+    key: 'portrait-colleague',
+    title: 'Colleague portrait',
+    brief: 'Environmental portrait of a colleague at work',
+    ratio: '4:5',
+    folder: '/people',
+    tone: 'light',
+  },
+  {
+    key: 'editorial-square',
+    title: 'Editorial square',
+    brief: 'Supporting editorial image, square crop',
+    ratio: '1:1',
+    folder: '/restaurants',
+    tone: 'light',
+  },
+  {
+    key: 'og-default',
+    title: 'Default social image',
+    brief: 'Corporate social sharing image, 1200×630',
+    ratio: '16:9',
+    folder: '/brand',
+    tone: 'dark',
+  },
 ];
 
 /**
@@ -120,14 +263,20 @@ function escapeXml(value: string): string {
  * Generate placeholders, write them to local storage and register them as media
  * assets so blocks can reference them like any other image.
  */
-export async function seedMedia(prisma: PrismaClient, actorId: string): Promise<Map<string, string>> {
+export async function seedMedia(
+  prisma: PrismaClient,
+  actorId: string,
+): Promise<Map<string, string>> {
   // Anchored to the repository root so the seed, the API and the worker all
   // agree on where files live regardless of which directory they run from.
   const storageRoot = resolveStorageRoot(process.env.STORAGE_LOCAL_ROOT ?? './.storage');
   const assetIdByKey = new Map<string, string>();
 
   const folders = new Map(
-    (await prisma.mediaFolder.findMany({ select: { id: true, path: true } })).map((f) => [f.path, f.id]),
+    (await prisma.mediaFolder.findMany({ select: { id: true, path: true } })).map((f) => [
+      f.path,
+      f.id,
+    ]),
   );
 
   for (const spec of PLACEHOLDERS) {
@@ -208,7 +357,8 @@ export function placeholderForPath(pathname: string): string {
   if (pathname.includes('/supply-chain') || pathname.includes('/procurement')) return 'warehouse';
   if (pathname.includes('/technology') || pathname.includes('/digital')) return 'technology-team';
   if (pathname.includes('/food-quality')) return 'quality-control';
-  if (pathname.includes('/restaurant') || pathname.includes('/business')) return 'restaurant-interior';
+  if (pathname.includes('/restaurant') || pathname.includes('/business'))
+    return 'restaurant-interior';
   if (pathname.includes('/impact')) return 'community-programme';
   if (pathname.includes('/development') || pathname.includes('/real-estate')) return 'construction';
   if (pathname.includes('/leadership')) return 'portrait-leadership';
@@ -218,6 +368,7 @@ export function placeholderForPath(pathname: string): string {
 export function heroForPath(pathname: string): string {
   if (pathname === '/careers' || pathname.startsWith('/careers')) return 'hero-careers';
   if (pathname.includes('/people')) return 'hero-people';
-  if (pathname.includes('/business') || pathname.includes('/supply-chain')) return 'hero-operations';
+  if (pathname.includes('/business') || pathname.includes('/supply-chain'))
+    return 'hero-operations';
   return 'hero-corporate';
 }

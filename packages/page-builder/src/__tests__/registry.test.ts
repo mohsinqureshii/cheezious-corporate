@@ -61,7 +61,9 @@ describe('block validation', () => {
     if (result.ok) {
       expect(result.data.columns).toBe('3');
       expect(result.data.tone).toBe('light');
-      expect((result.data.statistics as Array<Record<string, unknown>>)[0]?.isPlaceholder).toBe(false);
+      expect((result.data.statistics as Array<Record<string, unknown>>)[0]?.isPlaceholder).toBe(
+        false,
+      );
     }
   });
 
@@ -72,7 +74,10 @@ describe('block validation', () => {
     });
     expect(both.ok).toBe(false);
 
-    const neither = validateBlock('CTABand', { headline: 'Work with us', primaryLink: { label: 'Go' } });
+    const neither = validateBlock('CTABand', {
+      headline: 'Work with us',
+      primaryLink: { label: 'Go' },
+    });
     expect(neither.ok).toBe(false);
 
     const internal = validateBlock('CTABand', {
@@ -94,7 +99,9 @@ describe('block validation', () => {
 
   it('requires a poster image on video heroes', () => {
     expect(validateBlock('HeroVideo', { headline: 'Our operations' }).ok).toBe(false);
-    expect(validateBlock('HeroVideo', { headline: 'Our operations', poster: { assetId: 'a1' } }).ok).toBe(true);
+    expect(
+      validateBlock('HeroVideo', { headline: 'Our operations', poster: { assetId: 'a1' } }).ok,
+    ).toBe(true);
   });
 });
 
@@ -110,7 +117,10 @@ describe('page composition', () => {
   });
 
   it('refuses two heroes on one page', () => {
-    const result = validateComposition([hero, { blockKey: 'HeroEditorial', data: { headline: 'Second' } }]);
+    const result = validateComposition([
+      hero,
+      { blockKey: 'HeroEditorial', data: { headline: 'Second' } },
+    ]);
     expect(result.ok).toBe(false);
     expect(result.errors[0]?.message).toMatch(/Only one/);
   });
@@ -149,7 +159,10 @@ describe('reference extraction', () => {
 
   it('extracts prose for the search index but skips identifiers', () => {
     const text = extractTextFromBlocks([
-      { blockKey: 'HeroEditorial', data: { headline: 'Built here and growing', tone: 'dark', image: { assetId: 'asset_123' } } },
+      {
+        blockKey: 'HeroEditorial',
+        data: { headline: 'Built here and growing', tone: 'dark', image: { assetId: 'asset_123' } },
+      },
       { blockKey: 'RichText', data: { body: 'Our supply chain moves food across the country.' } },
     ]);
     expect(text).toContain('Built here and growing');

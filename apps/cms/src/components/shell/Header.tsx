@@ -59,15 +59,19 @@ export function Header({ user, unreadNotifications }: HeaderProps) {
   useEffect(() => {
     if (!accountOpen && !createOpen) return;
     const onPointerDown = (event: PointerEvent) => {
-      if (accountRef.current && !accountRef.current.contains(event.target as Node)) setAccountOpen(false);
-      if (createRef.current && !createRef.current.contains(event.target as Node)) setCreateOpen(false);
+      if (accountRef.current && !accountRef.current.contains(event.target as Node))
+        setAccountOpen(false);
+      if (createRef.current && !createRef.current.contains(event.target as Node))
+        setCreateOpen(false);
     };
     document.addEventListener('pointerdown', onPointerDown);
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, [accountOpen, createOpen]);
 
   async function signOut() {
-    await fetch(`${API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => undefined);
+    await fetch(`${API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' }).catch(
+      () => undefined,
+    );
     router.push('/sign-in');
     router.refresh();
   }
@@ -80,7 +84,10 @@ export function Header({ user, unreadNotifications }: HeaderProps) {
 
       <header className="fixed inset-x-0 top-0 z-header flex h-header items-center border-b border-gray-80 bg-gray-100">
         <div className="flex items-center gap-02 ps-12 lg:ps-05">
-          <Link href="/" className="flex items-baseline gap-02 px-03 text-content-inverse no-underline">
+          <Link
+            href="/"
+            className="flex items-baseline gap-02 px-03 text-content-inverse no-underline"
+          >
             <span className="text-heading-compact font-semibold">Cheezious</span>
             <span className="text-label-01 uppercase tracking-wide text-gray-40">CMS</span>
           </Link>
@@ -98,7 +105,12 @@ export function Header({ user, unreadNotifications }: HeaderProps) {
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.3" />
-              <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+              <path
+                d="M10.5 10.5L14 14"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+              />
             </svg>
             <span className="hidden sm:inline">Search</span>
             <kbd className="hidden rounded-sm border border-gray-70 px-02 py-[1px] font-mono text-label-01 text-gray-40 md:inline">
@@ -138,7 +150,9 @@ export function Header({ user, unreadNotifications }: HeaderProps) {
                       >
                         {action.label}
                         {action.shortcut ? (
-                          <kbd className="font-mono text-label-01 text-content-tertiary">{action.shortcut}</kbd>
+                          <kbd className="font-mono text-label-01 text-content-tertiary">
+                            {action.shortcut}
+                          </kbd>
                         ) : null}
                       </Link>
                     </li>
@@ -193,7 +207,9 @@ export function Header({ user, unreadNotifications }: HeaderProps) {
               >
                 <div className="border-b border-border-subtle px-05 py-04">
                   <p className="text-heading-compact text-content-primary">{user.name}</p>
-                  <p className="mt-01 truncate text-helper-01 text-content-secondary">{user.email}</p>
+                  <p className="mt-01 truncate text-helper-01 text-content-secondary">
+                    {user.email}
+                  </p>
                   {user.roles.length > 0 ? (
                     <p className="mt-02 text-helper-01 text-content-tertiary">
                       {user.roles.map(humanizeRole).join(', ')}
@@ -232,7 +248,9 @@ export function Header({ user, unreadNotifications }: HeaderProps) {
         </div>
       </header>
 
-      {paletteOpen ? <CommandPalette onClose={() => setPaletteOpen(false)} permissions={granted} /> : null}
+      {paletteOpen ? (
+        <CommandPalette onClose={() => setPaletteOpen(false)} permissions={granted} />
+      ) : null}
     </>
   );
 }
@@ -244,16 +262,29 @@ export function Header({ user, unreadNotifications }: HeaderProps) {
  * permission server-side; the create actions are filtered here so nothing
  * unusable is ever offered.
  */
-function CommandPalette({ onClose, permissions }: { onClose: () => void; permissions: Set<string> }) {
+function CommandPalette({
+  onClose,
+  permissions,
+}: {
+  onClose: () => void;
+  permissions: Set<string>;
+}) {
   const router = useRouter();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Array<{ id: string; title: string; href: string; type: string }>>([]);
+  const [results, setResults] = useState<
+    Array<{ id: string; title: string; href: string; type: string }>
+  >([]);
   const [highlighted, setHighlighted] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const actions = QUICK_CREATE.filter((action) =>
     action.permissions.some((permission) => permissions.has(permission)),
-  ).map((action) => ({ id: action.href, title: `Create ${action.label.toLowerCase()}`, href: action.href, type: 'Action' }));
+  ).map((action) => ({
+    id: action.href,
+    title: `Create ${action.label.toLowerCase()}`,
+    href: action.href,
+    type: 'Action',
+  }));
 
   const filteredActions = query
     ? actions.filter((action) => action.title.toLowerCase().includes(query.toLowerCase()))
@@ -280,7 +311,9 @@ function CommandPalette({ onClose, permissions }: { onClose: () => void; permiss
           { credentials: 'include', signal: controller.signal },
         );
         if (!response.ok) return;
-        const body = (await response.json()) as { items: Array<{ id: string; title: string; path: string }> };
+        const body = (await response.json()) as {
+          items: Array<{ id: string; title: string; path: string }>;
+        };
         setResults(
           body.items.map((item) => ({
             id: item.id,
@@ -319,7 +352,12 @@ function CommandPalette({ onClose, permissions }: { onClose: () => void; permiss
   }
 
   return (
-    <div className="fixed inset-0 z-modal flex items-start justify-center bg-gray-100/50 pt-[10vh]" role="dialog" aria-modal="true" aria-label="Command palette">
+    <div
+      className="fixed inset-0 z-modal flex items-start justify-center bg-gray-100/50 pt-[10vh]"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Command palette"
+    >
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
 
       <div className="relative w-full max-w-xl border border-border-subtle bg-surface-base shadow-modal">
@@ -343,7 +381,11 @@ function CommandPalette({ onClose, permissions }: { onClose: () => void; permiss
             </li>
           ) : (
             items.map((item, index) => (
-              <li key={`${item.type}-${item.id}`} role="option" aria-selected={index === highlighted}>
+              <li
+                key={`${item.type}-${item.id}`}
+                role="option"
+                aria-selected={index === highlighted}
+              >
                 <Link
                   href={item.href}
                   onClick={onClose}
@@ -356,7 +398,9 @@ function CommandPalette({ onClose, permissions }: { onClose: () => void; permiss
                   ].join(' ')}
                 >
                   <span className="truncate">{item.title}</span>
-                  <span className="ms-04 shrink-0 text-label-01 uppercase text-content-tertiary">{item.type}</span>
+                  <span className="ms-04 shrink-0 text-label-01 uppercase text-content-tertiary">
+                    {item.type}
+                  </span>
                 </Link>
               </li>
             ))

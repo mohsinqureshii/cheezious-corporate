@@ -10,7 +10,12 @@ export const requiredString = (label: string, max = 500) =>
   z
     .string()
     .transform((v) => v.trim())
-    .pipe(z.string().min(1, `${label} is required`).max(max, `${label} must be ${max} characters or fewer`));
+    .pipe(
+      z
+        .string()
+        .min(1, `${label} is required`)
+        .max(max, `${label} must be ${max} characters or fewer`),
+    );
 
 export const optionalString = (max = 500) =>
   z
@@ -63,7 +68,10 @@ export const slug = z
       .string()
       .min(1, 'A slug is required')
       .max(96)
-      .regex(/^[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*$/u, 'Use lower-case letters, numbers and single hyphens'),
+      .regex(
+        /^[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*$/u,
+        'Use lower-case letters, numbers and single hyphens',
+      ),
   );
 
 /** Site path without a locale prefix. */
@@ -101,8 +109,9 @@ export const sortQuery = z.object({
  * Explicit consent. A boolean `true` is required — a missing or false value
  * fails, so a submission can never be stored without recorded consent.
  */
-export const consent = z
-  .literal(true, { errorMap: () => ({ message: 'You must agree before submitting this form' }) });
+export const consent = z.literal(true, {
+  errorMap: () => ({ message: 'You must agree before submitting this form' }),
+});
 
 /** Anti-spam fields present on every public form. */
 /**

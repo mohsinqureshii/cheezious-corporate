@@ -62,14 +62,35 @@ const config: Config = {
         // Fluid scale: clamp(min, preferred, max). The middle term is viewport
         // relative, so headlines scale continuously instead of jumping at
         // breakpoints. Display tops out around 96px, as the brief calls for.
-        'display-xl': ['clamp(2.75rem, 1.2rem + 6.4vw, 6rem)', { lineHeight: '0.98', letterSpacing: '-0.035em', fontWeight: '700' }],
-        'display-lg': ['clamp(2.25rem, 1.1rem + 5vw, 4.5rem)', { lineHeight: '1.02', letterSpacing: '-0.03em', fontWeight: '700' }],
-        'display-md': ['clamp(1.875rem, 1rem + 3.6vw, 3.5rem)', { lineHeight: '1.06', letterSpacing: '-0.025em', fontWeight: '600' }],
-        'display-sm': ['clamp(1.625rem, 0.95rem + 2.6vw, 2.5rem)', { lineHeight: '1.12', letterSpacing: '-0.02em', fontWeight: '600' }],
+        'display-xl': [
+          'clamp(2.75rem, 1.2rem + 6.4vw, 6rem)',
+          { lineHeight: '0.98', letterSpacing: '-0.035em', fontWeight: '700' },
+        ],
+        'display-lg': [
+          'clamp(2.25rem, 1.1rem + 5vw, 4.5rem)',
+          { lineHeight: '1.02', letterSpacing: '-0.03em', fontWeight: '700' },
+        ],
+        'display-md': [
+          'clamp(1.875rem, 1rem + 3.6vw, 3.5rem)',
+          { lineHeight: '1.06', letterSpacing: '-0.025em', fontWeight: '600' },
+        ],
+        'display-sm': [
+          'clamp(1.625rem, 0.95rem + 2.6vw, 2.5rem)',
+          { lineHeight: '1.12', letterSpacing: '-0.02em', fontWeight: '600' },
+        ],
 
-        'heading-lg': ['clamp(1.375rem, 1rem + 1.4vw, 1.875rem)', { lineHeight: '1.2', letterSpacing: '-0.015em', fontWeight: '600' }],
-        'heading-md': ['clamp(1.1875rem, 1rem + 0.8vw, 1.5rem)', { lineHeight: '1.28', letterSpacing: '-0.01em', fontWeight: '600' }],
-        'heading-sm': ['1.125rem', { lineHeight: '1.35', letterSpacing: '-0.005em', fontWeight: '600' }],
+        'heading-lg': [
+          'clamp(1.375rem, 1rem + 1.4vw, 1.875rem)',
+          { lineHeight: '1.2', letterSpacing: '-0.015em', fontWeight: '600' },
+        ],
+        'heading-md': [
+          'clamp(1.1875rem, 1rem + 0.8vw, 1.5rem)',
+          { lineHeight: '1.28', letterSpacing: '-0.01em', fontWeight: '600' },
+        ],
+        'heading-sm': [
+          '1.125rem',
+          { lineHeight: '1.35', letterSpacing: '-0.005em', fontWeight: '600' },
+        ],
 
         // Body sits at 18–20px on desktop, as specified — comfortably above the
         // 16px default that makes corporate sites feel like documentation.
@@ -80,8 +101,14 @@ const config: Config = {
 
         // Eyebrows and labels: small, spaced, upper case.
         eyebrow: ['0.75rem', { lineHeight: '1.2', letterSpacing: '0.14em', fontWeight: '600' }],
-        'stat-xl': ['clamp(2.75rem, 1.5rem + 5vw, 5rem)', { lineHeight: '0.95', letterSpacing: '-0.04em', fontWeight: '700' }],
-        'stat-lg': ['clamp(2rem, 1.2rem + 3.2vw, 3.25rem)', { lineHeight: '1', letterSpacing: '-0.03em', fontWeight: '700' }],
+        'stat-xl': [
+          'clamp(2.75rem, 1.5rem + 5vw, 5rem)',
+          { lineHeight: '0.95', letterSpacing: '-0.04em', fontWeight: '700' },
+        ],
+        'stat-lg': [
+          'clamp(2rem, 1.2rem + 3.2vw, 3.25rem)',
+          { lineHeight: '1', letterSpacing: '-0.03em', fontWeight: '700' },
+        ],
       },
 
       spacing: {

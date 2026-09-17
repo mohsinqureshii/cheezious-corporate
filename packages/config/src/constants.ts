@@ -4,7 +4,10 @@ export const LOCALES = ['en', 'ur'] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = 'en';
 
-export const LOCALE_META: Record<Locale, { label: string; nativeLabel: string; dir: 'ltr' | 'rtl'; htmlLang: string }> = {
+export const LOCALE_META: Record<
+  Locale,
+  { label: string; nativeLabel: string; dir: 'ltr' | 'rtl'; htmlLang: string }
+> = {
   en: { label: 'English', nativeLabel: 'English', dir: 'ltr', htmlLang: 'en-PK' },
   ur: { label: 'Urdu', nativeLabel: 'اردو', dir: 'rtl', htmlLang: 'ur-PK' },
 };

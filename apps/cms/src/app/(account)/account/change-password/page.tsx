@@ -33,8 +33,8 @@ export default async function ChangePasswordPage() {
             <div className="mb-06">
               <h1 className="text-heading-04 text-content-primary">Choose a new password</h1>
               <p className="mt-02 text-body-01 text-content-secondary">
-                Your account was set up with a temporary password. Replace it to continue — the rest of the
-                CMS opens once you have.
+                Your account was set up with a temporary password. Replace it to continue — the rest
+                of the CMS opens once you have.
               </p>
             </div>
           ) : null}

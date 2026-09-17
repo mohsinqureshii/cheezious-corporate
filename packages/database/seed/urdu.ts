@@ -49,7 +49,12 @@ const SPINE: UrduPage[] = [
   { path: '/company/newsroom', title: 'نیوز روم', navLabel: 'نیوز روم', englishTitle: 'Newsroom' },
   { path: '/company/impact', title: 'اثرات', navLabel: 'اثرات', englishTitle: 'Impact' },
   { path: '/company/governance', title: 'گورننس', navLabel: 'گورننس', englishTitle: 'Governance' },
-  { path: '/company/partners', title: 'شراکت دار', navLabel: 'شراکت دار', englishTitle: 'Partners' },
+  {
+    path: '/company/partners',
+    title: 'شراکت دار',
+    navLabel: 'شراکت دار',
+    englishTitle: 'Partners',
+  },
   { path: '/company/contact', title: 'رابطہ', navLabel: 'رابطہ', englishTitle: 'Contact' },
   { path: '/careers', title: 'کیریئرز', navLabel: 'کیریئرز', englishTitle: 'Careers' },
 ];
@@ -60,7 +65,10 @@ export async function seedUrduSpine(
   mediaByKey: Map<string, string>,
 ): Promise<void> {
   const definitions = new Map(
-    (await prisma.blockDefinition.findMany({ select: { id: true, key: true } })).map((d) => [d.key, d.id]),
+    (await prisma.blockDefinition.findMany({ select: { id: true, key: true } })).map((d) => [
+      d.key,
+      d.id,
+    ]),
   );
 
   const heroDefinition = definitions.get('HeroMinimal');

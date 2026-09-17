@@ -11,7 +11,9 @@ import { z } from 'zod';
 const nonEmpty = (label: string) => z.string().min(1, `${label} must not be empty`);
 
 const secret = (label: string) =>
-  z.string().min(32, `${label} must be at least 32 characters. Generate with: openssl rand -base64 48`);
+  z
+    .string()
+    .min(32, `${label} must be at least 32 characters. Generate with: openssl rand -base64 48`);
 
 const boolish = z
   .union([z.boolean(), z.enum(['true', 'false', '1', '0'])])
@@ -125,7 +127,12 @@ export function parseEnv<T extends z.ZodTypeAny>(
  * In development we allow placeholder secrets so a fresh clone boots after a
  * plain `cp .env.example .env`. In production the placeholders are rejected.
  */
-export function assertProductionSecrets(env: Pick<ApiEnv, 'NODE_ENV' | 'SESSION_SECRET' | 'PREVIEW_SECRET' | 'REVALIDATE_SECRET' | 'INTERNAL_API_KEY'>): void {
+export function assertProductionSecrets(
+  env: Pick<
+    ApiEnv,
+    'NODE_ENV' | 'SESSION_SECRET' | 'PREVIEW_SECRET' | 'REVALIDATE_SECRET' | 'INTERNAL_API_KEY'
+  >,
+): void {
   if (env.NODE_ENV !== 'production') return;
   const placeholders: Array<[string, string]> = [
     ['SESSION_SECRET', env.SESSION_SECRET],

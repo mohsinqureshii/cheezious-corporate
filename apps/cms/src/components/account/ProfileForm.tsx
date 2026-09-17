@@ -47,7 +47,11 @@ export function ProfileForm({ name: initialName, jobTitle: initialJobTitle }: Pr
 
       if (!response.ok) {
         setStatus('error');
-        setMessage(body.error?.fields?.[0]?.message ?? body.error?.message ?? 'Your profile could not be saved.');
+        setMessage(
+          body.error?.fields?.[0]?.message ??
+            body.error?.message ??
+            'Your profile could not be saved.',
+        );
         return;
       }
 
@@ -64,7 +68,10 @@ export function ProfileForm({ name: initialName, jobTitle: initialJobTitle }: Pr
   return (
     <form onSubmit={handleSubmit} className="space-y-05" noValidate>
       {status === 'error' ? (
-        <div className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04" role="alert">
+        <div
+          className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04"
+          role="alert"
+        >
           <p className="text-body-01 text-content-primary">{message}</p>
         </div>
       ) : null}
@@ -103,7 +110,9 @@ export function ProfileForm({ name: initialName, jobTitle: initialJobTitle }: Pr
           autoComplete="organization-title"
           className="input"
         />
-        <p className="field-helper">Optional. Used in the audit log and review queues to give your name context.</p>
+        <p className="field-helper">
+          Optional. Used in the audit log and review queues to give your name context.
+        </p>
       </div>
 
       <div className="flex items-center gap-04">

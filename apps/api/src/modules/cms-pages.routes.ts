@@ -1,14 +1,26 @@
-import { PAGINATION } from '@cheezious/config';
-import { Prisma, type Locale } from '@cheezious/database';
 import { signPreviewPayload } from '@cheezious/auth';
-import { STATUS_META, availableTransitions, type ContentStatus, type WorkflowAction } from '@cheezious/permissions';
+import { PAGINATION } from '@cheezious/config';
+import type { Locale, Prisma, PrismaClient } from '@cheezious/database';
+import {
+  STATUS_META,
+  availableTransitions,
+  type ContentStatus,
+  type WorkflowAction,
+} from '@cheezious/permissions';
 import { normalizePath, slugify } from '@cheezious/utilities';
 import { ApiError, sanitizeHtml } from '@cheezious/validation';
 import { Router } from 'express';
 import { z } from 'zod';
 
 import { AuditService } from '../lib/audit';
-import { asyncHandler, clientIp, param, rateLimit, requireAuth, requirePermission } from '../middleware';
+import {
+  asyncHandler,
+  clientIp,
+  param,
+  rateLimit,
+  requireAuth,
+  requirePermission,
+} from '../middleware';
 import { PageService, PAGE_INCLUDE } from '../services/pages';
 import { SearchService } from '../services/search';
 import { VersioningService } from '../services/versioning';
@@ -62,7 +74,17 @@ const createPageInput = z.object({
   title: z.string().min(1).max(200),
   path: z.string().min(1).max(512),
   locale: z.enum(['en', 'ur']).default('en'),
-  type: z.enum(['STANDARD', 'LANDING', 'SECTION_INDEX', 'EDITORIAL', 'DOCUMENT_CENTRE', 'CONTACT', 'SYSTEM']).default('STANDARD'),
+  type: z
+    .enum([
+      'STANDARD',
+      'LANDING',
+      'SECTION_INDEX',
+      'EDITORIAL',
+      'DOCUMENT_CENTRE',
+      'CONTACT',
+      'SYSTEM',
+    ])
+    .default('STANDARD'),
   navLabel: z.string().max(120).nullish(),
   summary: z.string().max(600).nullish(),
   parentId: z.string().cuid().nullish(),
@@ -75,7 +97,17 @@ const updatePageInput = z.object({
   path: z.string().min(1).max(512).optional(),
   navLabel: z.string().max(120).nullish(),
   summary: z.string().max(600).nullish(),
-  type: z.enum(['STANDARD', 'LANDING', 'SECTION_INDEX', 'EDITORIAL', 'DOCUMENT_CENTRE', 'CONTACT', 'SYSTEM']).optional(),
+  type: z
+    .enum([
+      'STANDARD',
+      'LANDING',
+      'SECTION_INDEX',
+      'EDITORIAL',
+      'DOCUMENT_CENTRE',
+      'CONTACT',
+      'SYSTEM',
+    ])
+    .optional(),
   parentId: z.string().cuid().nullish(),
   sortOrder: z.number().int().min(0).optional(),
   excludeFromSearch: z.boolean().optional(),
@@ -201,8 +233,10 @@ export function cmsPagesRoutes(): Router {
 
       // Only the transitions this user can actually perform are offered, so the
       // editor never sees a button that will refuse them.
-      const transitions = availableTransitions(page.status as ContentStatus, 'pages', (permission) =>
-        req.ability.can(permission),
+      const transitions = availableTransitions(
+        page.status as ContentStatus,
+        'pages',
+        (permission) => req.ability.can(permission),
       );
 
       res.json({ page, versions, workflowEvents, translations, availableTransitions: transitions });
@@ -272,7 +306,14 @@ export function cmsPagesRoutes(): Router {
           after: { title: page.title, path: page.path, type: page.type },
         },
       );
-      await audit.activity(req.principal!.id, 'created', 'page', page.id, page.title, `/content/pages/${page.id}`);
+      await audit.activity(
+        req.principal!.id,
+        'created',
+        'page',
+        page.id,
+        page.title,
+        `/content/pages/${page.id}`,
+      );
 
       res.status(201).json({ page });
     }),
@@ -331,8 +372,12 @@ export function cmsPagesRoutes(): Router {
             ...(input.type !== undefined ? { type: input.type as never } : {}),
             ...(input.parentId !== undefined ? { parentId: input.parentId } : {}),
             ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
-            ...(input.excludeFromSearch !== undefined ? { excludeFromSearch: input.excludeFromSearch } : {}),
-            ...(input.excludeFromSitemap !== undefined ? { excludeFromSitemap: input.excludeFromSitemap } : {}),
+            ...(input.excludeFromSearch !== undefined
+              ? { excludeFromSearch: input.excludeFromSearch }
+              : {}),
+            ...(input.excludeFromSitemap !== undefined
+              ? { excludeFromSitemap: input.excludeFromSitemap }
+              : {}),
             ...(input.reviewDate !== undefined ? { reviewDate: input.reviewDate } : {}),
             ...(input.contentOwnerId !== undefined ? { contentOwnerId: input.contentOwnerId } : {}),
             updatedById: req.principal!.id,
@@ -373,7 +418,10 @@ export function cmsPagesRoutes(): Router {
           entityType: 'page',
           entityId: existing.id,
           entityLabel: updated.title,
-          summary: newPath !== existing.path ? `Moved from ${existing.path} to ${newPath}` : 'Updated page',
+          summary:
+            newPath !== existing.path
+              ? `Moved from ${existing.path} to ${newPath}`
+              : 'Updated page',
           before: { title: existing.title, path: existing.path, summary: existing.summary },
           after: { title: updated.title, path: updated.path, summary: updated.summary },
         },
@@ -443,7 +491,11 @@ export function cmsPagesRoutes(): Router {
       // missing permission costs nothing and produces a precise message.
       workflow.assertAllowed(request, req.ability);
 
-      const actor = { id: req.principal!.id, email: req.principal!.email, ipAddress: clientIp(req) };
+      const actor = {
+        id: req.principal!.id,
+        email: req.principal!.email,
+        ipAddress: clientIp(req),
+      };
 
       const outcome = await req.ctx.prisma.$transaction(async (tx) => {
         const result = await workflow.apply(request, actor, tx, {
@@ -488,7 +540,13 @@ export function cmsPagesRoutes(): Router {
     '/:id/versions',
     requirePermission('pages.read'),
     asyncHandler(async (req, res) => {
-      res.json({ versions: await new VersioningService(req.ctx.prisma).listVersions('page', param(req, 'id'), 50) });
+      res.json({
+        versions: await new VersioningService(req.ctx.prisma).listVersions(
+          'page',
+          param(req, 'id'),
+          50,
+        ),
+      });
     }),
   );
 
@@ -496,7 +554,9 @@ export function cmsPagesRoutes(): Router {
     '/:id/versions/diff',
     requirePermission('pages.read'),
     asyncHandler(async (req, res) => {
-      const { from, to } = z.object({ from: z.string().cuid(), to: z.string().cuid() }).parse(req.query);
+      const { from, to } = z
+        .object({ from: z.string().cuid(), to: z.string().cuid() })
+        .parse(req.query);
       res.json(await new VersioningService(req.ctx.prisma).diff(from, to));
     }),
   );
@@ -552,7 +612,8 @@ export function cmsPagesRoutes(): Router {
           },
         });
 
-        const blocks = (data.blocks as Array<{ blockKey: string; data: Record<string, unknown> }>) ?? [];
+        const blocks =
+          (data.blocks as Array<{ blockKey: string; data: Record<string, unknown> }>) ?? [];
         await pages.replaceBlocks(page.id, blocks, tx);
 
         // The snapshot's SEO block is restored wholesale. `id` and `pageId` are
@@ -681,7 +742,9 @@ async function reviewerIdsFor(tx: Prisma.TransactionClient): Promise<string[]> {
     where: {
       status: 'ACTIVE',
       deletedAt: null,
-      roles: { some: { role: { permissions: { some: { permission: { key: 'pages.publish' } } } } } },
+      roles: {
+        some: { role: { permissions: { some: { permission: { key: 'pages.publish' } } } } },
+      },
     },
     select: { id: true },
     take: 20,
@@ -691,7 +754,7 @@ async function reviewerIdsFor(tx: Prisma.TransactionClient): Promise<string[]> {
 
 /** Keep the public search index consistent with the published state. */
 async function syncSearchIndex(
-  prisma: import('@cheezious/database').PrismaClient,
+  prisma: PrismaClient,
   page: { id: string; title: string; path: string; locale: Locale; excludeFromSearch: boolean },
   status: ContentStatus,
 ): Promise<void> {
@@ -711,7 +774,10 @@ async function syncSearchIndex(
 
     const { extractTextFromBlocks } = await import('@cheezious/page-builder');
     const body = extractTextFromBlocks(
-      full.blocks.map((block) => ({ blockKey: block.blockKey, data: block.data as Record<string, unknown> })),
+      full.blocks.map((block) => ({
+        blockKey: block.blockKey,
+        data: block.data as Record<string, unknown>,
+      })),
     );
 
     await search.index({

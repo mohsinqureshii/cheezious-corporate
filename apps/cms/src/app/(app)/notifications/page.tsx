@@ -11,9 +11,12 @@ export const metadata = { title: 'Notifications' };
 export default async function NotificationsPage() {
   const cookie = (await headers()).get('cookie') ?? undefined;
 
-  const data = await cmsFetch<{ notifications: NotificationRow[]; unread: number }>('/api/cms/system/notifications', {
-    cookie,
-  }).catch(() => null);
+  const data = await cmsFetch<{ notifications: NotificationRow[]; unread: number }>(
+    '/api/cms/system/notifications',
+    {
+      cookie,
+    },
+  ).catch(() => null);
 
   return (
     <>

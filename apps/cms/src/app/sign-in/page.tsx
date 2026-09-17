@@ -95,11 +95,15 @@ export default function SignInPage() {
         <div className="w-full max-w-sm">
           <div className="mb-07 lg:hidden">
             <span className="text-heading-03 font-semibold text-content-primary">Cheezious</span>
-            <span className="ms-02 text-label-01 uppercase tracking-wide text-content-tertiary">CMS</span>
+            <span className="ms-02 text-label-01 uppercase tracking-wide text-content-tertiary">
+              CMS
+            </span>
           </div>
 
           <h1 className="text-heading-04 text-content-primary">Sign in</h1>
-          <p className="mt-02 text-body-01 text-content-secondary">Use your Cheezious CMS account.</p>
+          <p className="mt-02 text-body-01 text-content-secondary">
+            Use your Cheezious CMS account.
+          </p>
 
           {status === 'error' ? (
             <div
@@ -122,7 +126,6 @@ export default function SignInPage() {
                 onChange={(event) => setEmail(event.target.value)}
                 required
                 autoComplete="username"
-                autoFocus
                 className="input"
                 aria-invalid={status === 'error' ? true : undefined}
               />
@@ -144,7 +147,11 @@ export default function SignInPage() {
               />
             </div>
 
-            <button type="submit" disabled={status === 'submitting'} className="btn-primary w-full justify-center">
+            <button
+              type="submit"
+              disabled={status === 'submitting'}
+              className="btn-primary w-full justify-center"
+            >
               {status === 'submitting' ? 'Signing in…' : 'Sign in'}
             </button>
           </form>

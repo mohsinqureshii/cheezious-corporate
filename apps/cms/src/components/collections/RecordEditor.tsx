@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { MediaPicker } from '@/components/collections/MediaPicker';
 import { ReferenceSelect } from '@/components/collections/ReferenceSelect';
@@ -9,7 +9,13 @@ import { RichTextField } from '@/components/collections/RichTextField';
 import { WorkflowBar } from '@/components/collections/WorkflowBar';
 import { StatusTag, UnpublishedChangesTag } from '@/components/ui';
 import { API_URL } from '@/lib/api';
-import { collectionHref, groupFields, type CollectionDescriptor, type FieldSpec, type RecordRow } from '@/lib/collections';
+import {
+  collectionHref,
+  groupFields,
+  type CollectionDescriptor,
+  type FieldSpec,
+  type RecordRow,
+} from '@/lib/collections';
 
 /**
  * The record editor.
@@ -35,7 +41,13 @@ export interface RecordEditorProps {
 
 type Draft = Record<string, unknown>;
 
-export function RecordEditor({ collection, record, transitions, canEdit, listHref }: RecordEditorProps) {
+export function RecordEditor({
+  collection,
+  record,
+  transitions,
+  canEdit,
+  listHref,
+}: RecordEditorProps) {
   const router = useRouter();
   const isNew = record === null;
 
@@ -91,7 +103,11 @@ export function RecordEditor({ collection, record, transitions, canEdit, listHre
 
       if (!response.ok) {
         setStatus('error');
-        setFieldErrors(Object.fromEntries((body.error?.fields ?? []).map((error) => [error.field, error.message])));
+        setFieldErrors(
+          Object.fromEntries(
+            (body.error?.fields ?? []).map((error) => [error.field, error.message]),
+          ),
+        );
         setMessage(
           body.error?.fields?.length
             ? 'Some fields need attention.'
@@ -114,7 +130,8 @@ export function RecordEditor({ collection, record, transitions, canEdit, listHre
   }
 
   const groups = groupFields(collection.fields);
-  const title = String(draft[collection.labelField] ?? '') || `New ${collection.label.toLowerCase()}`;
+  const title =
+    String(draft[collection.labelField] ?? '') || `New ${collection.label.toLowerCase()}`;
 
   return (
     <div className="flex min-h-[calc(100vh-theme(spacing.header))] flex-col">
@@ -148,7 +165,12 @@ export function RecordEditor({ collection, record, transitions, canEdit, listHre
           </a>
 
           {canEdit ? (
-            <button type="button" onClick={save} disabled={!dirty || status === 'saving'} className="btn-primary">
+            <button
+              type="button"
+              onClick={save}
+              disabled={!dirty || status === 'saving'}
+              className="btn-primary"
+            >
               {status === 'saving' ? 'Saving…' : 'Save'}
             </button>
           ) : null}
@@ -156,13 +178,19 @@ export function RecordEditor({ collection, record, transitions, canEdit, listHre
       </div>
 
       {status === 'error' && message ? (
-        <div className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-06 py-04" role="alert">
+        <div
+          className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-06 py-04"
+          role="alert"
+        >
           <p className="text-body-01 text-content-primary">{message}</p>
         </div>
       ) : null}
 
       {!canEdit ? (
-        <div className="border-s-[3px] border-status-info bg-status-infoSubtle px-06 py-04" role="status">
+        <div
+          className="border-s-[3px] border-status-info bg-status-infoSubtle px-06 py-04"
+          role="status"
+        >
           <p className="text-body-01 text-content-primary">
             You can read this {collection.label.toLowerCase()} but not change it.
           </p>
@@ -327,7 +355,9 @@ function Field({
           />
           <span>
             <span className="block text-body-compact text-content-primary">{field.label}</span>
-            {field.help ? <span className="block text-helper-01 text-content-secondary">{field.help}</span> : null}
+            {field.help ? (
+              <span className="block text-helper-01 text-content-secondary">{field.help}</span>
+            ) : null}
           </span>
         </label>
         {error ? <p className="field-error">{error}</p> : null}
@@ -355,7 +385,11 @@ function Field({
             </option>
           ))}
         </select>
-        {error ? <p className="field-error">{error}</p> : field.help ? <p className="field-helper">{field.help}</p> : null}
+        {error ? (
+          <p className="field-error">{error}</p>
+        ) : field.help ? (
+          <p className="field-helper">{field.help}</p>
+        ) : null}
       </div>
     );
   }
@@ -375,13 +409,25 @@ function Field({
           disabled={disabled}
           onChange={(event) => onChange(event.target.value)}
         />
-        {error ? <p className="field-error">{error}</p> : field.help ? <p className="field-helper">{field.help}</p> : null}
+        {error ? (
+          <p className="field-error">{error}</p>
+        ) : field.help ? (
+          <p className="field-helper">{field.help}</p>
+        ) : null}
       </div>
     );
   }
 
   const inputType =
-    field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : field.type === 'datetime' ? 'datetime-local' : field.type === 'url' ? 'url' : 'text';
+    field.type === 'number'
+      ? 'number'
+      : field.type === 'date'
+        ? 'date'
+        : field.type === 'datetime'
+          ? 'datetime-local'
+          : field.type === 'url'
+            ? 'url'
+            : 'text';
 
   return (
     <div>
@@ -392,15 +438,29 @@ function Field({
       <input
         id={id}
         type={inputType}
-        className={['input', error ? 'input-invalid' : '', field.type === 'slug' ? 'font-mono' : ''].join(' ')}
+        className={[
+          'input',
+          error ? 'input-invalid' : '',
+          field.type === 'slug' ? 'font-mono' : '',
+        ].join(' ')}
         maxLength={field.max}
         value={toInputValue(value, field.type)}
         disabled={disabled}
         onChange={(event) =>
-          onChange(field.type === 'number' ? (event.target.value === '' ? null : Number(event.target.value)) : event.target.value)
+          onChange(
+            field.type === 'number'
+              ? event.target.value === ''
+                ? null
+                : Number(event.target.value)
+              : event.target.value,
+          )
         }
       />
-      {error ? <p className="field-error">{error}</p> : field.help ? <p className="field-helper">{field.help}</p> : null}
+      {error ? (
+        <p className="field-error">{error}</p>
+      ) : field.help ? (
+        <p className="field-helper">{field.help}</p>
+      ) : null}
     </div>
   );
 }
@@ -412,11 +472,7 @@ function draftFrom(collection: CollectionDescriptor, record: RecordRow | null): 
   for (const field of collection.fields) {
     const value = record?.[field.name];
     draft[field.name] =
-      value === undefined || value === null
-        ? field.type === 'boolean'
-          ? false
-          : ''
-        : value;
+      value === undefined || value === null ? (field.type === 'boolean' ? false : '') : value;
   }
 
   if (collection.localized && !draft.locale) draft.locale = 'en';
@@ -431,7 +487,11 @@ function draftFrom(collection: CollectionDescriptor, record: RecordRow | null): 
  * an empty string that later renders as a blank line. Dates go as ISO so the
  * server's coercion has something unambiguous to work with.
  */
-function payloadFrom(collection: CollectionDescriptor, draft: Draft, isNew: boolean): Record<string, unknown> {
+function payloadFrom(
+  collection: CollectionDescriptor,
+  draft: Draft,
+  isNew: boolean,
+): Record<string, unknown> {
   const payload: Record<string, unknown> = {};
 
   for (const field of collection.fields) {

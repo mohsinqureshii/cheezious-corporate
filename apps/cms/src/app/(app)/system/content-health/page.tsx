@@ -35,7 +35,10 @@ export default async function ContentHealthPage({
       <>
         <PageHeader title="Content health" />
         <div className="p-06">
-          <ErrorState title="Content health could not be loaded" description="This section is restricted." />
+          <ErrorState
+            title="Content health could not be loaded"
+            description="This section is restricted."
+          />
         </div>
       </>
     );

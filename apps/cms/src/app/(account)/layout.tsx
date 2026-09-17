@@ -42,10 +42,18 @@ export default async function AccountLayout({ children }: { children: React.Reac
   return (
     <>
       <Header user={session.user} unreadNotifications={session.unreadNotifications} />
-      <Sidebar permissions={session.user.permissions} isActive={session.user.isActive} badges={{}} />
+      <Sidebar
+        permissions={session.user.permissions}
+        isActive={session.user.isActive}
+        badges={{}}
+      />
 
       <div className="pt-header lg:ps-sidebar">
-        <main id="cms-main" tabIndex={-1} className="min-h-[calc(100vh-theme(spacing.header))] focus:outline-none">
+        <main
+          id="cms-main"
+          tabIndex={-1}
+          className="min-h-[calc(100vh-theme(spacing.header))] focus:outline-none"
+        >
           {children}
         </main>
       </div>

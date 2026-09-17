@@ -40,7 +40,9 @@ describe('editorial workflow', () => {
 
   it('only offers an author the transitions they are allowed to perform', () => {
     const authorPermissions = new Set(permissionsForRole('AUTHOR'));
-    const actions = availableTransitions('DRAFT', 'pages', (p) => authorPermissions.has(p)).map((t) => t.action);
+    const actions = availableTransitions('DRAFT', 'pages', (p) => authorPermissions.has(p)).map(
+      (t) => t.action,
+    );
     expect(actions).toContain('SUBMIT_FOR_REVIEW');
     expect(actions).not.toContain('PUBLISH');
     expect(actions).not.toContain('SCHEDULE');
@@ -48,14 +50,24 @@ describe('editorial workflow', () => {
 
   it('offers corporate communications the publishing transitions', () => {
     const permissions = new Set(permissionsForRole('CORPORATE_COMMUNICATIONS'));
-    const actions = availableTransitions('APPROVED', 'pages', (p) => permissions.has(p)).map((t) => t.action);
+    const actions = availableTransitions('APPROVED', 'pages', (p) => permissions.has(p)).map(
+      (t) => t.action,
+    );
     expect(actions).toContain('PUBLISH');
     expect(actions).toContain('SCHEDULE');
   });
 
   it('treats only PUBLISHED as publicly visible', () => {
     expect(isPubliclyVisible('PUBLISHED')).toBe(true);
-    for (const status of ['DRAFT', 'IN_REVIEW', 'CHANGES_REQUESTED', 'APPROVED', 'SCHEDULED', 'UNPUBLISHED', 'ARCHIVED'] as const) {
+    for (const status of [
+      'DRAFT',
+      'IN_REVIEW',
+      'CHANGES_REQUESTED',
+      'APPROVED',
+      'SCHEDULED',
+      'UNPUBLISHED',
+      'ARCHIVED',
+    ] as const) {
       expect(isPubliclyVisible(status)).toBe(false);
     }
   });
@@ -70,14 +82,22 @@ describe('roles', () => {
     const catalogue = new Set<string>(ALL_PERMISSIONS);
     for (const key of Object.keys(ROLE_DEFINITIONS) as Array<keyof typeof ROLE_DEFINITIONS>) {
       for (const permission of permissionsForRole(key)) {
-        expect(catalogue.has(permission), `${key} references unknown permission ${permission}`).toBe(true);
+        expect(
+          catalogue.has(permission),
+          `${key} references unknown permission ${permission}`,
+        ).toBe(true);
       }
     }
   });
 
   it('does not let an author publish or read personal data', () => {
     const author = new Set(permissionsForRole('AUTHOR'));
-    for (const forbidden of ['pages.publish', 'applications.read', 'users.manage', 'settings.manage'] as Permission[]) {
+    for (const forbidden of [
+      'pages.publish',
+      'applications.read',
+      'users.manage',
+      'settings.manage',
+    ] as Permission[]) {
       expect(author.has(forbidden)).toBe(false);
     }
   });
@@ -136,7 +156,9 @@ describe('republishing', () => {
 
   it('still requires the publish permission to republish', () => {
     const author = new Set(permissionsForRole('AUTHOR'));
-    const actions = availableTransitions('PUBLISHED', 'pages', (p) => author.has(p)).map((t) => t.action);
+    const actions = availableTransitions('PUBLISHED', 'pages', (p) => author.has(p)).map(
+      (t) => t.action,
+    );
     expect(actions).not.toContain('PUBLISH');
   });
 });

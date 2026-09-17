@@ -97,15 +97,28 @@ export class VersioningService {
    * JSON side by side.
    */
   async diff(fromVersionId: string, toVersionId: string): Promise<VersionDiff> {
-    const [from, to] = await Promise.all([this.getVersion(fromVersionId), this.getVersion(toVersionId)]);
+    const [from, to] = await Promise.all([
+      this.getVersion(fromVersionId),
+      this.getVersion(toVersionId),
+    ]);
 
     if (from.entityType !== to.entityType || from.entityId !== to.entityId) {
       throw ApiError.conflict('Those versions belong to different content.');
     }
 
     return {
-      from: { id: from.id, versionNumber: from.versionNumber, createdAt: from.createdAt, author: from.createdBy },
-      to: { id: to.id, versionNumber: to.versionNumber, createdAt: to.createdAt, author: to.createdBy },
+      from: {
+        id: from.id,
+        versionNumber: from.versionNumber,
+        createdAt: from.createdAt,
+        author: from.createdBy,
+      },
+      to: {
+        id: to.id,
+        versionNumber: to.versionNumber,
+        createdAt: to.createdAt,
+        author: to.createdBy,
+      },
       fields: diffSnapshots(from.data as VersionSnapshot, to.data as VersionSnapshot),
     };
   }

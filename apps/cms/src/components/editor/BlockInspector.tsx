@@ -83,7 +83,15 @@ const ENUM_OPTIONS: Record<string, Array<{ value: string; label: string }>> = {
 
 /** Fields whose content is long-form prose. */
 const RICH_TEXT_FIELDS = new Set(['body', 'left', 'right', 'answer', 'fullBio', 'description']);
-const MULTILINE_FIELDS = new Set(['standfirst', 'intro', 'summary', 'statement', 'text', 'excerpt', 'usageNotes']);
+const MULTILINE_FIELDS = new Set([
+  'standfirst',
+  'intro',
+  'summary',
+  'statement',
+  'text',
+  'excerpt',
+  'usageNotes',
+]);
 
 export function BlockInspector({ blockKey, data, canEdit, onChange }: BlockInspectorProps) {
   const spec = getBlockSpec(blockKey);
@@ -93,13 +101,16 @@ export function BlockInspector({ blockKey, data, canEdit, onChange }: BlockInspe
   const validation = useMemo(() => validateBlock(blockKey, data), [blockKey, data]);
   const errors = useMemo(() => {
     if (validation.ok) return {} as Record<string, string>;
-    return Object.fromEntries(validation.errors.map((error) => [error.field.split('.')[0] ?? error.field, error.message]));
+    return Object.fromEntries(
+      validation.errors.map((error) => [error.field.split('.')[0] ?? error.field, error.message]),
+    );
   }, [validation]);
 
   if (!spec) {
     return (
       <p className="text-body-01 text-status-danger">
-        This block type ({blockKey}) is no longer registered. Remove it, or restore the block definition.
+        This block type ({blockKey}) is no longer registered. Remove it, or restore the block
+        definition.
       </p>
     );
   }
@@ -123,8 +134,13 @@ export function BlockInspector({ blockKey, data, canEdit, onChange }: BlockInspe
           <p className="text-body-compact text-content-primary">This block is not complete yet</p>
           <ul className="mt-01 space-y-01">
             {validation.errors.slice(0, 4).map((error) => (
-              <li key={`${error.field}-${error.message}`} className="text-helper-01 text-content-secondary">
-                {error.field === '_root' ? error.message : `${humanize(error.field)}: ${error.message}`}
+              <li
+                key={`${error.field}-${error.message}`}
+                className="text-helper-01 text-content-secondary"
+              >
+                {error.field === '_root'
+                  ? error.message
+                  : `${humanize(error.field)}: ${error.message}`}
               </li>
             ))}
           </ul>
@@ -235,7 +251,14 @@ function Field({
   // --- Repeating groups -----------------------------------------------------
   if (Array.isArray(value)) {
     return (
-      <RepeaterField name={name} label={label} items={value} canEdit={canEdit} onChange={onChange} error={error} />
+      <RepeaterField
+        name={name}
+        label={label}
+        items={value}
+        canEdit={canEdit}
+        onChange={onChange}
+        error={error}
+      />
     );
   }
 
@@ -244,7 +267,9 @@ function Field({
     const record = value as Record<string, unknown>;
     return (
       <fieldset className="border border-border-subtle p-04">
-        <legend className="px-02 text-label-01 uppercase tracking-wide text-content-secondary">{label}</legend>
+        <legend className="px-02 text-label-01 uppercase tracking-wide text-content-secondary">
+          {label}
+        </legend>
         <div className="space-y-04">
           {Object.keys(record)
             .filter((key) => !HIDDEN_FIELDS.has(key))
@@ -280,7 +305,11 @@ function Field({
           disabled={!canEdit}
           rows={isRichText ? 8 : 3}
           onChange={(event) => onChange(event.target.value)}
-          className={['textarea', isRichText ? 'font-mono text-helper-01' : '', error ? 'input-invalid' : ''].join(' ')}
+          className={[
+            'textarea',
+            isRichText ? 'font-mono text-helper-01' : '',
+            error ? 'input-invalid' : '',
+          ].join(' ')}
         />
         {isRichText ? (
           <p className="field-helper">
@@ -353,7 +382,8 @@ function RepeaterField({
     );
   }
 
-  const template = items[0] && typeof items[0] === 'object' ? (items[0] as Record<string, unknown>) : {};
+  const template =
+    items[0] && typeof items[0] === 'object' ? (items[0] as Record<string, unknown>) : {};
 
   return (
     <fieldset className="border border-border-subtle p-04">
@@ -375,7 +405,8 @@ function RepeaterField({
                   className="flex-1 truncate text-left text-body-compact text-content-primary"
                   aria-expanded={isOpen}
                 >
-                  {index + 1}. {String(record.label ?? record.title ?? record.question ?? record.name ?? 'Item')}
+                  {index + 1}.{' '}
+                  {String(record.label ?? record.title ?? record.question ?? record.name ?? 'Item')}
                 </button>
 
                 {canEdit ? (
@@ -446,7 +477,15 @@ function RepeaterField({
             const blank = Object.fromEntries(
               Object.entries(template).map(([key, value]) => [
                 key,
-                typeof value === 'string' ? '' : typeof value === 'number' ? 0 : typeof value === 'boolean' ? value : Array.isArray(value) ? [] : value,
+                typeof value === 'string'
+                  ? ''
+                  : typeof value === 'number'
+                    ? 0
+                    : typeof value === 'boolean'
+                      ? value
+                      : Array.isArray(value)
+                        ? []
+                        : value,
               ]),
             );
             onChange([...items, blank]);

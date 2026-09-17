@@ -5,7 +5,14 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useState, useTransition } from 'react';
 
-import { DataTable, EmptyState, FilterBar, Pagination, StatusTag, type Column } from '@/components/ui';
+import {
+  DataTable,
+  EmptyState,
+  FilterBar,
+  Pagination,
+  StatusTag,
+  type Column,
+} from '@/components/ui';
 import { API_URL } from '@/lib/api';
 import { humanizeStatus, type QueueDescriptor, type SubmissionRecord } from '@/lib/queues';
 import type { ListMeta, StatusFacet } from '@/lib/types';
@@ -27,7 +34,14 @@ export interface QueueTableProps {
   canExport: boolean;
 }
 
-export function QueueTable({ queue, rows, meta, statusFacets, initialQuery, canExport }: QueueTableProps) {
+export function QueueTable({
+  queue,
+  rows,
+  meta,
+  statusFacets,
+  initialQuery,
+  canExport,
+}: QueueTableProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -52,14 +66,20 @@ export function QueueTable({ queue, rows, meta, statusFacets, initialQuery, canE
       key: 'reference',
       header: 'Reference',
       width: '130px',
-      render: (row) => <span className="font-mono text-helper-01 text-content-secondary">{row.reference}</span>,
+      render: (row) => (
+        <span className="font-mono text-helper-01 text-content-secondary">{row.reference}</span>
+      ),
     },
     ...listFields.map((field) => ({
       key: field.name,
       header: field.label,
       render: (row: SubmissionRecord) => {
         const value = row[field.name];
-        const text = Array.isArray(value) ? value.join(', ') : value === null || value === undefined || value === '' ? '—' : String(value);
+        const text = Array.isArray(value)
+          ? value.join(', ')
+          : value === null || value === undefined || value === ''
+            ? '—'
+            : String(value);
         return (
           <span className="block max-w-xs truncate" title={text}>
             {text}
@@ -72,7 +92,10 @@ export function QueueTable({ queue, rows, meta, statusFacets, initialQuery, canE
       header: 'Received',
       width: '130px',
       render: (row) => (
-        <time dateTime={row.createdAt} title={formatDate(row.createdAt, 'en', { dateStyle: 'full', timeStyle: 'short' })}>
+        <time
+          dateTime={row.createdAt}
+          title={formatDate(row.createdAt, 'en', { dateStyle: 'full', timeStyle: 'short' })}
+        >
           {formatRelativeTime(row.createdAt)}
         </time>
       ),
@@ -99,7 +122,10 @@ export function QueueTable({ queue, rows, meta, statusFacets, initialQuery, canE
       align: 'end',
       width: '90px',
       render: (row) => (
-        <Link href={`${queue.href}/${row.id}`} className="text-interactive no-underline hover:underline">
+        <Link
+          href={`${queue.href}/${row.id}`}
+          className="text-interactive no-underline hover:underline"
+        >
           Review
           <span className="sr-only"> {row.reference}</span>
         </Link>
@@ -151,7 +177,11 @@ export function QueueTable({ queue, rows, meta, statusFacets, initialQuery, canE
           </select>
 
           {filtered ? (
-            <button type="button" className="btn-ghost btn-sm" onClick={() => startTransition(() => router.push(pathname))}>
+            <button
+              type="button"
+              className="btn-ghost btn-sm"
+              onClick={() => startTransition(() => router.push(pathname))}
+            >
               Clear filters
             </button>
           ) : null}
@@ -167,12 +197,18 @@ export function QueueTable({ queue, rows, meta, statusFacets, initialQuery, canE
               className="btn-ghost btn-sm ms-auto no-underline"
             >
               Export CSV
-              <span className="sr-only"> — downloads personal data and is recorded in the audit log</span>
+              <span className="sr-only">
+                {' '}
+                — downloads personal data and is recorded in the audit log
+              </span>
             </a>
           ) : null}
         </FilterBar>
 
-        <div className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined} aria-busy={isPending}>
+        <div
+          className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined}
+          aria-busy={isPending}
+        >
           <DataTable
             caption={queue.labelPlural}
             columns={columns}
@@ -180,7 +216,11 @@ export function QueueTable({ queue, rows, meta, statusFacets, initialQuery, canE
             rowHref={(row) => `${queue.href}/${row.id}`}
             emptyState={
               <EmptyState
-                title={filtered ? 'Nothing matches those filters' : `No ${queue.labelPlural.toLowerCase()} yet`}
+                title={
+                  filtered
+                    ? 'Nothing matches those filters'
+                    : `No ${queue.labelPlural.toLowerCase()} yet`
+                }
                 description={
                   filtered
                     ? 'Try a different search term, or clear the filters.'

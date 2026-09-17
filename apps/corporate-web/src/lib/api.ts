@@ -82,7 +82,10 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
  * Used where a missing record is a normal outcome — an optional footer
  * configuration, a locale variant that has not been translated yet.
  */
-export async function apiFetchOptional<T>(path: string, options: FetchOptions = {}): Promise<T | null> {
+export async function apiFetchOptional<T>(
+  path: string,
+  options: FetchOptions = {},
+): Promise<T | null> {
   try {
     return await apiFetch<T>(path, options);
   } catch (error) {

@@ -43,7 +43,10 @@ export async function seedAccessControl(prisma: PrismaClient) {
   }
 
   const permissionIds = new Map(
-    (await prisma.permission.findMany({ select: { id: true, key: true } })).map((p) => [p.key, p.id]),
+    (await prisma.permission.findMany({ select: { id: true, key: true } })).map((p) => [
+      p.key,
+      p.id,
+    ]),
   );
 
   const roleKeys = Object.keys(ROLE_DEFINITIONS) as Array<keyof typeof ROLE_DEFINITIONS>;
@@ -99,7 +102,12 @@ export async function seedAccessControl(prisma: PrismaClient) {
       email,
       name,
       jobTitle: 'Administrator',
-      passwordHash: await argon2.hash(password, { type: argon2.argon2id, memoryCost: 19456, timeCost: 2, parallelism: 1 }),
+      passwordHash: await argon2.hash(password, {
+        type: argon2.argon2id,
+        memoryCost: 19456,
+        timeCost: 2,
+        parallelism: 1,
+      }),
       status: 'ACTIVE',
       // The seeded password is a known value, so the account is required to
       // change it at first sign-in.
@@ -119,11 +127,36 @@ export async function seedAccessControl(prisma: PrismaClient) {
   // Demonstration accounts, one per operational role, so the permission model
   // can be exercised without inventing users by hand. Disabled by default.
   const demoUsers: Array<{ email: string; name: string; jobTitle: string; role: string }> = [
-    { email: 'comms@cheezious.local', name: 'Corporate Communications', jobTitle: 'Communications Lead', role: 'CORPORATE_COMMUNICATIONS' },
-    { email: 'hr@cheezious.local', name: 'People Team', jobTitle: 'HR Manager', role: 'HR_MANAGER' },
-    { email: 'pr@cheezious.local', name: 'Press Office', jobTitle: 'PR Manager', role: 'PR_MANAGER' },
-    { email: 'procurement@cheezious.local', name: 'Procurement Team', jobTitle: 'Procurement Manager', role: 'PROCUREMENT_MANAGER' },
-    { email: 'expansion@cheezious.local', name: 'Expansion Team', jobTitle: 'Expansion Manager', role: 'EXPANSION_MANAGER' },
+    {
+      email: 'comms@cheezious.local',
+      name: 'Corporate Communications',
+      jobTitle: 'Communications Lead',
+      role: 'CORPORATE_COMMUNICATIONS',
+    },
+    {
+      email: 'hr@cheezious.local',
+      name: 'People Team',
+      jobTitle: 'HR Manager',
+      role: 'HR_MANAGER',
+    },
+    {
+      email: 'pr@cheezious.local',
+      name: 'Press Office',
+      jobTitle: 'PR Manager',
+      role: 'PR_MANAGER',
+    },
+    {
+      email: 'procurement@cheezious.local',
+      name: 'Procurement Team',
+      jobTitle: 'Procurement Manager',
+      role: 'PROCUREMENT_MANAGER',
+    },
+    {
+      email: 'expansion@cheezious.local',
+      name: 'Expansion Team',
+      jobTitle: 'Expansion Manager',
+      role: 'EXPANSION_MANAGER',
+    },
     { email: 'editor@cheezious.local', name: 'Content Editor', jobTitle: 'Editor', role: 'EDITOR' },
     { email: 'author@cheezious.local', name: 'Content Author', jobTitle: 'Author', role: 'AUTHOR' },
   ];
@@ -164,13 +197,18 @@ export async function seedAccessControl(prisma: PrismaClient) {
  * and the rule that a password may not contain the account's own email address
  * or name.
  */
-function assertSeedPasswordIsAcceptable(password: string, account: { email: string; name: string }): void {
+function assertSeedPasswordIsAcceptable(
+  password: string,
+  account: { email: string; name: string },
+): void {
   const problems: string[] = [];
   const lower = password.toLowerCase();
 
   if (password.length < 12) problems.push('it is shorter than 12 characters');
 
-  const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((pattern) => pattern.test(password)).length;
+  const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((pattern) =>
+    pattern.test(password),
+  ).length;
   if (password.length < 16 && classes < 3) {
     problems.push('it is under 16 characters and mixes fewer than three character types');
   }

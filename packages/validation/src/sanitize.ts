@@ -7,13 +7,45 @@
  */
 
 const ALLOWED_TAGS = new Set([
-  'p', 'br', 'strong', 'em', 'b', 'i', 'u', 's', 'sub', 'sup',
-  'h2', 'h3', 'h4', 'h5', 'h6',
-  'ul', 'ol', 'li',
-  'blockquote', 'cite', 'q',
-  'a', 'hr',
-  'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption',
-  'figure', 'figcaption', 'span', 'abbr', 'time', 'small', 'code', 'pre',
+  'p',
+  'br',
+  'strong',
+  'em',
+  'b',
+  'i',
+  'u',
+  's',
+  'sub',
+  'sup',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'ul',
+  'ol',
+  'li',
+  'blockquote',
+  'cite',
+  'q',
+  'a',
+  'hr',
+  'table',
+  'thead',
+  'tbody',
+  'tfoot',
+  'tr',
+  'th',
+  'td',
+  'caption',
+  'figure',
+  'figcaption',
+  'span',
+  'abbr',
+  'time',
+  'small',
+  'code',
+  'pre',
 ]);
 
 const ALLOWED_ATTRIBUTES: Record<string, Set<string>> = {
@@ -36,17 +68,26 @@ export function sanitizeHtml(input: string): string {
 
   let html = input
     .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/<(script|style|iframe|object|embed|form|input|button|link|meta|base)\b[\s\S]*?<\/\1>/gi, '')
-    .replace(/<(script|style|iframe|object|embed|form|input|button|link|meta|base)\b[^>]*\/?>/gi, '');
+    .replace(
+      /<(script|style|iframe|object|embed|form|input|button|link|meta|base)\b[\s\S]*?<\/\1>/gi,
+      '',
+    )
+    .replace(
+      /<(script|style|iframe|object|embed|form|input|button|link|meta|base)\b[^>]*\/?>/gi,
+      '',
+    );
 
-  html = html.replace(/<(\/?)([a-zA-Z][a-zA-Z0-9-]*)((?:\s+[^>]*)?)\s*(\/?)>/g, (match, closing, rawName, rawAttrs, selfClose) => {
-    const name = String(rawName).toLowerCase();
-    if (!ALLOWED_TAGS.has(name)) return '';
-    if (closing) return `</${name}>`;
+  html = html.replace(
+    /<(\/?)([a-zA-Z][a-zA-Z0-9-]*)((?:\s+[^>]*)?)\s*(\/?)>/g,
+    (match, closing, rawName, rawAttrs, selfClose) => {
+      const name = String(rawName).toLowerCase();
+      if (!ALLOWED_TAGS.has(name)) return '';
+      if (closing) return `</${name}>`;
 
-    const attrs = sanitizeAttributes(name, String(rawAttrs ?? ''));
-    return `<${name}${attrs}${selfClose ? ' /' : ''}>`;
-  });
+      const attrs = sanitizeAttributes(name, String(rawAttrs ?? ''));
+      return `<${name}${attrs}${selfClose ? ' /' : ''}>`;
+    },
+  );
 
   // Remove any residual stray angle brackets from malformed input.
   return html.replace(/<(?![/a-zA-Z])/g, '&lt;');
@@ -86,7 +127,11 @@ function sanitizeAttributes(tag: string, rawAttrs: string): string {
 }
 
 function escapeAttribute(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 /** Escape text for safe interpolation into HTML. */

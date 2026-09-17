@@ -3,8 +3,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-import { mediaUrl } from '@/lib/urls';
 import type { MediaImage } from '@/lib/content';
+import { mediaUrl } from '@/lib/urls';
 
 /**
  * Block primitives.
@@ -47,9 +47,19 @@ export interface SectionProps {
 }
 
 /** A page section: owns the surface colour and the vertical rhythm. */
-export function Section({ tone = 'light', spacing = 'standard', width = 'standard', id, className, children }: SectionProps) {
+export function Section({
+  tone = 'light',
+  spacing = 'standard',
+  width = 'standard',
+  id,
+  className,
+  children,
+}: SectionProps) {
   return (
-    <section id={id} className={[TONE_CLASSES[tone], SPACING_CLASSES[spacing], className ?? ''].join(' ')}>
+    <section
+      id={id}
+      className={[TONE_CLASSES[tone], SPACING_CLASSES[spacing], className ?? ''].join(' ')}
+    >
       <div className={WIDTH_CLASSES[width]}>{children}</div>
     </section>
   );
@@ -96,7 +106,9 @@ export function SectionHeader({
     >
       <div className={align === 'center' ? 'max-w-2xl' : 'max-w-3xl'}>
         {eyebrow ? (
-          <p className={['eyebrow', isDark ? 'text-paper/60' : 'text-ink-muted'].join(' ')}>{eyebrow}</p>
+          <p className={['eyebrow', isDark ? 'text-paper/60' : 'text-ink-muted'].join(' ')}>
+            {eyebrow}
+          </p>
         ) : null}
         {heading ? (
           <Heading
@@ -167,7 +179,11 @@ export function BlockImage({
   if (!image) {
     return (
       <div
-        className={[aspectClass, 'flex items-center justify-center bg-paper-sunken', className ?? ''].join(' ')}
+        className={[
+          aspectClass,
+          'flex items-center justify-center bg-paper-sunken',
+          className ?? '',
+        ].join(' ')}
         role="img"
         aria-label="Image not yet available"
       >
@@ -181,7 +197,9 @@ export function BlockImage({
 
   return (
     <div
-      className={[aspectClass, 'relative overflow-hidden bg-paper-sunken', className ?? ''].join(' ')}
+      className={[aspectClass, 'relative overflow-hidden bg-paper-sunken', className ?? ''].join(
+        ' ',
+      )}
       style={image.placeholderColor ? { backgroundColor: image.placeholderColor } : undefined}
     >
       <Image
@@ -192,19 +210,29 @@ export function BlockImage({
         priority={priority}
         className={['object-cover', reveal && !priority ? 'animate-image-reveal' : ''].join(' ')}
         style={{ objectPosition: `${image.focalX * 100}% ${image.focalY * 100}%` }}
-        {...(image.blurDataUrl ? { placeholder: 'blur' as const, blurDataURL: image.blurDataUrl } : {})}
+        {...(image.blurDataUrl
+          ? { placeholder: 'blur' as const, blurDataURL: image.blurDataUrl }
+          : {})}
       />
     </div>
   );
 }
 
 /** Caption and credit rendered beneath an image. */
-export function ImageCaption({ image, tone = 'light' }: { image: MediaImage | null | undefined; tone?: Tone }) {
+export function ImageCaption({
+  image,
+  tone = 'light',
+}: {
+  image: MediaImage | null | undefined;
+  tone?: Tone;
+}) {
   if (!image?.caption && !image?.credit) return null;
   const isDark = tone === 'dark';
 
   return (
-    <figcaption className={['mt-3 text-body-xs', isDark ? 'text-paper/55' : 'text-ink-faint'].join(' ')}>
+    <figcaption
+      className={['mt-3 text-body-xs', isDark ? 'text-paper/55' : 'text-ink-faint'].join(' ')}
+    >
       {image.caption}
       {image.caption && image.credit ? ' · ' : ''}
       {image.credit ? <span className="italic">{image.credit}</span> : null}
@@ -227,20 +255,33 @@ export interface ResolvedLink {
  * which is preferable to shipping a dead link.
  */
 export function resolveLink(
-  link: { label?: string; pageId?: string; externalUrl?: string; opensInNewTab?: boolean } | undefined | null,
+  link:
+    | { label?: string; pageId?: string; externalUrl?: string; opensInNewTab?: boolean }
+    | undefined
+    | null,
   locale: Locale,
   pathById: Map<string, string>,
 ): ResolvedLink | null {
   if (!link?.label) return null;
 
   if (link.externalUrl) {
-    return { label: link.label, href: link.externalUrl, opensInNewTab: link.opensInNewTab ?? true, isExternal: true };
+    return {
+      label: link.label,
+      href: link.externalUrl,
+      opensInNewTab: link.opensInNewTab ?? true,
+      isExternal: true,
+    };
   }
 
   if (link.pageId) {
     const path = pathById.get(link.pageId);
     if (!path) return null;
-    return { label: link.label, href: `/${locale}${path}`, opensInNewTab: false, isExternal: false };
+    return {
+      label: link.label,
+      href: `/${locale}${path}`,
+      opensInNewTab: false,
+      isExternal: false,
+    };
   }
 
   return null;
@@ -285,15 +326,33 @@ export function ActionLink({
   const content = (
     <>
       {link.label}
-      <svg width="13" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true" className="rtl:rotate-180">
-        <path d="M9 1l4 4-4 4M13 5H1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <svg
+        width="13"
+        height="10"
+        viewBox="0 0 14 10"
+        fill="none"
+        aria-hidden="true"
+        className="rtl:rotate-180"
+      >
+        <path
+          d="M9 1l4 4-4 4M13 5H1"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
       {link.isExternal ? <span className="sr-only"> (opens in a new tab)</span> : null}
     </>
   );
 
   return link.isExternal ? (
-    <a href={link.href} target={link.opensInNewTab ? '_blank' : undefined} rel="noopener noreferrer" className={className}>
+    <a
+      href={link.href}
+      target={link.opensInNewTab ? '_blank' : undefined}
+      rel="noopener noreferrer"
+      className={className}
+    >
       {content}
     </a>
   ) : (
@@ -331,7 +390,6 @@ export function RichText({ html, className }: { html: string; className?: string
   return (
     <div
       className={['rich-text', className ?? ''].join(' ')}
-      // eslint-disable-next-line react/no-danger
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

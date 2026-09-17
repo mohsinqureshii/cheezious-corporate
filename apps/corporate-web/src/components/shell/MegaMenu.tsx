@@ -5,8 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 
-import { mediaUrl } from '@/lib/urls';
 import type { NavigationItem } from '@/lib/content';
+import { mediaUrl } from '@/lib/urls';
 
 /**
  * The mega menu panel.
@@ -31,7 +31,15 @@ export interface MegaMenuProps {
   onClose: () => void;
 }
 
-export function MegaMenu({ id, locale, section, isOpen, onMouseEnter, onMouseLeave, onClose }: MegaMenuProps) {
+export function MegaMenu({
+  id,
+  locale,
+  section,
+  isOpen,
+  onMouseEnter,
+  onMouseLeave,
+  onClose,
+}: MegaMenuProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
   /**
@@ -64,8 +72,12 @@ export function MegaMenu({ id, locale, section, isOpen, onMouseEnter, onMouseLea
     return () => panel.removeEventListener('keydown', onKeyDown);
   }, [isOpen, onClose]);
 
-  const columns = section.children.filter((child) => child.children.length > 0 || child.kind === 'GROUP');
-  const directLinks = section.children.filter((child) => child.children.length === 0 && child.kind !== 'GROUP');
+  const columns = section.children.filter(
+    (child) => child.children.length > 0 || child.kind === 'GROUP',
+  );
+  const directLinks = section.children.filter(
+    (child) => child.children.length === 0 && child.kind !== 'GROUP',
+  );
   const featured = section.featuredStory;
   const featuredImage = featured?.heroImage ?? section.featuredImage;
 
@@ -95,8 +107,21 @@ export function MegaMenu({ id, locale, section, isOpen, onMouseEnter, onMouseLea
                            transition-colors duration-quick hover:text-brand-deep"
               >
                 {section.descriptor ?? `Explore ${section.label.toLowerCase()}`}
-                <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true" className="rtl:rotate-180">
-                  <path d="M9 1l4 4-4 4M13 5H1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <svg
+                  width="14"
+                  height="10"
+                  viewBox="0 0 14 10"
+                  fill="none"
+                  aria-hidden="true"
+                  className="rtl:rotate-180"
+                >
+                  <path
+                    d="M9 1l4 4-4 4M13 5H1"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
               </Link>
             ) : null}
@@ -104,10 +129,7 @@ export function MegaMenu({ id, locale, section, isOpen, onMouseEnter, onMouseLea
 
           {/* Link columns --------------------------------------------------- */}
           <div
-            className={[
-              'col-span-12',
-              featuredImage ? 'lg:col-span-6' : 'lg:col-span-9',
-            ].join(' ')}
+            className={['col-span-12', featuredImage ? 'lg:col-span-6' : 'lg:col-span-9'].join(' ')}
           >
             <div
               className={[
@@ -172,7 +194,9 @@ export function MegaMenu({ id, locale, section, isOpen, onMouseEnter, onMouseLea
                   {section.featuredHeadline ?? featured?.title}
                 </p>
                 {featured?.excerpt ? (
-                  <p className="mt-2 line-clamp-2 text-body-sm text-ink-muted">{featured.excerpt}</p>
+                  <p className="mt-2 line-clamp-2 text-body-sm text-ink-muted">
+                    {featured.excerpt}
+                  </p>
                 ) : null}
               </Link>
             </div>
@@ -202,13 +226,32 @@ function MegaMenuLink({ locale, item }: { locale: Locale; item: NavigationItem }
       >
         {item.label}
         {item.isCallToAction ? (
-          <svg width="12" height="9" viewBox="0 0 12 9" fill="none" aria-hidden="true" className="rtl:rotate-180">
-            <path d="M7.5 1L11 4.5 7.5 8M11 4.5H1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          <svg
+            width="12"
+            height="9"
+            viewBox="0 0 12 9"
+            fill="none"
+            aria-hidden="true"
+            className="rtl:rotate-180"
+          >
+            <path
+              d="M7.5 1L11 4.5 7.5 8M11 4.5H1"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         ) : null}
         {isExternal ? (
           <svg width="10" height="10" viewBox="0 0 11 11" fill="none" aria-hidden="true">
-            <path d="M2 9L9 2M9 2H4M9 2v5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M2 9L9 2M9 2H4M9 2v5"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         ) : null}
       </span>
@@ -219,7 +262,12 @@ function MegaMenuLink({ locale, item }: { locale: Locale; item: NavigationItem }
   );
 
   return isExternal ? (
-    <a href={href} target={item.opensInNewTab ? '_blank' : undefined} rel="noopener noreferrer" className={className}>
+    <a
+      href={href}
+      target={item.opensInNewTab ? '_blank' : undefined}
+      rel="noopener noreferrer"
+      className={className}
+    >
       {content}
     </a>
   ) : (

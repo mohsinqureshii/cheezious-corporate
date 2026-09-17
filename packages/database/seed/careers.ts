@@ -9,11 +9,31 @@ import type { PrismaClient } from '@prisma/client';
  */
 export async function seedCareers(prisma: PrismaClient, actorId: string): Promise<void> {
   const categories = [
-    { key: 'RESTAURANT', name: 'Restaurant Careers', summary: 'Restaurant management, kitchen, service, delivery and operations.' },
-    { key: 'CORPORATE', name: 'Corporate Careers', summary: 'Finance, people, marketing, procurement, supply chain and legal.' },
-    { key: 'TECHNOLOGY', name: 'Technology Careers', summary: 'Engineering, product, data, infrastructure and security.' },
-    { key: 'SUPPLY_CHAIN', name: 'Supply Chain Careers', summary: 'Warehousing, distribution, quality and planning.' },
-    { key: 'EARLY_CAREERS', name: 'Students & Graduates', summary: 'Internships, graduate programmes and management trainee routes.' },
+    {
+      key: 'RESTAURANT',
+      name: 'Restaurant Careers',
+      summary: 'Restaurant management, kitchen, service, delivery and operations.',
+    },
+    {
+      key: 'CORPORATE',
+      name: 'Corporate Careers',
+      summary: 'Finance, people, marketing, procurement, supply chain and legal.',
+    },
+    {
+      key: 'TECHNOLOGY',
+      name: 'Technology Careers',
+      summary: 'Engineering, product, data, infrastructure and security.',
+    },
+    {
+      key: 'SUPPLY_CHAIN',
+      name: 'Supply Chain Careers',
+      summary: 'Warehousing, distribution, quality and planning.',
+    },
+    {
+      key: 'EARLY_CAREERS',
+      name: 'Students & Graduates',
+      summary: 'Internships, graduate programmes and management trainee routes.',
+    },
   ];
 
   for (const [index, category] of categories.entries()) {
@@ -64,10 +84,38 @@ export async function seedCareers(prisma: PrismaClient, actorId: string): Promis
   });
 
   const fields = [
-    { type: 'TEXT', name: 'firstName', label: 'First name', isRequired: true, width: 'half', sortOrder: 0 },
-    { type: 'TEXT', name: 'lastName', label: 'Last name', isRequired: true, width: 'half', sortOrder: 1 },
-    { type: 'EMAIL', name: 'email', label: 'Email address', isRequired: true, width: 'half', sortOrder: 2 },
-    { type: 'PHONE', name: 'phone', label: 'Phone number', isRequired: true, width: 'half', sortOrder: 3 },
+    {
+      type: 'TEXT',
+      name: 'firstName',
+      label: 'First name',
+      isRequired: true,
+      width: 'half',
+      sortOrder: 0,
+    },
+    {
+      type: 'TEXT',
+      name: 'lastName',
+      label: 'Last name',
+      isRequired: true,
+      width: 'half',
+      sortOrder: 1,
+    },
+    {
+      type: 'EMAIL',
+      name: 'email',
+      label: 'Email address',
+      isRequired: true,
+      width: 'half',
+      sortOrder: 2,
+    },
+    {
+      type: 'PHONE',
+      name: 'phone',
+      label: 'Phone number',
+      isRequired: true,
+      width: 'half',
+      sortOrder: 3,
+    },
     { type: 'TEXT', name: 'city', label: 'City', isRequired: false, width: 'half', sortOrder: 4 },
     {
       type: 'FILE',
@@ -77,10 +125,29 @@ export async function seedCareers(prisma: PrismaClient, actorId: string): Promis
       isRequired: true,
       width: 'full',
       sortOrder: 5,
-      validation: { accept: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'] },
+      validation: {
+        accept: [
+          'application/pdf',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ],
+      },
     },
-    { type: 'TEXT', name: 'linkedinUrl', label: 'LinkedIn profile', isRequired: false, width: 'half', sortOrder: 6 },
-    { type: 'TEXT', name: 'portfolioUrl', label: 'Portfolio or website', isRequired: false, width: 'half', sortOrder: 7 },
+    {
+      type: 'TEXT',
+      name: 'linkedinUrl',
+      label: 'LinkedIn profile',
+      isRequired: false,
+      width: 'half',
+      sortOrder: 6,
+    },
+    {
+      type: 'TEXT',
+      name: 'portfolioUrl',
+      label: 'Portfolio or website',
+      isRequired: false,
+      width: 'half',
+      sortOrder: 7,
+    },
     {
       type: 'TEXTAREA',
       name: 'coverNote',
@@ -198,8 +265,7 @@ export async function seedCareers(prisma: PrismaClient, actorId: string): Promis
           '<p>Placeholder role description. Replace with the approved description for this position.</p>',
         responsibilities:
           '<ul><li>Placeholder responsibility.</li><li>Placeholder responsibility.</li><li>Placeholder responsibility.</li></ul>',
-        requirements:
-          '<ul><li>Placeholder requirement.</li><li>Placeholder requirement.</li></ul>',
+        requirements: '<ul><li>Placeholder requirement.</li><li>Placeholder requirement.</li></ul>',
         preferredQualifications: '<ul><li>Placeholder preferred qualification.</li></ul>',
         benefits: '<ul><li>Placeholder benefit. Replace with approved benefits.</li></ul>',
         // Salary is deliberately left unset: an unapproved range must never be
@@ -276,5 +342,8 @@ export async function seedCareers(prisma: PrismaClient, actorId: string): Promis
 }
 
 function slugify(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }

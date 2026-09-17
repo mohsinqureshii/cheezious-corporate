@@ -51,7 +51,9 @@ export function RoleMatrix({ roles: initialRoles, catalogue, canManage }: RoleMa
       catalogue
         .map((group) => ({
           ...group,
-          permissions: highRiskOnly ? group.permissions.filter((permission) => permission.isHighRisk) : group.permissions,
+          permissions: highRiskOnly
+            ? group.permissions.filter((permission) => permission.isHighRisk)
+            : group.permissions,
         }))
         .filter((group) => group.permissions.length > 0),
     [catalogue, highRiskOnly],
@@ -79,7 +81,9 @@ export function RoleMatrix({ roles: initialRoles, catalogue, canManage }: RoleMa
         return;
       }
       setRoles((current) =>
-        current.map((entry) => (entry.id === role.id ? { ...entry, permissions: [...draft] } : entry)),
+        current.map((entry) =>
+          entry.id === role.id ? { ...entry, permissions: [...draft] } : entry,
+        ),
       );
       setEditing(null);
     } catch {
@@ -92,7 +96,10 @@ export function RoleMatrix({ roles: initialRoles, catalogue, canManage }: RoleMa
   return (
     <div className="p-06">
       {error ? (
-        <div className="mb-05 border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04" role="alert">
+        <div
+          className="mb-05 border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04"
+          role="alert"
+        >
           <p className="text-body-01 text-content-primary">{error}</p>
         </div>
       ) : null}
@@ -108,8 +115,9 @@ export function RoleMatrix({ roles: initialRoles, catalogue, canManage }: RoleMa
           Show only high-risk permissions
         </label>
         <p className="text-helper-01 text-content-tertiary">
-          Publishing, deleting, granting roles and reading personal data are marked. Hiding a control in the
-          interface is never the control — the API checks every one of these independently.
+          Publishing, deleting, granting roles and reading personal data are marked. Hiding a
+          control in the interface is never the control — the API checks every one of these
+          independently.
         </p>
       </div>
 
@@ -130,10 +138,19 @@ export function RoleMatrix({ roles: initialRoles, catalogue, canManage }: RoleMa
                   {canManage && !role.isSystem ? (
                     editing === role.id ? (
                       <span className="mt-01 flex justify-center gap-02">
-                        <button type="button" className="text-helper-01 text-interactive" disabled={busy} onClick={() => save(role)}>
+                        <button
+                          type="button"
+                          className="text-helper-01 text-interactive"
+                          disabled={busy}
+                          onClick={() => save(role)}
+                        >
                           Save
                         </button>
-                        <button type="button" className="text-helper-01 text-content-secondary" onClick={() => setEditing(null)}>
+                        <button
+                          type="button"
+                          className="text-helper-01 text-content-secondary"
+                          onClick={() => setEditing(null)}
+                        >
                           Cancel
                         </button>
                       </span>
@@ -166,13 +183,20 @@ export function RoleMatrix({ roles: initialRoles, catalogue, canManage }: RoleMa
               {group.permissions.map((permission) => (
                 <tr key={permission.key}>
                   <th scope="row" className="sticky start-0 bg-surface-base text-start font-normal">
-                    <span className="font-mono text-helper-01 text-content-primary">{permission.key}</span>
+                    <span className="font-mono text-helper-01 text-content-primary">
+                      {permission.key}
+                    </span>
                     {permission.isHighRisk ? (
-                      <span className="ms-02 tag bg-status-warningSubtle text-content-primary">High risk</span>
+                      <span className="ms-02 tag bg-status-warningSubtle text-content-primary">
+                        High risk
+                      </span>
                     ) : null}
                   </th>
                   {roles.map((role) => {
-                    const held = editing === role.id ? draft.has(permission.key) : role.permissions.includes(permission.key);
+                    const held =
+                      editing === role.id
+                        ? draft.has(permission.key)
+                        : role.permissions.includes(permission.key);
                     return (
                       <td key={role.id} className="text-center">
                         {editing === role.id ? (
@@ -191,12 +215,17 @@ export function RoleMatrix({ roles: initialRoles, catalogue, canManage }: RoleMa
                             }
                           />
                         ) : held ? (
-                          <span className="text-status-success" title={`${role.name} holds ${permission.key}`}>
-                            ✓<span className="sr-only">{`${role.name} holds ${permission.key}`}</span>
+                          <span
+                            className="text-status-success"
+                            title={`${role.name} holds ${permission.key}`}
+                          >
+                            ✓
+                            <span className="sr-only">{`${role.name} holds ${permission.key}`}</span>
                           </span>
                         ) : (
                           <span className="text-content-tertiary">
-                            ·<span className="sr-only">{`${role.name} does not hold ${permission.key}`}</span>
+                            ·
+                            <span className="sr-only">{`${role.name} does not hold ${permission.key}`}</span>
                           </span>
                         )}
                       </td>
@@ -219,7 +248,8 @@ export function RoleMatrix({ roles: initialRoles, catalogue, canManage }: RoleMa
             ) : null}
             {role.isSystem ? (
               <p className="mt-02 text-helper-01 text-content-tertiary">
-                A system role. Its permissions are fixed so the platform cannot be locked out of itself.
+                A system role. Its permissions are fixed so the platform cannot be locked out of
+                itself.
               </p>
             ) : null}
           </div>

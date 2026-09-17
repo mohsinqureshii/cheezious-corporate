@@ -31,7 +31,12 @@ export interface SubmissionDetailProps {
   canManage: boolean;
 }
 
-export function SubmissionDetail({ queue, submission, assignees, canManage }: SubmissionDetailProps) {
+export function SubmissionDetail({
+  queue,
+  submission,
+  assignees,
+  canManage,
+}: SubmissionDetailProps) {
   const router = useRouter();
   const [status, setStatus] = useState(submission.status);
   const [assigneeId, setAssigneeId] = useState(submission.assignee?.id ?? '');
@@ -44,12 +49,15 @@ export function SubmissionDetail({ queue, submission, assignees, canManage }: Su
     setBusy(true);
     setError('');
     try {
-      const response = await fetch(`${API_URL}/api/cms/submissions/${queue.path}/${submission.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(changes),
-      });
+      const response = await fetch(
+        `${API_URL}/api/cms/submissions/${queue.path}/${submission.id}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(changes),
+        },
+      );
       if (!response.ok) {
         const body = (await response.json()) as { error?: { message: string } };
         setError(body.error?.message ?? 'That change could not be saved.');
@@ -72,12 +80,15 @@ export function SubmissionDetail({ queue, submission, assignees, canManage }: Su
     setBusy(true);
     setError('');
     try {
-      const response = await fetch(`${API_URL}/api/cms/submissions/${queue.path}/${submission.id}/notes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ body: note }),
-      });
+      const response = await fetch(
+        `${API_URL}/api/cms/submissions/${queue.path}/${submission.id}/notes`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ body: note }),
+        },
+      );
       if (!response.ok) {
         setError('The note could not be added.');
         return;
@@ -101,9 +112,12 @@ export function SubmissionDetail({ queue, submission, assignees, canManage }: Su
         <div>
           <p className="font-mono text-helper-01 text-content-secondary">{submission.reference}</p>
           <h1 className="mt-01 text-heading-04 text-content-primary">{title}</h1>
-          {subtitle ? <p className="mt-01 text-body-01 text-content-secondary">{subtitle}</p> : null}
+          {subtitle ? (
+            <p className="mt-01 text-body-01 text-content-secondary">{subtitle}</p>
+          ) : null}
           <p className="mt-02 text-helper-01 text-content-tertiary">
-            Received {formatDate(submission.createdAt, 'en', { dateStyle: 'full', timeStyle: 'short' })}
+            Received{' '}
+            {formatDate(submission.createdAt, 'en', { dateStyle: 'full', timeStyle: 'short' })}
           </p>
         </div>
 
@@ -113,7 +127,10 @@ export function SubmissionDetail({ queue, submission, assignees, canManage }: Su
       </div>
 
       {error ? (
-        <div className="mb-05 border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04" role="alert">
+        <div
+          className="mb-05 border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04"
+          role="alert"
+        >
           <p className="text-body-01 text-content-primary">{error}</p>
         </div>
       ) : null}
@@ -133,8 +150,12 @@ export function SubmissionDetail({ queue, submission, assignees, canManage }: Su
 
               return (
                 <div key={field.name} className={field.long ? 'sm:col-span-2' : undefined}>
-                  <dt className="text-label-01 uppercase tracking-wide text-content-tertiary">{field.label}</dt>
-                  <dd className="mt-01 text-body-01 text-content-primary">{renderValue(value, field.type)}</dd>
+                  <dt className="text-label-01 uppercase tracking-wide text-content-tertiary">
+                    {field.label}
+                  </dt>
+                  <dd className="mt-01 text-body-01 text-content-primary">
+                    {renderValue(value, field.type)}
+                  </dd>
                 </div>
               );
             })}
@@ -257,7 +278,11 @@ export function SubmissionDetail({ queue, submission, assignees, canManage }: Su
                   placeholder="Add a note for whoever picks this up next"
                   className="textarea"
                 />
-                <button type="submit" disabled={busy || !note.trim()} className="btn-secondary btn-sm mt-03">
+                <button
+                  type="submit"
+                  disabled={busy || !note.trim()}
+                  className="btn-secondary btn-sm mt-03"
+                >
                   Add note
                 </button>
               </form>
@@ -270,7 +295,9 @@ export function SubmissionDetail({ queue, submission, assignees, canManage }: Su
                     <p className="text-helper-01 text-content-tertiary">
                       {entry.author?.name ?? 'Someone'} · {formatRelativeTime(entry.createdAt)}
                     </p>
-                    <p className="mt-01 whitespace-pre-wrap text-body-01 text-content-primary">{entry.body}</p>
+                    <p className="mt-01 whitespace-pre-wrap text-body-01 text-content-primary">
+                      {entry.body}
+                    </p>
                   </li>
                 ))}
               </ul>
@@ -299,21 +326,33 @@ function renderValue(value: unknown, type: string | undefined): React.ReactNode 
   }
   if (type === 'phone') {
     return (
-      <a href={`tel:${text.replace(/\s+/g, '')}`} className="text-interactive no-underline hover:underline">
+      <a
+        href={`tel:${text.replace(/\s+/g, '')}`}
+        className="text-interactive no-underline hover:underline"
+      >
         {text}
       </a>
     );
   }
   if (type === 'url') {
     return (
-      <a href={text} target="_blank" rel="noopener noreferrer nofollow" className="text-interactive no-underline hover:underline">
+      <a
+        href={text}
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        className="text-interactive no-underline hover:underline"
+      >
         {text}
         <span className="sr-only"> (opens in a new tab)</span>
       </a>
     );
   }
   if (type === 'date') {
-    return <time dateTime={text}>{formatDate(text, 'en', { dateStyle: 'medium', timeStyle: 'short' })}</time>;
+    return (
+      <time dateTime={text}>
+        {formatDate(text, 'en', { dateStyle: 'medium', timeStyle: 'short' })}
+      </time>
+    );
   }
 
   return <span className="whitespace-pre-wrap">{text}</span>;

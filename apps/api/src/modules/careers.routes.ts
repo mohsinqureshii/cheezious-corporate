@@ -1,6 +1,6 @@
 import { generateReference, hashIp } from '@cheezious/auth';
 import { isLocale, type Locale } from '@cheezious/config';
-import type { Prisma } from '@cheezious/database';
+import type { PrismaClient, Prisma } from '@cheezious/database';
 import {
   ApiError,
   consent,
@@ -14,6 +14,7 @@ import {
   spamGuard,
   validateUpload,
 } from '@cheezious/validation';
+import type { Response } from 'express';
 import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
@@ -36,8 +37,11 @@ function parseLocale(value: unknown): Locale {
   return value;
 }
 
-function setPublicCache(res: import('express').Response, seconds = 60): void {
-  res.setHeader('Cache-Control', `public, max-age=0, s-maxage=${seconds}, stale-while-revalidate=${seconds * 10}`);
+function setPublicCache(res: Response, seconds = 60): void {
+  res.setHeader(
+    'Cache-Control',
+    `public, max-age=0, s-maxage=${seconds}, stale-while-revalidate=${seconds * 10}`,
+  );
 }
 
 const jobListSelect = {
@@ -53,7 +57,14 @@ const jobListSelect = {
   openingsCount: true,
   category: { select: { name: true, slug: true } },
   department: { select: { name: true, slug: true } },
-  location: { select: { name: true, slug: true, isRemote: true, city: { select: { name: true, slug: true } } } },
+  location: {
+    select: {
+      name: true,
+      slug: true,
+      isRemote: true,
+      city: { select: { name: true, slug: true } },
+    },
+  },
 } satisfies Prisma.JobSelect;
 
 /**
@@ -240,7 +251,10 @@ export function careersRoutes(): Router {
 
       setPublicCache(res, 120);
       res.json({
-        categories: categories.map(({ _count, ...category }) => ({ ...category, openRoles: _count.jobs })),
+        categories: categories.map(({ _count, ...category }) => ({
+          ...category,
+          openRoles: _count.jobs,
+        })),
       });
     }),
   );
@@ -307,7 +321,10 @@ export function careersRoutes(): Router {
         throw new ApiError('VALIDATION_ERROR', 'We could not accept this submission.');
       }
       if (typeof body.elapsedMs === 'number' && body.elapsedMs < 3000) {
-        logger.warn({ ip: clientIp(req), elapsedMs: body.elapsedMs }, 'application rejected by timing check');
+        logger.warn(
+          { ip: clientIp(req), elapsedMs: body.elapsedMs },
+          'application rejected by timing check',
+        );
         throw new ApiError('VALIDATION_ERROR', 'We could not accept this submission.');
       }
 
@@ -315,7 +332,12 @@ export function careersRoutes(): Router {
       // the form was open in a tab.
       const job = await prisma.job.findFirst({
         where: { ...openJobFilter(locale), slug: req.params.slug },
-        select: { id: true, title: true, applicationDeadline: true, formDefinition: { select: { fields: true } } },
+        select: {
+          id: true,
+          title: true,
+          applicationDeadline: true,
+          formDefinition: { select: { fields: true } },
+        },
       });
       if (!job) {
         throw new ApiError('CONFLICT', 'This role is no longer accepting applications.');
@@ -328,7 +350,9 @@ export function careersRoutes(): Router {
       }
 
       const maxBytes = env.MAX_APPLICATION_UPLOAD_MB * 1024 * 1024;
-      const attachments: Array<{ file: Express.Multer.File; kind: string }> = [{ file: cv, kind: 'CV' }];
+      const attachments: Array<{ file: Express.Multer.File; kind: string }> = [
+        { file: cv, kind: 'CV' },
+      ];
       if (files?.portfolio?.[0]) attachments.push({ file: files.portfolio[0], kind: 'PORTFOLIO' });
 
       for (const { file, kind } of attachments) {
@@ -343,7 +367,10 @@ export function careersRoutes(): Router {
         );
         if (!validation.valid) {
           throw ApiError.validation(
-            validation.errors.map((message) => ({ field: kind === 'CV' ? 'cv' : 'portfolio', message })),
+            validation.errors.map((message) => ({
+              field: kind === 'CV' ? 'cv' : 'portfolio',
+              message,
+            })),
           );
         }
       }
@@ -373,7 +400,12 @@ export function careersRoutes(): Router {
 
       // Files are written to private storage before the record is created, so a
       // stored application always has its attachments.
-      const stored: Array<{ kind: string; storageKey: string; file: Express.Multer.File; checksum: string }> = [];
+      const stored: Array<{
+        kind: string;
+        storageKey: string;
+        file: Express.Multer.File;
+        checksum: string;
+      }> = [];
       for (const { file, kind } of attachments) {
         const key = buildStorageKey(STORAGE_PREFIX.applications, file.originalname);
         const result = await storage.put(key, file.buffer, file.mimetype);
@@ -480,7 +512,7 @@ function parseAnswers(raw: string | undefined): Prisma.InputJsonValue | undefine
   }
 }
 
-async function buildJobFacets(prisma: import('@cheezious/database').PrismaClient, locale: Locale) {
+async function buildJobFacets(prisma: PrismaClient, locale: Locale) {
   const where = openJobFilter(locale);
 
   const [categories, departments, locations, byType, byWorkplace] = await Promise.all([

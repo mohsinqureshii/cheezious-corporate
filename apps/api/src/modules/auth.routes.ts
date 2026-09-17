@@ -20,6 +20,7 @@ import {
   optionalString,
   requiredString,
 } from '@cheezious/validation';
+import type { Response } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
 
@@ -69,7 +70,9 @@ export function authRoutes(): Router {
       const user = await prisma.user.findFirst({
         where: { email: { equals: email, mode: 'insensitive' }, deletedAt: null },
         include: {
-          roles: { include: { role: { include: { permissions: { include: { permission: true } } } } } },
+          roles: {
+            include: { role: { include: { permissions: { include: { permission: true } } } } },
+          },
         },
       });
 
@@ -92,7 +95,13 @@ export function authRoutes(): Router {
       if (failureReason || !user) {
         await recordFailedLogin(
           prisma,
-          { email, userId: user?.id, ipAddress: ip, userAgent, reason: failureReason ?? 'UNKNOWN_USER' },
+          {
+            email,
+            userId: user?.id,
+            ipAddress: ip,
+            userAgent,
+            reason: failureReason ?? 'UNKNOWN_USER',
+          },
           lockoutConfig,
         );
         await new AuditService(prisma).record(
@@ -146,7 +155,12 @@ export function authRoutes(): Router {
         await revokeSession(req.ctx.prisma, req.sessionId, 'LOGOUT');
         await new AuditService(req.ctx.prisma).record(
           { id: req.principal?.id, email: req.principal?.email, ipAddress: clientIp(req) },
-          { action: 'LOGOUT', entityType: 'user', entityId: req.principal?.id ?? null, summary: 'Signed out' },
+          {
+            action: 'LOGOUT',
+            entityType: 'user',
+            entityId: req.principal?.id ?? null,
+            summary: 'Signed out',
+          },
         );
       }
       clearSessionCookie(res, req.ctx.env.NODE_ENV === 'production');
@@ -290,7 +304,9 @@ export function authRoutes(): Router {
 
       const reset = await prisma.passwordReset.findUnique({
         where: { tokenHash: hashToken(token) },
-        include: { user: { select: { id: true, email: true, name: true, status: true, deletedAt: true } } },
+        include: {
+          user: { select: { id: true, email: true, name: true, status: true, deletedAt: true } },
+        },
       });
 
       const invalid =
@@ -301,10 +317,16 @@ export function authRoutes(): Router {
         reset.user.status !== 'ACTIVE';
 
       if (invalid) {
-        throw new ApiError('VALIDATION_ERROR', 'That reset link is invalid or has expired. Request a new one.');
+        throw new ApiError(
+          'VALIDATION_ERROR',
+          'That reset link is invalid or has expired. Request a new one.',
+        );
       }
 
-      const policy = checkPasswordPolicy(password, { email: reset.user.email, name: reset.user.name });
+      const policy = checkPasswordPolicy(password, {
+        email: reset.user.email,
+        name: reset.user.name,
+      });
       if (!policy.valid) {
         throw ApiError.validation(policy.errors.map((message) => ({ field: 'password', message })));
       }
@@ -337,7 +359,10 @@ export function authRoutes(): Router {
         },
       );
 
-      res.json({ ok: true, message: 'Your password has been changed. Sign in with your new password.' });
+      res.json({
+        ok: true,
+        message: 'Your password has been changed. Sign in with your new password.',
+      });
     }),
   );
 
@@ -347,7 +372,10 @@ export function authRoutes(): Router {
     requireAuth(),
     asyncHandler(async (req, res) => {
       const { currentPassword, newPassword } = z
-        .object({ currentPassword: z.string().min(1).max(200), newPassword: z.string().min(1).max(200) })
+        .object({
+          currentPassword: z.string().min(1).max(200),
+          newPassword: z.string().min(1).max(200),
+        })
         .parse(req.body);
       const { prisma } = req.ctx;
 
@@ -358,12 +386,16 @@ export function authRoutes(): Router {
       if (!user) throw ApiError.notFound('Account');
 
       if (!(await verifyPassword(user.passwordHash, currentPassword))) {
-        throw ApiError.validation([{ field: 'currentPassword', message: 'That is not your current password.' }]);
+        throw ApiError.validation([
+          { field: 'currentPassword', message: 'That is not your current password.' },
+        ]);
       }
 
       const policy = checkPasswordPolicy(newPassword, { email: user.email, name: user.name });
       if (!policy.valid) {
-        throw ApiError.validation(policy.errors.map((message) => ({ field: 'newPassword', message })));
+        throw ApiError.validation(
+          policy.errors.map((message) => ({ field: 'newPassword', message })),
+        );
       }
 
       await prisma.user.update({
@@ -376,7 +408,12 @@ export function authRoutes(): Router {
       });
 
       // Every other session is ended; the one making the change survives.
-      const revoked = await revokeAllSessionsForUser(prisma, user.id, 'PASSWORD_CHANGED', req.sessionId ?? undefined);
+      const revoked = await revokeAllSessionsForUser(
+        prisma,
+        user.id,
+        'PASSWORD_CHANGED',
+        req.sessionId ?? undefined,
+      );
 
       await new AuditService(prisma).record(
         { id: user.id, email: user.email, ipAddress: clientIp(req) },
@@ -400,11 +437,21 @@ export function authRoutes(): Router {
       const sessions = await req.ctx.prisma.session.findMany({
         where: { userId: req.principal!.id, revokedAt: null, expiresAt: { gt: new Date() } },
         orderBy: { lastActiveAt: 'desc' },
-        select: { id: true, userAgent: true, ipAddress: true, createdAt: true, lastActiveAt: true, expiresAt: true },
+        select: {
+          id: true,
+          userAgent: true,
+          ipAddress: true,
+          createdAt: true,
+          lastActiveAt: true,
+          expiresAt: true,
+        },
       });
 
       res.json({
-        sessions: sessions.map((session) => ({ ...session, isCurrent: session.id === req.sessionId })),
+        sessions: sessions.map((session) => ({
+          ...session,
+          isCurrent: session.id === req.sessionId,
+        })),
       });
     }),
   );
@@ -427,12 +474,7 @@ export function authRoutes(): Router {
   return router;
 }
 
-function setSessionCookie(
-  res: import('express').Response,
-  token: string,
-  expiresAt: Date,
-  secure: boolean,
-): void {
+function setSessionCookie(res: Response, token: string, expiresAt: Date, secure: boolean): void {
   const attributes = [
     `${SESSION_COOKIE}=${encodeURIComponent(token)}`,
     'Path=/',
@@ -446,7 +488,7 @@ function setSessionCookie(
   res.setHeader('Set-Cookie', attributes.join('; '));
 }
 
-function clearSessionCookie(res: import('express').Response, secure: boolean): void {
+function clearSessionCookie(res: Response, secure: boolean): void {
   res.setHeader(
     'Set-Cookie',
     [

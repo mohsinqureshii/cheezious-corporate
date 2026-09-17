@@ -7,8 +7,8 @@ import { notFound } from 'next/navigation';
 import { StoryCard } from '@/components/blocks/collections';
 import { BlockImage, RichText, Section, SectionHeader } from '@/components/blocks/primitives';
 import { getPerson, getSettings, type MediaImage, type StorySummary } from '@/lib/content';
-import { mediaUrl } from '@/lib/urls';
 import { buildRouteSeo, siteUrl } from '@/lib/seo';
+import { mediaUrl } from '@/lib/urls';
 
 /**
  * A leadership profile.
@@ -47,7 +47,11 @@ interface Person {
   relatedStories: StorySummary[];
 }
 
-export async function generateMetadata({ params }: { params: Promise<RouteParams> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<RouteParams>;
+}): Promise<Metadata> {
   const { locale: localeParam, slug } = await params;
   if (!isLocale(localeParam)) return {};
 
@@ -63,12 +67,16 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
     settings,
     path: `/${locale}/company/leadership/${slug}`,
     title: person.seoTitle ?? `${person.name} — ${person.role}`,
-    description: person.seoDescription ?? person.shortBio ?? `${person.name}, ${person.role} at Cheezious.`,
+    description:
+      person.seoDescription ?? person.shortBio ?? `${person.name}, ${person.role} at Cheezious.`,
     siteName: (settings['site.name'] as string) ?? 'Cheezious Corporate',
     imageUrl: person.portrait ? (mediaUrl(person.portrait.storageKey) ?? undefined) : undefined,
     type: 'article',
     alternates: Object.fromEntries(
-      Object.entries(result.alternates).map(([code, value]) => [code, `/${code}/company/leadership/${value}`]),
+      Object.entries(result.alternates).map(([code, value]) => [
+        code,
+        `/${code}/company/leadership/${value}`,
+      ]),
     ) as Partial<Record<Locale, string>>,
   });
 }
@@ -134,7 +142,12 @@ export default async function PersonPage({ params }: { params: Promise<RoutePara
 
         <div className="grid gap-12 md:grid-cols-[320px_minmax(0,1fr)] md:items-start">
           <div>
-            <BlockImage image={person.portrait} sizes="(min-width: 768px) 320px, 100vw" aspectRatio="4:5" priority />
+            <BlockImage
+              image={person.portrait}
+              sizes="(min-width: 768px) 320px, 100vw"
+              aspectRatio="4:5"
+              priority
+            />
           </div>
 
           <div>
@@ -146,9 +159,13 @@ export default async function PersonPage({ params }: { params: Promise<RoutePara
 
             <h1 className="mt-4 text-display-sm text-ink">{person.name}</h1>
             <p className="mt-3 text-body-lg text-ink-muted">{person.role}</p>
-            {person.roleDetail ? <p className="mt-1 text-body-sm text-ink-faint">{person.roleDetail}</p> : null}
+            {person.roleDetail ? (
+              <p className="mt-1 text-body-sm text-ink-faint">{person.roleDetail}</p>
+            ) : null}
 
-            {person.shortBio ? <p className="mt-8 text-body-lg text-ink-soft">{person.shortBio}</p> : null}
+            {person.shortBio ? (
+              <p className="mt-8 text-body-lg text-ink-soft">{person.shortBio}</p>
+            ) : null}
 
             {person.linkedinUrl ? (
               <p className="mt-6">
@@ -197,7 +214,10 @@ export default async function PersonPage({ params }: { params: Promise<RoutePara
 
       {person.relatedStories.length > 0 ? (
         <Section width="wide">
-          <SectionHeader eyebrow="In the newsroom" heading={`Stories featuring ${person.name.split(' ')[0]}`} />
+          <SectionHeader
+            eyebrow="In the newsroom"
+            heading={`Stories featuring ${person.name.split(' ')[0]}`}
+          />
           <div className="mt-10 grid gap-8 md:grid-cols-3">
             {person.relatedStories.map((story) => (
               <StoryCard key={story.id} story={story} locale={locale} />

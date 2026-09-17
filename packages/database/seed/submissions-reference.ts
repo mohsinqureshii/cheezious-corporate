@@ -22,7 +22,12 @@ export async function seedSubmissionsReference(prisma: PrismaClient): Promise<vo
   for (const [index, category] of supplierCategories.entries()) {
     await prisma.supplierCategory.upsert({
       where: { key: category.key },
-      create: { key: category.key, name: category.name, slug: slugify(category.name), sortOrder: index },
+      create: {
+        key: category.key,
+        name: category.name,
+        slug: slugify(category.name),
+        sortOrder: index,
+      },
       update: { name: category.name, sortOrder: index },
     });
   }
@@ -42,7 +47,12 @@ export async function seedSubmissionsReference(prisma: PrismaClient): Promise<vo
   for (const [index, category] of partnershipCategories.entries()) {
     await prisma.partnershipCategory.upsert({
       where: { key: category.key },
-      create: { key: category.key, name: category.name, slug: slugify(category.name), sortOrder: index },
+      create: {
+        key: category.key,
+        name: category.name,
+        slug: slugify(category.name),
+        sortOrder: index,
+      },
       update: { name: category.name, sortOrder: index },
     });
   }
@@ -73,14 +83,16 @@ export async function seedSubmissionsReference(prisma: PrismaClient): Promise<vo
       key: 'CAREERS',
       name: 'Careers',
       description: 'Questions about applying or about a live application.',
-      instructions: 'To apply for a role, use the application form on the role itself rather than this form.',
+      instructions:
+        'To apply for a role, use the application form on the role itself rather than this form.',
       routingEmail: 'careers@example.com',
     },
     {
       key: 'SUPPLIERS',
       name: 'Suppliers',
       description: 'Questions about supplying Cheezious.',
-      instructions: 'To register as a supplier, use the supplier registration form rather than this one.',
+      instructions:
+        'To register as a supplier, use the supplier registration form rather than this one.',
       routingEmail: 'procurement@example.com',
     },
     {
@@ -96,7 +108,12 @@ export async function seedSubmissionsReference(prisma: PrismaClient): Promise<vo
       description: 'Institutional and brand partnership enquiries.',
       routingEmail: 'partnerships@example.com',
     },
-    { key: 'OTHER', name: 'Something else', description: 'Anything not covered above.', routingEmail: 'corporate@example.com' },
+    {
+      key: 'OTHER',
+      name: 'Something else',
+      description: 'Anything not covered above.',
+      routingEmail: 'corporate@example.com',
+    },
   ];
 
   for (const [index, category] of contactCategories.entries()) {
@@ -132,7 +149,10 @@ export async function seedSubmissionsReference(prisma: PrismaClient): Promise<vo
   ];
 
   for (const [index, folder] of folders.entries()) {
-    const existing = await prisma.mediaFolder.findFirst({ where: { path: folder.path }, select: { id: true } });
+    const existing = await prisma.mediaFolder.findFirst({
+      where: { path: folder.path },
+      select: { id: true },
+    });
     if (existing) continue;
     await prisma.mediaFolder.create({
       data: { name: folder.name, slug: folder.slug, path: folder.path, sortOrder: index },
@@ -141,5 +161,8 @@ export async function seedSubmissionsReference(prisma: PrismaClient): Promise<vo
 }
 
 function slugify(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }

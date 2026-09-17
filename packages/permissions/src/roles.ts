@@ -182,7 +182,14 @@ export const ROLE_DEFINITIONS: Record<
     name: 'Procurement Manager',
     description: 'Receives, qualifies and progresses supplier submissions.',
     isSystem: false,
-    permissions: ['suppliers.read', 'suppliers.manage', 'suppliers.export', 'pages.read', 'media.read', 'forms.read'],
+    permissions: [
+      'suppliers.read',
+      'suppliers.manage',
+      'suppliers.export',
+      'pages.read',
+      'media.read',
+      'forms.read',
+    ],
   },
   EXPANSION_MANAGER: {
     name: 'Expansion Manager',
@@ -204,7 +211,14 @@ export const ROLE_DEFINITIONS: Record<
     name: 'Reviewer',
     description: 'Reviews submitted content and approves it or requests changes. Cannot publish.',
     isSystem: false,
-    permissions: [...READ_ONLY, 'pages.update', 'stories.update', 'news.update', 'pressReleases.update', 'contentHealth.read'],
+    permissions: [
+      ...READ_ONLY,
+      'pages.update',
+      'stories.update',
+      'news.update',
+      'pressReleases.update',
+      'contentHealth.read',
+    ],
   },
   VIEWER: {
     name: 'Viewer',

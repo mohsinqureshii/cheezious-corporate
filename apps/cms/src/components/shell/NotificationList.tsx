@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { API_URL } from '@/lib/api';
 import { EmptyState } from '@/components/ui';
+import { API_URL } from '@/lib/api';
 
 /**
  * Notifications.
@@ -94,7 +94,12 @@ export function NotificationList({ notifications: initial }: { notifications: No
           {unread.length > 0 ? `${unread.length} unread` : 'All caught up'}
         </p>
         {unread.length > 0 ? (
-          <button type="button" onClick={() => markRead()} disabled={busy} className="btn-ghost btn-sm">
+          <button
+            type="button"
+            onClick={() => markRead()}
+            disabled={busy}
+            className="btn-ghost btn-sm"
+          >
             Mark all as read
           </button>
         ) : null}
@@ -109,7 +114,10 @@ export function NotificationList({ notifications: initial }: { notifications: No
                 <span className="text-label-01 uppercase tracking-wide text-content-tertiary">
                   {KIND_LABELS[notification.kind] ?? notification.kind}
                 </span>
-                <time dateTime={notification.createdAt} className="text-helper-01 text-content-tertiary">
+                <time
+                  dateTime={notification.createdAt}
+                  className="text-helper-01 text-content-tertiary"
+                >
                   {formatRelativeTime(notification.createdAt)}
                 </time>
               </div>
@@ -125,7 +133,9 @@ export function NotificationList({ notifications: initial }: { notifications: No
               key={notification.id}
               className={[
                 'border-s-[3px] px-05 py-04',
-                isUnread ? 'border-interactive bg-surface-base' : 'border-transparent bg-surface-base',
+                isUnread
+                  ? 'border-interactive bg-surface-base'
+                  : 'border-transparent bg-surface-base',
               ].join(' ')}
             >
               {notification.href ? (

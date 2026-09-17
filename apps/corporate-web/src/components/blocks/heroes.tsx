@@ -60,12 +60,22 @@ export function HeroEditorial({ data, context }: { data: BlockData; context: Blo
             {String(data.headline ?? '')}
           </h1>
           {data.standfirst ? (
-            <p className={['mt-7 max-w-prose text-body-lg', isDark ? 'text-paper/75' : 'text-ink-soft', alignCentre ? 'mx-auto' : ''].join(' ')}>
+            <p
+              className={[
+                'mt-7 max-w-prose text-body-lg',
+                isDark ? 'text-paper/75' : 'text-ink-soft',
+                alignCentre ? 'mx-auto' : '',
+              ].join(' ')}
+            >
               {String(data.standfirst)}
             </p>
           ) : null}
-          {(primary || secondary) ? (
-            <div className={['mt-10 flex flex-wrap gap-4', alignCentre ? 'justify-center' : ''].join(' ')}>
+          {primary || secondary ? (
+            <div
+              className={['mt-10 flex flex-wrap gap-4', alignCentre ? 'justify-center' : ''].join(
+                ' ',
+              )}
+            >
               {primary ? <ActionLink link={primary} tone={tone} /> : null}
               {secondary ? <ActionLink link={secondary} variant="secondary" tone={tone} /> : null}
             </div>
@@ -92,7 +102,10 @@ export function HeroEditorial({ data, context }: { data: BlockData; context: Blo
           a light overall wash keeps contrast on images that are bright
           throughout. Together they hold WCAG AA on real photographs.
         */}
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/45 to-ink/20" aria-hidden="true" />
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/45 to-ink/20"
+          aria-hidden="true"
+        />
         <div className="absolute inset-0 bg-ink/15" aria-hidden="true" />
       </div>
 
@@ -103,12 +116,21 @@ export function HeroEditorial({ data, context }: { data: BlockData; context: Blo
             {data.eyebrow ? <p className="eyebrow text-paper/70">{String(data.eyebrow)}</p> : null}
             <h1 className="mt-5 text-display-xl text-paper">{String(data.headline ?? '')}</h1>
             {data.standfirst ? (
-              <p className={['mt-7 max-w-prose text-body-lg text-paper/85', alignCentre ? 'mx-auto' : ''].join(' ')}>
+              <p
+                className={[
+                  'mt-7 max-w-prose text-body-lg text-paper/85',
+                  alignCentre ? 'mx-auto' : '',
+                ].join(' ')}
+              >
                 {String(data.standfirst)}
               </p>
             ) : null}
-            {(primary || secondary) ? (
-              <div className={['mt-10 flex flex-wrap gap-4', alignCentre ? 'justify-center' : ''].join(' ')}>
+            {primary || secondary ? (
+              <div
+                className={['mt-10 flex flex-wrap gap-4', alignCentre ? 'justify-center' : ''].join(
+                  ' ',
+                )}
+              >
                 {primary ? <ActionLink link={primary} tone="dark" /> : null}
                 {secondary ? <ActionLink link={secondary} variant="secondary" tone="dark" /> : null}
               </div>
@@ -134,7 +156,9 @@ export function HeroMedia({ data, context }: { data: BlockData; context: BlockCo
               {data.eyebrow ? <p className="eyebrow">{String(data.eyebrow)}</p> : null}
               <h1 className="mt-5 text-display-lg text-ink">{String(data.headline ?? '')}</h1>
               {data.standfirst ? (
-                <p className="mt-6 max-w-prose text-body-lg text-ink-soft">{String(data.standfirst)}</p>
+                <p className="mt-6 max-w-prose text-body-lg text-ink-soft">
+                  {String(data.standfirst)}
+                </p>
               ) : null}
               {primary ? <div className="mt-9">{<ActionLink link={primary} />}</div> : null}
             </div>
@@ -159,7 +183,9 @@ export function HeroMedia({ data, context }: { data: BlockData; context: BlockCo
             {data.eyebrow ? <p className="eyebrow">{String(data.eyebrow)}</p> : null}
             <h1 className="mt-5 text-display-lg text-ink">{String(data.headline ?? '')}</h1>
             {data.standfirst ? (
-              <p className="mt-6 max-w-prose text-body-lg text-ink-soft">{String(data.standfirst)}</p>
+              <p className="mt-6 max-w-prose text-body-lg text-ink-soft">
+                {String(data.standfirst)}
+              </p>
             ) : null}
           </div>
         </div>
@@ -212,7 +238,10 @@ export function HeroVideo({ data, context }: { data: BlockData; context: BlockCo
             <source src={data.videoUrl} />
           </video>
         ) : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/45 to-ink/20" aria-hidden="true" />
+        <div
+          className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/45 to-ink/20"
+          aria-hidden="true"
+        />
       </div>
 
       <div className="container-wide relative">
@@ -221,7 +250,9 @@ export function HeroVideo({ data, context }: { data: BlockData; context: BlockCo
             {data.eyebrow ? <p className="eyebrow text-paper/70">{String(data.eyebrow)}</p> : null}
             <h1 className="mt-5 text-display-xl text-paper">{String(data.headline ?? '')}</h1>
             {data.standfirst ? (
-              <p className="mt-7 max-w-prose text-body-lg text-paper/85">{String(data.standfirst)}</p>
+              <p className="mt-7 max-w-prose text-body-lg text-paper/85">
+                {String(data.standfirst)}
+              </p>
             ) : null}
           </div>
         </div>
@@ -230,7 +261,13 @@ export function HeroVideo({ data, context }: { data: BlockData; context: BlockCo
   );
 }
 
-export function HeroMinimal({ data, context: _context }: { data: BlockData; context: BlockContext }) {
+export function HeroMinimal({
+  data,
+  context: _context,
+}: {
+  data: BlockData;
+  context: BlockContext;
+}) {
   const tone = (data.tone as Tone) ?? 'light';
   const isDark = tone === 'dark';
 
@@ -247,7 +284,12 @@ export function HeroMinimal({ data, context: _context }: { data: BlockData; cont
             {String(data.headline ?? '')}
           </h1>
           {data.standfirst ? (
-            <p className={['mt-6 max-w-prose text-body-lg', isDark ? 'text-paper/75' : 'text-ink-soft'].join(' ')}>
+            <p
+              className={[
+                'mt-6 max-w-prose text-body-lg',
+                isDark ? 'text-paper/75' : 'text-ink-soft',
+              ].join(' ')}
+            >
               {String(data.standfirst)}
             </p>
           ) : null}
@@ -272,11 +314,18 @@ export function IntroStatement({ data, context }: { data: BlockData; context: Bl
           {String(data.statement ?? '')}
         </p>
         {data.attribution ? (
-          <p className={['mt-6 text-body-sm', tone === 'dark' ? 'text-paper/60' : 'text-ink-muted'].join(' ')}>
+          <p
+            className={[
+              'mt-6 text-body-sm',
+              tone === 'dark' ? 'text-paper/60' : 'text-ink-muted',
+            ].join(' ')}
+          >
             {String(data.attribution)}
           </p>
         ) : null}
-        {link ? <div className="mt-8">{<ActionLink link={link} variant="ghost" tone={tone} />}</div> : null}
+        {link ? (
+          <div className="mt-8">{<ActionLink link={link} variant="ghost" tone={tone} />}</div>
+        ) : null}
       </div>
     </Section>
   );

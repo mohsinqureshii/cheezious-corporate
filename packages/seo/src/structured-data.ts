@@ -334,7 +334,10 @@ export function buildFaqPage(items: FaqItem[]): JsonLd | null {
       name: item.question,
       acceptedAnswer: {
         '@type': 'Answer',
-        text: item.answer.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+        text: item.answer
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim(),
       },
     })),
   };

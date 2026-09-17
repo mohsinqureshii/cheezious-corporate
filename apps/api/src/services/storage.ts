@@ -255,8 +255,9 @@ export function resolveStorageRoot(configured: string): string {
 
 export function createStorageDriver(env: ApiEnv): StorageDriver {
   if (env.STORAGE_DRIVER === 's3') {
-    const missing = (['S3_ENDPOINT', 'S3_REGION', 'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'] as const)
-      .filter((key) => !env[key]);
+    const missing = (
+      ['S3_ENDPOINT', 'S3_REGION', 'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'] as const
+    ).filter((key) => !env[key]);
     if (missing.length > 0) {
       throw new Error(`STORAGE_DRIVER=s3 requires: ${missing.join(', ')}`);
     }
@@ -272,7 +273,10 @@ export function createStorageDriver(env: ApiEnv): StorageDriver {
     });
   }
 
-  return new LocalStorageDriver(resolveStorageRoot(env.STORAGE_LOCAL_ROOT), env.STORAGE_PUBLIC_BASE_URL);
+  return new LocalStorageDriver(
+    resolveStorageRoot(env.STORAGE_LOCAL_ROOT),
+    env.STORAGE_PUBLIC_BASE_URL,
+  );
 }
 
 /** Storage prefixes. Applicant files are separated from public media by prefix. */

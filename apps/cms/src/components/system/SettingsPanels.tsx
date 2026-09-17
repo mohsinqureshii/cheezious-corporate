@@ -48,7 +48,10 @@ export interface SettingsPanelsProps {
 export function SettingsPanels({ site, globals, flags }: SettingsPanelsProps) {
   const [locale, setLocale] = useState('en');
 
-  const siteGroups = groupBy(site.filter((setting) => setting.locale === locale), (setting) => setting.group);
+  const siteGroups = groupBy(
+    site.filter((setting) => setting.locale === locale),
+    (setting) => setting.group,
+  );
   const globalGroups = groupBy(globals, (setting) => setting.group);
 
   return (
@@ -85,7 +88,9 @@ export function SettingsPanels({ site, globals, flags }: SettingsPanelsProps) {
         ) : (
           siteGroups.map(([group, settings]) => (
             <div key={group} className="mt-06">
-              <h3 className="text-label-01 uppercase tracking-wide text-content-tertiary">{group}</h3>
+              <h3 className="text-label-01 uppercase tracking-wide text-content-tertiary">
+                {group}
+              </h3>
               <div className="mt-03 space-y-05">
                 {settings.map((setting) => (
                   <SettingField
@@ -156,7 +161,8 @@ function SettingField({
   description: string | null;
   value: unknown;
 }) {
-  const isSimple = typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
+  const isSimple =
+    typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
   const [draft, setDraft] = useState(isSimple ? String(value) : JSON.stringify(value, null, 2));
   const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [error, setError] = useState('');
@@ -188,12 +194,15 @@ function SettingField({
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/cms/system/settings/${encodeURIComponent(settingKey)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ value: parsed, ...(locale ? { locale } : {}) }),
-      });
+      const response = await fetch(
+        `${API_URL}/api/cms/system/settings/${encodeURIComponent(settingKey)}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ value: parsed, ...(locale ? { locale } : {}) }),
+        },
+      );
       if (!response.ok) {
         const body = (await response.json()) as { error?: { message: string } };
         setState('error');
@@ -214,7 +223,15 @@ function SettingField({
       </label>
 
       {typeof value === 'boolean' ? (
-        <select id={id} className="select" value={draft} onChange={(event) => { setDraft(event.target.value); setState('idle'); }}>
+        <select
+          id={id}
+          className="select"
+          value={draft}
+          onChange={(event) => {
+            setDraft(event.target.value);
+            setState('idle');
+          }}
+        >
           <option value="true">On</option>
           <option value="false">Off</option>
         </select>
@@ -242,7 +259,12 @@ function SettingField({
       )}
 
       <div className="mt-02 flex flex-wrap items-center gap-03">
-        <button type="button" onClick={save} disabled={state === 'saving'} className="btn-tertiary btn-sm">
+        <button
+          type="button"
+          onClick={save}
+          disabled={state === 'saving'}
+          className="btn-tertiary btn-sm"
+        >
           {state === 'saving' ? 'Saving…' : 'Save'}
         </button>
         {state === 'saved' ? (
@@ -275,12 +297,15 @@ function FlagToggle({ flag }: { flag: FeatureFlag }) {
     setEnabled(next);
 
     try {
-      const response = await fetch(`${API_URL}/api/cms/system/flags/${encodeURIComponent(flag.key)}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ isEnabled: next }),
-      });
+      const response = await fetch(
+        `${API_URL}/api/cms/system/flags/${encodeURIComponent(flag.key)}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ isEnabled: next }),
+        },
+      );
       if (!response.ok) {
         setEnabled(previous);
         setError('That flag could not be changed.');

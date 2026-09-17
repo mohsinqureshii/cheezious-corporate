@@ -5,8 +5,6 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useState, useTransition } from 'react';
 
-import type { ListMeta, PageRow, StatusFacet } from '@/lib/types';
-
 import {
   BulkActions,
   DataTable,
@@ -17,6 +15,7 @@ import {
   UnpublishedChangesTag,
   type Column,
 } from '@/components/ui';
+import type { ListMeta, PageRow, StatusFacet } from '@/lib/types';
 
 /**
  * The pages data table.
@@ -82,7 +81,10 @@ export function PagesTable({
       key: 'path',
       header: 'Path',
       render: (row) => (
-        <span className="block max-w-xs truncate font-mono text-helper-01 text-content-secondary" title={row.path}>
+        <span
+          className="block max-w-xs truncate font-mono text-helper-01 text-content-secondary"
+          title={row.path}
+        >
           {row.path}
         </span>
       ),
@@ -105,7 +107,9 @@ export function PagesTable({
       render: (row) => (
         <span className="flex flex-wrap items-center gap-02">
           <StatusTag status={row.status} size="sm" />
-          {row.hasUnpublishedChanges && row.status === 'PUBLISHED' ? <UnpublishedChangesTag /> : null}
+          {row.hasUnpublishedChanges && row.status === 'PUBLISHED' ? (
+            <UnpublishedChangesTag />
+          ) : null}
         </span>
       ),
       width: '180px',
@@ -119,7 +123,13 @@ export function PagesTable({
       key: 'updatedAt',
       header: 'Updated',
       render: (row) => (
-        <time dateTime={row.updatedAt} title={formatDate(row.updatedAt, 'en', { dateStyle: 'full', timeStyle: 'short' } as never)}>
+        <time
+          dateTime={row.updatedAt}
+          title={formatDate(row.updatedAt, 'en', {
+            dateStyle: 'full',
+            timeStyle: 'short',
+          } as never)}
+        >
           {formatRelativeTime(row.updatedAt)}
         </time>
       ),
@@ -131,7 +141,12 @@ export function PagesTable({
       render: (row) =>
         row.scheduledFor ? (
           <time dateTime={row.scheduledFor} className="text-status-info">
-            {formatDate(row.scheduledFor, 'en', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            {formatDate(row.scheduledFor, 'en', {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
           </time>
         ) : (
           <span className="text-content-tertiary">—</span>
@@ -146,7 +161,10 @@ export function PagesTable({
         // Labelled links rather than mystery icons: an operational tool should
         // not require hovering to discover what a control does.
         <span className="flex items-center justify-end gap-03">
-          <Link href={`/content/pages/${row.id}`} className="text-interactive no-underline hover:underline">
+          <Link
+            href={`/content/pages/${row.id}`}
+            className="text-interactive no-underline hover:underline"
+          >
             Edit
           </Link>
           {row.status === 'PUBLISHED' ? (
@@ -231,7 +249,10 @@ export function PagesTable({
             Unpublished changes only
           </label>
 
-          {(initialQuery.q || initialQuery.status || initialQuery.locale || initialQuery.unpublished) ? (
+          {initialQuery.q ||
+          initialQuery.status ||
+          initialQuery.locale ||
+          initialQuery.unpublished ? (
             <button
               type="button"
               className="btn-ghost btn-sm"
@@ -257,7 +278,10 @@ export function PagesTable({
           </BulkActions>
         ) : null}
 
-        <div className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined} aria-busy={isPending}>
+        <div
+          className={isPending ? 'opacity-60 transition-opacity duration-fast' : undefined}
+          aria-busy={isPending}
+        >
           <DataTable
             caption="Pages on the corporate site"
             columns={columns}
@@ -270,7 +294,9 @@ export function PagesTable({
               )
             }
             onToggleAll={() =>
-              setSelected((current) => (current.length === rows.length ? [] : rows.map((row) => row.id)))
+              setSelected((current) =>
+                current.length === rows.length ? [] : rows.map((row) => row.id),
+              )
             }
             rowHref={(row) => `/content/pages/${row.id}`}
             emptyState={
@@ -284,7 +310,9 @@ export function PagesTable({
                 <EmptyState
                   title="No pages yet"
                   description="Pages are the backbone of the corporate site. Create one to get started."
-                  action={canCreate ? { label: 'Create page', href: '/content/pages/new' } : undefined}
+                  action={
+                    canCreate ? { label: 'Create page', href: '/content/pages/new' } : undefined
+                  }
                 />
               )
             }

@@ -27,7 +27,14 @@ interface Option {
   name: string;
 }
 
-export function ReferenceSelect({ value, collection, label, help, disabled, onChange }: ReferenceSelectProps) {
+export function ReferenceSelect({
+  value,
+  collection,
+  label,
+  help,
+  disabled,
+  onChange,
+}: ReferenceSelectProps) {
   const [options, setOptions] = useState<Option[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
 
@@ -81,7 +88,8 @@ export function ReferenceSelect({ value, collection, label, help, disabled, onCh
 
       {state === 'error' ? (
         <p className="field-error">
-          The list could not be loaded. You may not have permission to see it, or the API is unavailable.
+          The list could not be loaded. You may not have permission to see it, or the API is
+          unavailable.
         </p>
       ) : help ? (
         <p className="field-helper">{help}</p>

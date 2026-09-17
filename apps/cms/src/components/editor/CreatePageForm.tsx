@@ -78,8 +78,16 @@ export function CreatePageForm({ parents }: { parents: ParentOption[] }) {
       };
 
       if (!response.ok) {
-        setFieldErrors(Object.fromEntries((body.error?.fields ?? []).map((entry) => [entry.field, entry.message])));
-        setError(body.error?.fields?.length ? 'Some fields need attention.' : (body.error?.message ?? 'The page could not be created.'));
+        setFieldErrors(
+          Object.fromEntries(
+            (body.error?.fields ?? []).map((entry) => [entry.field, entry.message]),
+          ),
+        );
+        setError(
+          body.error?.fields?.length
+            ? 'Some fields need attention.'
+            : (body.error?.message ?? 'The page could not be created.'),
+        );
         return;
       }
 
@@ -94,7 +102,10 @@ export function CreatePageForm({ parents }: { parents: ParentOption[] }) {
   return (
     <form onSubmit={submit} className="max-w-xl space-y-05 p-06" noValidate>
       {error ? (
-        <div className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04" role="alert">
+        <div
+          className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04"
+          role="alert"
+        >
           <p className="text-body-01 text-content-primary">{error}</p>
         </div>
       ) : null}
@@ -108,7 +119,6 @@ export function CreatePageForm({ parents }: { parents: ParentOption[] }) {
           className={['input', fieldErrors.title ? 'input-invalid' : ''].join(' ')}
           value={title}
           required
-          autoFocus
           onChange={(event) => setTitle(event.target.value)}
         />
         {fieldErrors.title ? <p className="field-error">{fieldErrors.title}</p> : null}
@@ -118,7 +128,12 @@ export function CreatePageForm({ parents }: { parents: ParentOption[] }) {
         <label htmlFor="page-parent" className="field-label">
           Section
         </label>
-        <select id="page-parent" className="select" value={parentId} onChange={(event) => setParentId(event.target.value)}>
+        <select
+          id="page-parent"
+          className="select"
+          value={parentId}
+          onChange={(event) => setParentId(event.target.value)}
+        >
           <option value="">Top level</option>
           {parents.map((entry) => (
             <option key={entry.id} value={entry.id}>
@@ -146,7 +161,8 @@ export function CreatePageForm({ parents }: { parents: ParentOption[] }) {
           <p className="field-error">{fieldErrors.path}</p>
         ) : (
           <p className="field-helper">
-            Suggested from the title. Worth one deliberate look — a URL is a promise to everyone who links to it.
+            Suggested from the title. Worth one deliberate look — a URL is a promise to everyone who
+            links to it.
           </p>
         )}
       </div>
@@ -155,7 +171,12 @@ export function CreatePageForm({ parents }: { parents: ParentOption[] }) {
         <label htmlFor="page-locale" className="field-label">
           Language
         </label>
-        <select id="page-locale" className="select" value={locale} onChange={(event) => setLocale(event.target.value)}>
+        <select
+          id="page-locale"
+          className="select"
+          value={locale}
+          onChange={(event) => setLocale(event.target.value)}
+        >
           <option value="en">English</option>
           <option value="ur">Urdu</option>
         </select>

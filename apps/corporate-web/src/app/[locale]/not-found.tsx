@@ -9,10 +9,22 @@ import Link from 'next/link';
  */
 export default function NotFound() {
   const destinations = [
-    { label: 'Company', description: 'About Cheezious, leadership and our footprint', href: '/en/company' },
-    { label: 'Newsroom', description: 'Company news, press releases and stories', href: '/en/company/newsroom' },
+    {
+      label: 'Company',
+      description: 'About Cheezious, leadership and our footprint',
+      href: '/en/company',
+    },
+    {
+      label: 'Newsroom',
+      description: 'Company news, press releases and stories',
+      href: '/en/company/newsroom',
+    },
     { label: 'Careers', description: 'Open roles across the business', href: '/en/careers' },
-    { label: 'Partners', description: 'Suppliers, real estate and partnerships', href: '/en/company/partners' },
+    {
+      label: 'Partners',
+      description: 'Suppliers, real estate and partnerships',
+      href: '/en/company/partners',
+    },
     { label: 'Contact', description: 'Reach the right team', href: '/en/company/contact' },
   ];
 
@@ -22,8 +34,8 @@ export default function NotFound() {
         <p className="eyebrow">Error 404</p>
         <h1 className="mt-5 text-display-md text-ink">This page could not be found</h1>
         <p className="mt-6 max-w-prose text-body-lg text-ink-soft">
-          The page may have moved, or the link may be out of date. If you followed a link from another site, it
-          may be pointing at an address we no longer use.
+          The page may have moved, or the link may be out of date. If you followed a link from
+          another site, it may be pointing at an address we no longer use.
         </p>
 
         <form action="/en/search" method="get" className="mt-10 flex max-w-xl gap-3">

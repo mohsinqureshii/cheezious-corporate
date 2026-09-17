@@ -68,11 +68,18 @@ export function ImpactPillars({
 
   return (
     <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} intro={data.intro as string} tone={tone} />
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+      />
 
       <div
         className={[
-          isEditorial ? 'border-t border-ink-line' : 'grid gap-x-gutter gap-y-10 sm:grid-cols-2 lg:grid-cols-4',
+          isEditorial
+            ? 'border-t border-ink-line'
+            : 'grid gap-x-gutter gap-y-10 sm:grid-cols-2 lg:grid-cols-4',
         ].join(' ')}
       >
         {pillars.map((pillar) => {
@@ -81,7 +88,10 @@ export function ImpactPillars({
 
           if (isEditorial) {
             return (
-              <div key={pillar.id} className="grid gap-x-gutter gap-y-4 border-b border-ink-line py-8 lg:grid-cols-12">
+              <div
+                key={pillar.id}
+                className="grid gap-x-gutter gap-y-4 border-b border-ink-line py-8 lg:grid-cols-12"
+              >
                 <div className="lg:col-span-4">
                   <h3 className={['text-heading-lg', isDark ? 'text-paper' : 'text-ink'].join(' ')}>
                     <Link
@@ -92,7 +102,12 @@ export function ImpactPillars({
                     </Link>
                   </h3>
                   {pillar.summary ? (
-                    <p className={['mt-2 text-body-sm', isDark ? 'text-paper/65' : 'text-ink-muted'].join(' ')}>
+                    <p
+                      className={[
+                        'mt-2 text-body-sm',
+                        isDark ? 'text-paper/65' : 'text-ink-muted',
+                      ].join(' ')}
+                    >
                       {pillar.summary}
                     </p>
                   ) : null}
@@ -106,10 +121,20 @@ export function ImpactPillars({
                         if (!latest) return null;
                         return (
                           <div key={metric.id}>
-                            <dd className={['text-stat-lg tabular-nums', isDark ? 'text-paper' : 'text-ink'].join(' ')}>
+                            <dd
+                              className={[
+                                'text-stat-lg tabular-nums',
+                                isDark ? 'text-paper' : 'text-ink',
+                              ].join(' ')}
+                            >
                               {formatMetric(metric, latest.value, context.locale)}
                             </dd>
-                            <dt className={['mt-2 text-body-sm', isDark ? 'text-paper/65' : 'text-ink-muted'].join(' ')}>
+                            <dt
+                              className={[
+                                'mt-2 text-body-sm',
+                                isDark ? 'text-paper/65' : 'text-ink-muted',
+                              ].join(' ')}
+                            >
                               {metric.name}
                               {latest.isDemoContent ? <PlaceholderBadge tone={tone} /> : null}
                             </dt>
@@ -123,7 +148,11 @@ export function ImpactPillars({
                       figure. A pillar with no approved data is a fact about the
                       reporting, and the site says so.
                     */
-                    <p className={['text-body-sm', isDark ? 'text-paper/50' : 'text-ink-faint'].join(' ')}>
+                    <p
+                      className={['text-body-sm', isDark ? 'text-paper/50' : 'text-ink-faint'].join(
+                        ' ',
+                      )}
+                    >
                       Measures for this pillar have not yet been published.
                     </p>
                   )}
@@ -143,7 +172,11 @@ export function ImpactPillars({
                 </Link>
               </h3>
               {pillar.summary ? (
-                <p className={['mt-3 text-body-sm', isDark ? 'text-paper/70' : 'text-ink-soft'].join(' ')}>
+                <p
+                  className={['mt-3 text-body-sm', isDark ? 'text-paper/70' : 'text-ink-soft'].join(
+                    ' ',
+                  )}
+                >
                   {pillar.summary}
                 </p>
               ) : null}
@@ -155,10 +188,20 @@ export function ImpactPillars({
                     if (!latest) return null;
                     return (
                       <div key={metric.id} className="flex items-baseline justify-between gap-3">
-                        <dt className={['text-body-sm', isDark ? 'text-paper/65' : 'text-ink-muted'].join(' ')}>
+                        <dt
+                          className={[
+                            'text-body-sm',
+                            isDark ? 'text-paper/65' : 'text-ink-muted',
+                          ].join(' ')}
+                        >
                           {metric.name}
                         </dt>
-                        <dd className={['text-body-md font-semibold tabular-nums', isDark ? 'text-paper' : 'text-ink'].join(' ')}>
+                        <dd
+                          className={[
+                            'text-body-md font-semibold tabular-nums',
+                            isDark ? 'text-paper' : 'text-ink',
+                          ].join(' ')}
+                        >
                           {formatMetric(metric, latest.value, context.locale)}
                         </dd>
                       </div>
@@ -192,7 +235,9 @@ export function ImpactMetrics({
 }) {
   const tone = (data.tone as Tone) ?? 'light';
   const metrics = pillars.flatMap((pillar) =>
-    pillar.metrics.filter((metric) => metric.values.length > 0).map((metric) => ({ ...metric, pillarName: pillar.name })),
+    pillar.metrics
+      .filter((metric) => metric.values.length > 0)
+      .map((metric) => ({ ...metric, pillarName: pillar.name })),
   );
 
   if (metrics.length === 0) {
@@ -200,7 +245,8 @@ export function ImpactMetrics({
       <Section tone={tone} spacing="compact" width="standard">
         <SectionHeader heading={data.heading as string} tone={tone} />
         <p className="max-w-prose text-body-md text-ink-muted">
-          Impact measures appear here once figures have been approved and published. Nothing is shown until then.
+          Impact measures appear here once figures have been approved and published. Nothing is
+          shown until then.
         </p>
       </Section>
     );
@@ -212,12 +258,21 @@ export function ImpactMetrics({
 
   return (
     <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} intro={data.intro as string} tone={tone} />
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+      />
 
       <dl
         className={[
           'grid gap-x-gutter gap-y-12',
-          columns === '2' ? 'sm:grid-cols-2' : columns === '4' ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3',
+          columns === '2'
+            ? 'sm:grid-cols-2'
+            : columns === '4'
+              ? 'sm:grid-cols-2 lg:grid-cols-4'
+              : 'sm:grid-cols-2 lg:grid-cols-3',
         ].join(' ')}
       >
         {metrics.map((metric) => {
@@ -225,26 +280,44 @@ export function ImpactMetrics({
           if (!latest) return null;
 
           const hasTarget = showTargets && metric.targetValue !== null && metric.targetValue > 0;
-          const progress = hasTarget ? Math.min(100, (latest.value / metric.targetValue!) * 100) : null;
+          const progress = hasTarget
+            ? Math.min(100, (latest.value / metric.targetValue!) * 100)
+            : null;
 
           return (
             <div key={metric.id}>
-              <dd className={['text-stat-lg tabular-nums', isDark ? 'text-paper' : 'text-ink'].join(' ')}>
+              <dd
+                className={['text-stat-lg tabular-nums', isDark ? 'text-paper' : 'text-ink'].join(
+                  ' ',
+                )}
+              >
                 {formatMetric(metric, latest.value, context.locale)}
               </dd>
-              <dt className={['mt-2 text-body-sm font-medium', isDark ? 'text-paper/70' : 'text-ink-muted'].join(' ')}>
+              <dt
+                className={[
+                  'mt-2 text-body-sm font-medium',
+                  isDark ? 'text-paper/70' : 'text-ink-muted',
+                ].join(' ')}
+              >
                 {metric.name}
                 {latest.isDemoContent ? <PlaceholderBadge tone={tone} /> : null}
               </dt>
 
-              <p className={['mt-1 text-body-xs', isDark ? 'text-paper/45' : 'text-ink-faint'].join(' ')}>
+              <p
+                className={['mt-1 text-body-xs', isDark ? 'text-paper/45' : 'text-ink-faint'].join(
+                  ' ',
+                )}
+              >
                 {latest.year} · {metric.pillarName}
               </p>
 
               {progress !== null ? (
                 <div className="mt-4">
                   <div
-                    className={['h-1 w-full overflow-hidden', isDark ? 'bg-paper/15' : 'bg-ink/8'].join(' ')}
+                    className={[
+                      'h-1 w-full overflow-hidden',
+                      isDark ? 'bg-paper/15' : 'bg-ink/8',
+                    ].join(' ')}
                     role="progressbar"
                     aria-valuenow={Math.round(progress)}
                     aria-valuemin={0}
@@ -253,8 +326,14 @@ export function ImpactMetrics({
                   >
                     <div className="h-full bg-brand" style={{ width: `${progress}%` }} />
                   </div>
-                  <p className={['mt-2 text-body-xs', isDark ? 'text-paper/50' : 'text-ink-faint'].join(' ')}>
-                    {Math.round(progress)}% of {formatMetric(metric, metric.targetValue!, context.locale)} target
+                  <p
+                    className={[
+                      'mt-2 text-body-xs',
+                      isDark ? 'text-paper/50' : 'text-ink-faint',
+                    ].join(' ')}
+                  >
+                    {Math.round(progress)}% of{' '}
+                    {formatMetric(metric, metric.targetValue!, context.locale)} target
                     {metric.targetYear ? ` by ${metric.targetYear}` : ''}
                   </p>
                 </div>
@@ -272,7 +351,12 @@ export function ImpactMetrics({
                   >
                     How this is measured
                   </summary>
-                  <p className={['mt-2 text-body-xs', isDark ? 'text-paper/60' : 'text-ink-muted'].join(' ')}>
+                  <p
+                    className={[
+                      'mt-2 text-body-xs',
+                      isDark ? 'text-paper/60' : 'text-ink-muted',
+                    ].join(' ')}
+                  >
                     {metric.methodology}
                   </p>
                 </details>
@@ -309,10 +393,12 @@ export function JobSearchBlock({
       <Section tone={tone} spacing="compact" width="standard">
         <SectionHeader heading={(data.heading as string) ?? 'Open roles'} tone={tone} />
         <div className="border-t border-ink-line pt-8">
-          <p className="text-body-lg text-ink">There are no open roles matching this area right now.</p>
+          <p className="text-body-lg text-ink">
+            There are no open roles matching this area right now.
+          </p>
           <p className="mt-2 max-w-prose text-body-sm text-ink-muted">
-            New roles are posted here as they open. In the meantime you can browse every open role across the
-            business.
+            New roles are posted here as they open. In the meantime you can browse every open role
+            across the business.
           </p>
           <Link
             href={`/${context.locale}/careers/jobs`}
@@ -320,8 +406,21 @@ export function JobSearchBlock({
                        text-paper no-underline transition-colors duration-quick hover:bg-ink-soft"
           >
             See all open roles
-            <svg width="13" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true" className="rtl:rotate-180">
-              <path d="M9 1l4 4-4 4M13 5H1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              width="13"
+              height="10"
+              viewBox="0 0 14 10"
+              fill="none"
+              aria-hidden="true"
+              className="rtl:rotate-180"
+            >
+              <path
+                d="M9 1l4 4-4 4M13 5H1"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </Link>
         </div>
@@ -357,8 +456,21 @@ export function JobSearchBlock({
                        transition-colors duration-quick hover:text-brand-deep"
           >
             See all {total} open roles
-            <svg width="13" height="10" viewBox="0 0 14 10" fill="none" aria-hidden="true" className="rtl:rotate-180">
-              <path d="M9 1l4 4-4 4M13 5H1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              width="13"
+              height="10"
+              viewBox="0 0 14 10"
+              fill="none"
+              aria-hidden="true"
+              className="rtl:rotate-180"
+            >
+              <path
+                d="M9 1l4 4-4 4M13 5H1"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </Link>
         </div>

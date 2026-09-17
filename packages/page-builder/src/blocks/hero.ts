@@ -1,6 +1,15 @@
 import { z } from 'zod';
 
-import { alignment, aspectRatio, baseBlock, eyebrowText, headingText, linkRef, mediaRef, tone } from '../shared';
+import {
+  alignment,
+  aspectRatio,
+  baseBlock,
+  eyebrowText,
+  headingText,
+  linkRef,
+  mediaRef,
+  tone,
+} from '../shared';
 
 /**
  * Hero blocks.

@@ -94,10 +94,10 @@ export function queueRecordPage(key: keyof typeof QUEUES) {
 
     let submission: SubmissionRecord;
     try {
-      const response = await cmsFetch<{ submission?: SubmissionRecord; application?: SubmissionRecord }>(
-        `/api/cms/submissions/${queue.path}/${id}`,
-        { cookie },
-      );
+      const response = await cmsFetch<{
+        submission?: SubmissionRecord;
+        application?: SubmissionRecord;
+      }>(`/api/cms/submissions/${queue.path}/${id}`, { cookie });
       // Applications predate the queue factory and answer under their own key.
       const record = response.submission ?? response.application;
       if (!record) notFound();

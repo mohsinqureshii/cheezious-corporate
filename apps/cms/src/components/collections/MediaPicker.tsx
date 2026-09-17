@@ -66,7 +66,6 @@ export function MediaPicker({ value, label, help, disabled, onChange }: MediaPic
       {selected ? (
         <div className="flex items-start gap-04 border border-border-subtle bg-surface-base p-03">
           {selected.kind === 'IMAGE' ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={assetUrl(selected.storageKey)}
               alt=""
@@ -199,6 +198,9 @@ function MediaBrowser({
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search by title or file name"
               className="input w-64"
+              // A dialog takes focus when it opens: WAI-ARIA asks for it, and without
+              // it a keyboard user is left behind the overlay with nothing focused.
+              // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
             />
           </form>
@@ -211,7 +213,9 @@ function MediaBrowser({
           {state === 'loading' ? (
             <p className="text-body-compact text-content-secondary">Loading…</p>
           ) : state === 'error' ? (
-            <p className="text-body-compact text-status-danger">The media library could not be loaded.</p>
+            <p className="text-body-compact text-status-danger">
+              The media library could not be loaded.
+            </p>
           ) : items.length === 0 ? (
             <p className="text-body-compact text-content-secondary">Nothing matched that search.</p>
           ) : (
@@ -225,7 +229,6 @@ function MediaBrowser({
                   >
                     <span className="block aspect-square overflow-hidden bg-surface-subtle">
                       {asset.kind === 'IMAGE' ? (
-                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={assetUrl(asset.storageKey)}
                           alt=""
@@ -238,7 +241,9 @@ function MediaBrowser({
                         </span>
                       )}
                     </span>
-                    <span className="mt-02 block truncate text-helper-01 text-content-primary">{asset.title}</span>
+                    <span className="mt-02 block truncate text-helper-01 text-content-primary">
+                      {asset.title}
+                    </span>
                     {asset.kind === 'IMAGE' && !asset.altText ? (
                       <span className="block text-helper-01 text-status-warning">No alt text</span>
                     ) : null}

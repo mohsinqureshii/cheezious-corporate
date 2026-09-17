@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 import { API_URL } from '@/lib/api';
 
@@ -44,7 +44,13 @@ export interface Navigation {
   items: NavigationItem[];
 }
 
-export function NavigationEditor({ navigations, canManage }: { navigations: Navigation[]; canManage: boolean }) {
+export function NavigationEditor({
+  navigations,
+  canManage,
+}: {
+  navigations: Navigation[];
+  canManage: boolean;
+}) {
   const [selected, setSelected] = useState(navigations[0]?.id ?? '');
   const navigation = navigations.find((entry) => entry.id === selected) ?? navigations[0];
 
@@ -83,14 +89,18 @@ export function NavigationEditor({ navigations, canManage }: { navigations: Navi
       </div>
 
       {problems.length > 0 ? (
-        <div className="mb-05 border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04" role="alert">
+        <div
+          className="mb-05 border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-04"
+          role="alert"
+        >
           <p className="text-heading-compact text-content-primary">
             {problems.length} item{problems.length === 1 ? '' : 's'} will not work
           </p>
           <ul className="mt-02 space-y-01">
             {problems.map((item) => (
               <li key={item.id} className="text-helper-01 text-content-secondary">
-                <strong className="font-medium text-content-primary">{item.label}</strong> — {item.problem}
+                <strong className="font-medium text-content-primary">{item.label}</strong> —{' '}
+                {item.problem}
               </li>
             ))}
           </ul>
@@ -112,8 +122,8 @@ export function NavigationEditor({ navigations, canManage }: { navigations: Navi
       </div>
 
       <p className="mt-04 text-helper-01 text-content-tertiary">
-        Changes here are live as soon as they are saved. The menu is not versioned, so a mistake is corrected
-        rather than rolled back.
+        Changes here are live as soon as they are saved. The menu is not versioned, so a mistake is
+        corrected rather than rolled back.
       </p>
     </div>
   );
@@ -156,12 +166,24 @@ function NavigationRow({
         <div className="flex flex-wrap items-center gap-03">
           <span className="flex-1 min-w-0">
             <span className="flex flex-wrap items-center gap-02">
-              <span className={item.isVisible ? 'text-body-compact text-content-primary' : 'text-body-compact text-content-tertiary line-through'}>
+              <span
+                className={
+                  item.isVisible
+                    ? 'text-body-compact text-content-primary'
+                    : 'text-body-compact text-content-tertiary line-through'
+                }
+              >
                 {item.label}
               </span>
-              <span className="text-label-01 uppercase text-content-tertiary">{item.kind.toLowerCase()}</span>
-              {item.isCallToAction ? <span className="tag bg-interactive-subtle text-content-primary">CTA</span> : null}
-              {item.problem ? <span className="tag bg-status-dangerSubtle text-content-primary">Broken</span> : null}
+              <span className="text-label-01 uppercase text-content-tertiary">
+                {item.kind.toLowerCase()}
+              </span>
+              {item.isCallToAction ? (
+                <span className="tag bg-interactive-subtle text-content-primary">CTA</span>
+              ) : null}
+              {item.problem ? (
+                <span className="tag bg-status-dangerSubtle text-content-primary">Broken</span>
+              ) : null}
             </span>
             <span className="mt-01 block truncate font-mono text-helper-01 text-content-tertiary">
               {item.page?.path ?? item.externalUrl ?? '—'}
@@ -169,7 +191,12 @@ function NavigationRow({
           </span>
 
           {canManage ? (
-            <button type="button" onClick={toggleVisible} disabled={busy} className="btn-ghost btn-sm">
+            <button
+              type="button"
+              onClick={toggleVisible}
+              disabled={busy}
+              className="btn-ghost btn-sm"
+            >
               {item.isVisible ? 'Hide' : 'Show'}
               <span className="sr-only"> {item.label}</span>
             </button>

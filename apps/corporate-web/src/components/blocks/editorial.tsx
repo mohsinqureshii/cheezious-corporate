@@ -23,11 +23,21 @@ function image(context: BlockContext, ref: unknown): MediaImage | null {
   return assetId ? (context.images.get(assetId) ?? null) : null;
 }
 
-export function RichTextBlock({ data, context: _context }: { data: BlockData; context: BlockContext }) {
+export function RichTextBlock({
+  data,
+  context: _context,
+}: {
+  data: BlockData;
+  context: BlockContext;
+}) {
   const tone = (data.tone as Tone) ?? 'light';
 
   return (
-    <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width={(data.width as never) ?? 'narrow'}>
+    <Section
+      tone={tone}
+      spacing={(data.spacing as never) ?? 'standard'}
+      width={(data.width as never) ?? 'narrow'}
+    >
       <SectionHeader
         eyebrow={data.eyebrow as string}
         heading={data.heading as string}
@@ -42,12 +52,23 @@ export function RichTextBlock({ data, context: _context }: { data: BlockData; co
   );
 }
 
-export function TwoColumnText({ data, context: _context }: { data: BlockData; context: BlockContext }) {
+export function TwoColumnText({
+  data,
+  context: _context,
+}: {
+  data: BlockData;
+  context: BlockContext;
+}) {
   const tone = (data.tone as Tone) ?? 'light';
 
   return (
     <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} intro={data.intro as string} tone={tone} />
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+      />
       <div className="grid gap-x-gutter gap-y-8 md:grid-cols-2">
         {typeof data.left === 'string' ? <RichText html={data.left} /> : null}
         {typeof data.right === 'string' ? <RichText html={data.right} /> : null}
@@ -56,13 +77,24 @@ export function TwoColumnText({ data, context: _context }: { data: BlockData; co
   );
 }
 
-export function ThreeColumnEditorial({ data, context }: { data: BlockData; context: BlockContext }) {
+export function ThreeColumnEditorial({
+  data,
+  context,
+}: {
+  data: BlockData;
+  context: BlockContext;
+}) {
   const tone = (data.tone as Tone) ?? 'light';
   const columns = (data.columns as Array<Record<string, unknown>>) ?? [];
 
   return (
     <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} intro={data.intro as string} tone={tone} />
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+      />
       <div
         className={[
           'grid gap-x-gutter gap-y-10',
@@ -74,12 +106,20 @@ export function ThreeColumnEditorial({ data, context }: { data: BlockData; conte
           return (
             <div key={index}>
               {column.heading ? (
-                <h3 className={['text-heading-md', tone === 'dark' ? 'text-paper' : 'text-ink'].join(' ')}>
+                <h3
+                  className={['text-heading-md', tone === 'dark' ? 'text-paper' : 'text-ink'].join(
+                    ' ',
+                  )}
+                >
                   {String(column.heading)}
                 </h3>
               ) : null}
-              {typeof column.body === 'string' ? <RichText html={column.body} className="mt-4" /> : null}
-              {link ? <div className="mt-5">{<ActionLink link={link} variant="ghost" tone={tone} />}</div> : null}
+              {typeof column.body === 'string' ? (
+                <RichText html={column.body} className="mt-4" />
+              ) : null}
+              {link ? (
+                <div className="mt-5">{<ActionLink link={link} variant="ghost" tone={tone} />}</div>
+              ) : null}
             </div>
           );
         })}
@@ -115,17 +155,28 @@ export function EditorialSplit({ data, context }: { data: BlockData; context: Bl
           ].join(' ')}
         >
           {data.eyebrow ? (
-            <p className={['eyebrow', tone === 'dark' ? 'text-paper/60' : 'text-ink-muted'].join(' ')}>
+            <p
+              className={['eyebrow', tone === 'dark' ? 'text-paper/60' : 'text-ink-muted'].join(
+                ' ',
+              )}
+            >
               {String(data.eyebrow)}
             </p>
           ) : null}
           {data.heading ? (
-            <h2 className={['mt-4 text-display-sm', tone === 'dark' ? 'text-paper' : 'text-ink'].join(' ')}>
+            <h2
+              className={['mt-4 text-display-sm', tone === 'dark' ? 'text-paper' : 'text-ink'].join(
+                ' ',
+              )}
+            >
               {String(data.heading)}
             </h2>
           ) : null}
           {typeof data.body === 'string' && data.body ? (
-            <RichText html={data.body} className={['mt-6', tone === 'dark' ? 'text-paper/80' : ''].join(' ')} />
+            <RichText
+              html={data.body}
+              className={['mt-6', tone === 'dark' ? 'text-paper/80' : ''].join(' ')}
+            />
           ) : null}
           {links.length > 0 ? (
             <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3">
@@ -174,7 +225,9 @@ export function FullBleedImage({ data, context }: { data: BlockData; context: Bl
           <div className="container-wide pb-12 lg:pb-20">
             <h2 className="max-w-3xl text-display-sm text-paper">{String(data.overlayHeading)}</h2>
             {data.overlayBody ? (
-              <p className="mt-4 max-w-prose text-body-lg text-paper/80">{String(data.overlayBody)}</p>
+              <p className="mt-4 max-w-prose text-body-lg text-paper/80">
+                {String(data.overlayBody)}
+              </p>
             ) : null}
           </div>
         </div>
@@ -211,14 +264,28 @@ export function QuoteBlock({ data, context }: { data: BlockData; context: BlockC
         {quote.attribution ? (
           <figcaption className="mt-8 flex items-center gap-4">
             {portrait ? (
-              <BlockImage image={portrait} sizes="56px" aspectRatio="1:1" className="w-14 shrink-0 rounded-full" reveal={false} />
+              <BlockImage
+                image={portrait}
+                sizes="56px"
+                aspectRatio="1:1"
+                className="w-14 shrink-0 rounded-full"
+                reveal={false}
+              />
             ) : null}
             <div>
-              <p className={['text-body-sm font-semibold', isDark ? 'text-paper' : 'text-ink'].join(' ')}>
+              <p
+                className={['text-body-sm font-semibold', isDark ? 'text-paper' : 'text-ink'].join(
+                  ' ',
+                )}
+              >
                 {String(quote.attribution)}
               </p>
               {quote.role ? (
-                <p className={['text-body-sm', isDark ? 'text-paper/60' : 'text-ink-muted'].join(' ')}>
+                <p
+                  className={['text-body-sm', isDark ? 'text-paper/60' : 'text-ink-muted'].join(
+                    ' ',
+                  )}
+                >
                   {String(quote.role)}
                 </p>
               ) : null}
@@ -245,7 +312,12 @@ export function Accordion({ data, context: _context }: { data: BlockData; contex
 
   return (
     <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="narrow">
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} intro={data.intro as string} tone={tone} />
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+      />
       <div className="border-t border-ink-line">
         {items.map((item, index) => (
           <details key={index} name={groupName} className="group border-b border-ink-line">
@@ -263,7 +335,12 @@ export function Accordion({ data, context: _context }: { data: BlockData; contex
                 aria-hidden="true"
                 className="mt-1 shrink-0 text-ink-muted transition-transform duration-quick group-open:rotate-45"
               >
-                <path d="M8 2v12M2 8h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path
+                  d="M8 2v12M2 8h12"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
               </svg>
             </summary>
             <div className="pb-6 pe-10">
@@ -290,7 +367,7 @@ export function Spacer({ data }: { data: BlockData; context: BlockContext }) {
 /** Related content: derived links back into the site. */
 export function RelatedContent({
   data,
-  context,
+  context: _context,
   related,
 }: {
   data: BlockData;
@@ -317,7 +394,9 @@ export function RelatedContent({
             >
               {item.title}
             </Link>
-            {item.summary ? <p className="mt-2 line-clamp-2 text-body-sm text-ink-muted">{item.summary}</p> : null}
+            {item.summary ? (
+              <p className="mt-2 line-clamp-2 text-body-sm text-ink-muted">{item.summary}</p>
+            ) : null}
           </li>
         ))}
       </ul>

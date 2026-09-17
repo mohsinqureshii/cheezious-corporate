@@ -108,11 +108,20 @@ export function StoryGrid({
       <div
         className={[
           'grid gap-x-gutter gap-y-12',
-          columns === '2' ? 'sm:grid-cols-2' : columns === '4' ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3',
+          columns === '2'
+            ? 'sm:grid-cols-2'
+            : columns === '4'
+              ? 'sm:grid-cols-2 lg:grid-cols-4'
+              : 'sm:grid-cols-2 lg:grid-cols-3',
         ].join(' ')}
       >
         {stories.map((story) => (
-          <StoryCard key={story.id} story={story} locale={context.locale} showExcerpt={data.showExcerpt !== false} />
+          <StoryCard
+            key={story.id}
+            story={story}
+            locale={context.locale}
+            showExcerpt={data.showExcerpt !== false}
+          />
         ))}
       </div>
     </Section>
@@ -142,13 +151,17 @@ export function StoryFeature({
         <div className="absolute inset-0 flex items-end bg-gradient-to-t from-ink/85 via-ink/40 to-transparent">
           <div className="container-wide pb-12 lg:pb-20">
             <div className="max-w-3xl">
-              {story.category ? <p className="eyebrow text-paper/70">{story.category.name}</p> : null}
+              {story.category ? (
+                <p className="eyebrow text-paper/70">{story.category.name}</p>
+              ) : null}
               <h2 className="mt-4 text-display-md text-paper">
                 <Link href={href} className="text-paper no-underline">
                   {story.title}
                 </Link>
               </h2>
-              {story.excerpt ? <p className="mt-4 max-w-prose text-body-lg text-paper/80">{story.excerpt}</p> : null}
+              {story.excerpt ? (
+                <p className="mt-4 max-w-prose text-body-lg text-paper/80">{story.excerpt}</p>
+              ) : null}
             </div>
           </div>
         </div>
@@ -158,7 +171,11 @@ export function StoryFeature({
 
   return (
     <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} tone={tone} />
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        tone={tone}
+      />
       <article className="group grid items-center gap-x-gutter gap-y-8 lg:grid-cols-12">
         <div className="lg:col-span-7">
           <Link href={href} className="block overflow-hidden no-underline">
@@ -180,11 +197,16 @@ export function StoryFeature({
             ) : null}
           </div>
           <h3 className="mt-3 text-display-sm text-ink">
-            <Link href={href} className="text-ink no-underline transition-colors duration-quick group-hover:text-brand-deep">
+            <Link
+              href={href}
+              className="text-ink no-underline transition-colors duration-quick group-hover:text-brand-deep"
+            >
               {story.title}
             </Link>
           </h3>
-          {story.excerpt ? <p className="mt-5 text-body-lg text-ink-soft">{story.excerpt}</p> : null}
+          {story.excerpt ? (
+            <p className="mt-5 text-body-lg text-ink-soft">{story.excerpt}</p>
+          ) : null}
           {story.readingMinutes ? (
             <p className="mt-4 text-body-xs text-ink-faint">{story.readingMinutes} min read</p>
           ) : null}
@@ -202,7 +224,14 @@ export function PressReleaseList({
 }: {
   data: BlockData;
   context: BlockContext;
-  releases?: Array<{ id: string; headline: string; slug: string; summary: string | null; publishedAt: string | null; dateline: string | null }>;
+  releases?: Array<{
+    id: string;
+    headline: string;
+    slug: string;
+    summary: string | null;
+    publishedAt: string | null;
+    dateline: string | null;
+  }>;
 }) {
   const tone = (data.tone as Tone) ?? 'light';
   if (releases.length === 0) return null;
@@ -226,8 +255,15 @@ export function PressReleaseList({
               className="group grid gap-x-gutter gap-y-2 py-6 no-underline lg:grid-cols-12 lg:items-baseline"
             >
               {release.publishedAt ? (
-                <time dateTime={release.publishedAt} className="text-body-sm tabular-nums text-ink-faint lg:col-span-2">
-                  {formatDate(release.publishedAt, context.locale, { year: 'numeric', month: 'short', day: 'numeric' })}
+                <time
+                  dateTime={release.publishedAt}
+                  className="text-body-sm tabular-nums text-ink-faint lg:col-span-2"
+                >
+                  {formatDate(release.publishedAt, context.locale, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
                 </time>
               ) : (
                 <span className="lg:col-span-2" />
@@ -236,7 +272,9 @@ export function PressReleaseList({
                 {release.headline}
               </h3>
               {release.summary ? (
-                <p className="line-clamp-2 text-body-sm text-ink-muted lg:col-span-3">{release.summary}</p>
+                <p className="line-clamp-2 text-body-sm text-ink-muted lg:col-span-3">
+                  {release.summary}
+                </p>
               ) : null}
             </Link>
           </li>
@@ -259,7 +297,13 @@ export function LeadershipGrid({
 }: {
   data: BlockData;
   context: BlockContext;
-  groups?: Array<{ id: string; name: string; slug: string; summary: string | null; people: PersonSummary[] }>;
+  groups?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    summary: string | null;
+    people: PersonSummary[];
+  }>;
 }) {
   const tone = (data.tone as Tone) ?? 'light';
   const withPeople = groups.filter((group) => group.people.length > 0);
@@ -267,21 +311,36 @@ export function LeadershipGrid({
 
   const columns = (data.columns as string) ?? '3';
   const columnClass =
-    columns === '2' ? 'sm:grid-cols-2' : columns === '4' ? 'grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3';
+    columns === '2'
+      ? 'sm:grid-cols-2'
+      : columns === '4'
+        ? 'grid-cols-2 lg:grid-cols-4'
+        : 'sm:grid-cols-2 lg:grid-cols-3';
 
   return (
     <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} intro={data.intro as string} tone={tone} />
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+      />
 
       <div className="space-y-16">
         {withPeople.map((group) => (
           <div key={group.id}>
             {withPeople.length > 1 ? (
               <div className="mb-8 border-b border-ink-line pb-4">
-                <h3 className={['text-heading-lg', tone === 'dark' ? 'text-paper' : 'text-ink'].join(' ')}>
+                <h3
+                  className={['text-heading-lg', tone === 'dark' ? 'text-paper' : 'text-ink'].join(
+                    ' ',
+                  )}
+                >
                   {group.name}
                 </h3>
-                {group.summary ? <p className="mt-2 max-w-prose text-body-sm text-ink-muted">{group.summary}</p> : null}
+                {group.summary ? (
+                  <p className="mt-2 max-w-prose text-body-sm text-ink-muted">{group.summary}</p>
+                ) : null}
               </div>
             ) : null}
 
@@ -294,10 +353,20 @@ export function LeadershipGrid({
                   <li key={person.id} className="group">
                     {data.linkToProfiles !== false ? (
                       <Link href={href} className="block no-underline">
-                        <PersonCardBody person={person} tone={tone} isPlaceholder={isPlaceholder} showRole={data.showRole !== false} />
+                        <PersonCardBody
+                          person={person}
+                          tone={tone}
+                          isPlaceholder={isPlaceholder}
+                          showRole={data.showRole !== false}
+                        />
                       </Link>
                     ) : (
-                      <PersonCardBody person={person} tone={tone} isPlaceholder={isPlaceholder} showRole={data.showRole !== false} />
+                      <PersonCardBody
+                        person={person}
+                        tone={tone}
+                        isPlaceholder={isPlaceholder}
+                        showRole={data.showRole !== false}
+                      />
                     )}
                   </li>
                 );
@@ -339,7 +408,9 @@ function PersonCardBody({
         {isPlaceholder ? <PlaceholderBadge tone={tone} /> : null}
       </h4>
       {showRole ? (
-        <p className={['mt-1 text-body-sm', isDark ? 'text-paper/65' : 'text-ink-muted'].join(' ')}>{person.role}</p>
+        <p className={['mt-1 text-body-sm', isDark ? 'text-paper/65' : 'text-ink-muted'].join(' ')}>
+          {person.role}
+        </p>
       ) : null}
     </>
   );
@@ -349,7 +420,11 @@ function PersonCardBody({
 export function JobCard({ job, locale }: { job: JobSummary; locale: string }) {
   const href = `/${locale}/careers/jobs/${job.slug}`;
   const workplaceLabel =
-    job.workplaceType === 'REMOTE' ? 'Remote' : job.workplaceType === 'HYBRID' ? 'Hybrid' : 'On site';
+    job.workplaceType === 'REMOTE'
+      ? 'Remote'
+      : job.workplaceType === 'HYBRID'
+        ? 'Hybrid'
+        : 'On site';
   const employmentLabel = job.employmentType.replace(/_/g, ' ').toLowerCase();
 
   return (
@@ -361,20 +436,37 @@ export function JobCard({ job, locale }: { job: JobSummary; locale: string }) {
           </h3>
           <span className="inline-flex items-center gap-1.5 text-body-sm font-medium text-ink-muted">
             View role
-            <svg width="12" height="9" viewBox="0 0 12 9" fill="none" aria-hidden="true" className="rtl:rotate-180">
-              <path d="M7.5 1L11 4.5 7.5 8M11 4.5H1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              width="12"
+              height="9"
+              viewBox="0 0 12 9"
+              fill="none"
+              aria-hidden="true"
+              className="rtl:rotate-180"
+            >
+              <path
+                d="M7.5 1L11 4.5 7.5 8M11 4.5H1"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </span>
         </div>
 
-        {job.summary ? <p className="mt-2 max-w-prose text-body-sm text-ink-soft">{job.summary}</p> : null}
+        {job.summary ? (
+          <p className="mt-2 max-w-prose text-body-sm text-ink-soft">{job.summary}</p>
+        ) : null}
 
         <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5 text-body-xs text-ink-muted">
           {job.department ? <li>{job.department.name}</li> : null}
           {job.location ? <li>{job.location.name}</li> : null}
           <li className="capitalize">{employmentLabel}</li>
           <li>{workplaceLabel}</li>
-          {job.openingsCount && job.openingsCount > 1 ? <li>{job.openingsCount} openings</li> : null}
+          {job.openingsCount && job.openingsCount > 1 ? (
+            <li>{job.openingsCount} openings</li>
+          ) : null}
         </ul>
       </Link>
     </article>
@@ -388,7 +480,13 @@ export function JobCategories({
 }: {
   data: BlockData;
   context: BlockContext;
-  categories?: Array<{ id: string; name: string; slug: string; summary: string | null; openRoles: number }>;
+  categories?: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    summary: string | null;
+    openRoles: number;
+  }>;
 }) {
   const tone = (data.tone as Tone) ?? 'light';
   if (categories.length === 0) return null;
@@ -397,16 +495,28 @@ export function JobCategories({
 
   return (
     <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} intro={data.intro as string} tone={tone} />
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+      />
       <ul
         className={[
           'grid gap-x-gutter gap-y-8',
-          columns === '2' ? 'sm:grid-cols-2' : columns === '4' ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3',
+          columns === '2'
+            ? 'sm:grid-cols-2'
+            : columns === '4'
+              ? 'sm:grid-cols-2 lg:grid-cols-4'
+              : 'sm:grid-cols-2 lg:grid-cols-3',
         ].join(' ')}
       >
         {categories.map((category) => (
           <li key={category.id} className="border-t border-ink-line pt-5">
-            <Link href={`/${context.locale}/careers/${category.slug}`} className="group block no-underline">
+            <Link
+              href={`/${context.locale}/careers/${category.slug}`}
+              className="group block no-underline"
+            >
               <div className="flex items-baseline justify-between gap-4">
                 <h3 className="text-heading-md text-ink transition-colors duration-quick group-hover:text-brand-deep">
                   {category.name}
@@ -418,7 +528,9 @@ export function JobCategories({
                   </span>
                 ) : null}
               </div>
-              {category.summary ? <p className="mt-2 text-body-sm text-ink-soft">{category.summary}</p> : null}
+              {category.summary ? (
+                <p className="mt-2 text-body-sm text-ink-soft">{category.summary}</p>
+              ) : null}
             </Link>
           </li>
         ))}
@@ -427,20 +539,34 @@ export function JobCategories({
   );
 }
 
-export function CareerPath({ data, context: _context }: { data: BlockData; context: BlockContext }) {
+export function CareerPath({
+  data,
+  context: _context,
+}: {
+  data: BlockData;
+  context: BlockContext;
+}) {
   const tone = (data.tone as Tone) ?? 'light';
-  const steps = (data.steps as Array<{ title: string; description?: string; durationLabel?: string }>) ?? [];
+  const steps =
+    (data.steps as Array<{ title: string; description?: string; durationLabel?: string }>) ?? [];
   if (steps.length === 0) return null;
 
   return (
     <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} intro={data.intro as string} tone={tone} />
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+      />
       <ol className="grid gap-x-gutter gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
         {steps.map((step, index) => (
           <li key={index} className="border-t-2 border-brand pt-5">
             {step.durationLabel ? <p className="eyebrow">{step.durationLabel}</p> : null}
             <h3 className="mt-2 text-heading-md text-ink">{step.title}</h3>
-            {step.description ? <p className="mt-2 text-body-sm text-ink-soft">{step.description}</p> : null}
+            {step.description ? (
+              <p className="mt-2 text-body-sm text-ink-soft">{step.description}</p>
+            ) : null}
           </li>
         ))}
       </ol>
@@ -465,7 +591,10 @@ export function ReportGrid({
     description: string | null;
     isDemoContent: boolean;
     cover: MediaImage | null;
-    files: Array<{ label: string; asset: { storageKey: string; byteSize: number; mimeType: string } }>;
+    files: Array<{
+      label: string;
+      asset: { storageKey: string; byteSize: number; mimeType: string };
+    }>;
   }>;
 }) {
   const tone = (data.tone as Tone) ?? 'light';
@@ -486,12 +615,19 @@ export function ReportGrid({
       <ul
         className={[
           'grid gap-x-gutter gap-y-10',
-          columns === '2' ? 'sm:grid-cols-2' : columns === '4' ? 'grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3',
+          columns === '2'
+            ? 'sm:grid-cols-2'
+            : columns === '4'
+              ? 'grid-cols-2 lg:grid-cols-4'
+              : 'sm:grid-cols-2 lg:grid-cols-3',
         ].join(' ')}
       >
         {reports.map((report) => (
           <li key={report.id} className="group">
-            <Link href={`/${context.locale}/company/resources/publications`} className="block no-underline">
+            <Link
+              href={`/${context.locale}/company/resources/publications`}
+              className="block no-underline"
+            >
               {/* Document covers are portrait, matching the page they represent. */}
               <div className="overflow-hidden border border-ink-line bg-paper-raised">
                 <BlockImage
@@ -510,7 +646,9 @@ export function ReportGrid({
                 {report.isDemoContent ? <PlaceholderBadge tone={tone} /> : null}
               </h3>
               {report.description ? (
-                <p className="mt-2 line-clamp-2 text-body-sm text-ink-muted">{report.description}</p>
+                <p className="mt-2 line-clamp-2 text-body-sm text-ink-muted">
+                  {report.description}
+                </p>
               ) : null}
             </Link>
           </li>
@@ -532,7 +670,15 @@ export function PolicyList({
     name: string;
     slug: string;
     summary: string | null;
-    policies: Array<{ id: string; title: string; slug: string; summary: string | null; version: string; updatedAt: string; document: { storageKey: string } | null }>;
+    policies: Array<{
+      id: string;
+      title: string;
+      slug: string;
+      summary: string | null;
+      version: string;
+      updatedAt: string;
+      document: { storageKey: string } | null;
+    }>;
   }>;
 }) {
   const tone = (data.tone as Tone) ?? 'light';
@@ -545,8 +691,8 @@ export function PolicyList({
       <Section tone={tone} spacing="compact" width="standard">
         <SectionHeader heading={data.heading as string} tone={tone} />
         <p className="max-w-prose text-body-md text-ink-muted">
-          No policies have been published yet. Policies appear here once they have been approved and published
-          through the CMS.
+          No policies have been published yet. Policies appear here once they have been approved and
+          published through the CMS.
         </p>
       </Section>
     );
@@ -554,11 +700,18 @@ export function PolicyList({
 
   return (
     <Section tone={tone} spacing={(data.spacing as never) ?? 'standard'} width="standard">
-      <SectionHeader eyebrow={data.eyebrow as string} heading={data.heading as string} intro={data.intro as string} tone={tone} />
+      <SectionHeader
+        eyebrow={data.eyebrow as string}
+        heading={data.heading as string}
+        intro={data.intro as string}
+        tone={tone}
+      />
       <div className="space-y-12">
         {withPolicies.map((category) => (
           <div key={category.id}>
-            <h3 className="border-b border-ink-line pb-3 text-heading-md text-ink">{category.name}</h3>
+            <h3 className="border-b border-ink-line pb-3 text-heading-md text-ink">
+              {category.name}
+            </h3>
             <ul>
               {category.policies.map((policy) => (
                 <li key={policy.id} className="border-b border-ink-line">
@@ -570,13 +723,19 @@ export function PolicyList({
                       {policy.title}
                     </h4>
                     {policy.summary ? (
-                      <p className="line-clamp-1 text-body-sm text-ink-muted lg:col-span-4">{policy.summary}</p>
+                      <p className="line-clamp-1 text-body-sm text-ink-muted lg:col-span-4">
+                        {policy.summary}
+                      </p>
                     ) : (
                       <span className="lg:col-span-4" />
                     )}
                     {data.showLastUpdated !== false ? (
                       <p className="text-body-xs text-ink-faint lg:col-span-2 lg:text-end">
-                        v{policy.version} · {formatDate(policy.updatedAt, context.locale, { year: 'numeric', month: 'short' })}
+                        v{policy.version} ·{' '}
+                        {formatDate(policy.updatedAt, context.locale, {
+                          year: 'numeric',
+                          month: 'short',
+                        })}
                       </p>
                     ) : null}
                   </Link>

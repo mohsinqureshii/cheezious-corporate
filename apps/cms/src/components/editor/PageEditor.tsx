@@ -43,7 +43,14 @@ export interface EditorPage {
   scheduledFor: string | null;
   reviewDate: string | null;
   updatedAt: string;
-  blocks: Array<{ id: string; blockKey: string; data: Record<string, unknown>; sortOrder: number; isHidden: boolean; anchor: string | null }>;
+  blocks: Array<{
+    id: string;
+    blockKey: string;
+    data: Record<string, unknown>;
+    sortOrder: number;
+    isHidden: boolean;
+    anchor: string | null;
+  }>;
   seo: Record<string, unknown> | null;
   updatedBy: { id: string; name: string } | null;
 }
@@ -58,7 +65,13 @@ export interface AvailableTransition {
 export interface PageEditorProps {
   page: EditorPage;
   transitions: AvailableTransition[];
-  versions: Array<{ id: string; versionNumber: number; createdAt: string; note: string | null; createdBy: { name: string } | null }>;
+  versions: Array<{
+    id: string;
+    versionNumber: number;
+    createdAt: string;
+    note: string | null;
+    createdBy: { name: string } | null;
+  }>;
   canUpdate: boolean;
   siteUrl: string;
 }
@@ -91,7 +104,9 @@ export function PageEditor({ page, transitions, versions, canUpdate, siteUrl }: 
   );
 
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
-  const [inspectorTab, setInspectorTab] = useState<'block' | 'settings' | 'seo' | 'history'>('settings');
+  const [inspectorTab, setInspectorTab] = useState<'block' | 'settings' | 'seo' | 'history'>(
+    'settings',
+  );
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -224,7 +239,9 @@ export function PageEditor({ page, transitions, versions, canUpdate, siteUrl }: 
 
   const updateBlock = useCallback(
     (key: string, data: Record<string, unknown>) => {
-      setBlocks((current) => current.map((block) => (block.key === key ? { ...block, data } : block)));
+      setBlocks((current) =>
+        current.map((block) => (block.key === key ? { ...block, data } : block)),
+      );
       markDirty();
     },
     [markDirty],
@@ -279,7 +296,9 @@ export function PageEditor({ page, transitions, versions, canUpdate, siteUrl }: 
         // A hero cannot be moved out of first position.
         if (spec?.category === 'hero') return current;
 
-        const targetSpec = BLOCK_SPECS.find((candidate) => candidate.key === current[target]!.blockKey);
+        const targetSpec = BLOCK_SPECS.find(
+          (candidate) => candidate.key === current[target]!.blockKey,
+        );
         if (targetSpec?.category === 'hero') return current;
 
         const next = [...current];
@@ -294,7 +313,9 @@ export function PageEditor({ page, transitions, versions, canUpdate, siteUrl }: 
   const toggleBlockVisibility = useCallback(
     (key: string) => {
       setBlocks((current) =>
-        current.map((block) => (block.key === key ? { ...block, isHidden: !block.isHidden } : block)),
+        current.map((block) =>
+          block.key === key ? { ...block, isHidden: !block.isHidden } : block,
+        ),
       );
       markDirty();
     },
@@ -303,29 +324,39 @@ export function PageEditor({ page, transitions, versions, canUpdate, siteUrl }: 
 
   // --- Workflow -------------------------------------------------------------
 
-  async function runTransition(action: string, extra: { scheduledFor?: string; note?: string } = {}) {
+  async function runTransition(
+    action: string,
+    extra: { scheduledFor?: string; note?: string } = {},
+  ) {
     // Unsaved work is persisted before a transition, so publishing never ships
     // a stale version of what is on screen.
     const saved = await save();
     if (!saved) return;
 
     try {
-      const result = await cmsFetch<{ status: ContentStatus }>(`/api/cms/pages/${page.id}/transition`, {
-        method: 'POST',
-        body: { action, ...extra },
-      });
+      const result = await cmsFetch<{ status: ContentStatus }>(
+        `/api/cms/pages/${page.id}/transition`,
+        {
+          method: 'POST',
+          body: { action, ...extra },
+        },
+      );
       setStatus(result.status);
       router.refresh();
     } catch (error) {
       setSaveState('error');
-      setSaveError(error instanceof CmsApiError ? error.message : 'That action could not be completed.');
+      setSaveError(
+        error instanceof CmsApiError ? error.message : 'That action could not be completed.',
+      );
     }
   }
 
   async function openPreview() {
     await save();
     try {
-      const { url } = await cmsFetch<{ url: string }>(`/api/cms/pages/${page.id}/preview`, { method: 'POST' });
+      const { url } = await cmsFetch<{ url: string }>(`/api/cms/pages/${page.id}/preview`, {
+        method: 'POST',
+      });
       window.open(url, '_blank', 'noopener,noreferrer');
     } catch {
       setSaveError('The preview link could not be created.');
@@ -364,7 +395,12 @@ export function PageEditor({ page, transitions, versions, canUpdate, siteUrl }: 
 
         <div className="flex items-center gap-02">
           {canUpdate ? (
-            <button type="button" onClick={() => void save()} className="btn-tertiary btn-sm" disabled={saveState === 'saving'}>
+            <button
+              type="button"
+              onClick={() => void save()}
+              className="btn-tertiary btn-sm"
+              disabled={saveState === 'saving'}
+            >
               Save
             </button>
           ) : null}
@@ -389,7 +425,10 @@ export function PageEditor({ page, transitions, versions, canUpdate, siteUrl }: 
       </div>
 
       {saveError ? (
-        <div className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-03" role="alert">
+        <div
+          className="border-s-[3px] border-status-danger bg-status-dangerSubtle px-05 py-03"
+          role="alert"
+        >
           <p className="text-body-compact text-content-primary">{saveError}</p>
           {Object.entries(fieldErrors).length > 0 ? (
             <ul className="mt-01 space-y-01">
@@ -429,7 +468,9 @@ export function PageEditor({ page, transitions, versions, canUpdate, siteUrl }: 
                 disabled={!canUpdate}
                 className="input text-heading-03"
               />
-              <p className="field-helper">Used in the browser tab, search results and navigation.</p>
+              <p className="field-helper">
+                Used in the browser tab, search results and navigation.
+              </p>
             </div>
 
             <BlockList
@@ -519,7 +560,9 @@ export function PageEditor({ page, transitions, versions, canUpdate, siteUrl }: 
               />
             ) : null}
 
-            {inspectorTab === 'history' ? <HistoryPanel versions={versions} pageId={page.id} /> : null}
+            {inspectorTab === 'history' ? (
+              <HistoryPanel versions={versions} pageId={page.id} />
+            ) : null}
           </div>
         </aside>
       </div>
@@ -541,7 +584,15 @@ export function PageEditor({ page, transitions, versions, canUpdate, siteUrl }: 
  * Four distinct, honest states. An editor must never have to guess whether
  * their work is safe.
  */
-function SaveIndicator({ state, error, updatedAt }: { state: SaveState; error: string | null; updatedAt: string }) {
+function SaveIndicator({
+  state,
+  error,
+  updatedAt,
+}: {
+  state: SaveState;
+  error: string | null;
+  updatedAt: string;
+}) {
   const content: Record<SaveState, { label: string; className: string }> = {
     idle: { label: `Saved ${formatDateTime(updatedAt)}`, className: 'text-content-tertiary' },
     dirty: { label: 'Unsaved changes', className: 'text-status-warning' },
@@ -553,13 +604,23 @@ function SaveIndicator({ state, error, updatedAt }: { state: SaveState; error: s
   const { label, className } = content[state];
 
   return (
-    <p className={['hidden text-helper-01 md:block', className].join(' ')} role="status" aria-live="polite">
+    <p
+      className={['hidden text-helper-01 md:block', className].join(' ')}
+      role="status"
+      aria-live="polite"
+    >
       {label}
     </p>
   );
 }
 
-function StatusBadge({ status, hasUnpublishedChanges }: { status: ContentStatus; hasUnpublishedChanges: boolean }) {
+function StatusBadge({
+  status,
+  hasUnpublishedChanges,
+}: {
+  status: ContentStatus;
+  hasUnpublishedChanges: boolean;
+}) {
   const meta = STATUS_META[status];
   return (
     <span className="flex items-center gap-02">
@@ -620,7 +681,10 @@ function TransitionMenu({
           </button>
 
           {open ? (
-            <ul role="menu" className="absolute end-0 top-full z-dropdown mt-01 w-64 border border-border-subtle bg-surface-base shadow-menu">
+            <ul
+              role="menu"
+              className="absolute end-0 top-full z-dropdown mt-01 w-64 border border-border-subtle bg-surface-base shadow-menu"
+            >
               {rest.map((transition) => (
                 <li key={transition.action} role="none">
                   <button
@@ -629,13 +693,18 @@ function TransitionMenu({
                     onClick={() => {
                       setOpen(false);
                       if (transition.action === 'SCHEDULE') setScheduling(true);
-                      else if (transition.action === 'REQUEST_CHANGES') setNoteFor(transition.action);
+                      else if (transition.action === 'REQUEST_CHANGES')
+                        setNoteFor(transition.action);
                       else onRun(transition.action);
                     }}
                     className="block w-full px-05 py-03 text-left hover:bg-surface-hover"
                   >
-                    <span className="block text-body-compact text-content-primary">{transition.label}</span>
-                    <span className="mt-01 block text-helper-01 text-content-secondary">{transition.description}</span>
+                    <span className="block text-body-compact text-content-primary">
+                      {transition.label}
+                    </span>
+                    <span className="mt-01 block text-helper-01 text-content-secondary">
+                      {transition.description}
+                    </span>
                   </button>
                 </li>
               ))}
@@ -715,7 +784,11 @@ function Dialog({
   confirmDisabled?: boolean;
 }) {
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center bg-gray-100/50 p-05" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-modal flex items-center justify-center bg-gray-100/50 p-05"
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
       <div className="relative w-full max-w-md border border-border-subtle bg-surface-base shadow-modal">
         <div className="px-06 py-05">
@@ -726,7 +799,12 @@ function Dialog({
           <button type="button" onClick={onClose} className="btn-tertiary">
             Cancel
           </button>
-          <button type="button" onClick={onConfirm} disabled={confirmDisabled} className="btn-primary">
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={confirmDisabled}
+            className="btn-primary"
+          >
             {confirmLabel}
           </button>
         </div>
@@ -781,7 +859,9 @@ function SettingsPanel({
           className="input"
           placeholder={page.title}
         />
-        <p className="field-helper">A shorter label for menus and breadcrumbs. Defaults to the title.</p>
+        <p className="field-helper">
+          A shorter label for menus and breadcrumbs. Defaults to the title.
+        </p>
       </div>
 
       <dl className="space-y-03 border-t border-border-subtle pt-05 text-body-compact">
@@ -789,9 +869,17 @@ function SettingsPanel({
         <Row label="Type" value={page.type.replace(/_/g, ' ').toLowerCase()} />
         <Row label="Language" value={page.locale === 'en' ? 'English' : 'Urdu'} />
         <Row label="Status" value={STATUS_META[status]?.label ?? status} />
-        <Row label="Published" value={page.publishedAt ? formatDateTime(page.publishedAt) : 'Never'} />
-        {page.scheduledFor ? <Row label="Scheduled" value={formatDateTime(page.scheduledFor)} /> : null}
-        <Row label="Last edited" value={`${formatDateTime(page.updatedAt)}${page.updatedBy ? ` by ${page.updatedBy.name}` : ''}`} />
+        <Row
+          label="Published"
+          value={page.publishedAt ? formatDateTime(page.publishedAt) : 'Never'}
+        />
+        {page.scheduledFor ? (
+          <Row label="Scheduled" value={formatDateTime(page.scheduledFor)} />
+        ) : null}
+        <Row
+          label="Last edited"
+          value={`${formatDateTime(page.updatedAt)}${page.updatedBy ? ` by ${page.updatedBy.name}` : ''}`}
+        />
       </dl>
     </div>
   );
@@ -825,12 +913,16 @@ function HistoryPanel({
     <ol className="space-y-04">
       {versions.map((version) => (
         <li key={version.id} className="border-s-2 border-border-subtle ps-04">
-          <p className="text-body-compact font-medium text-content-primary">Version {version.versionNumber}</p>
+          <p className="text-body-compact font-medium text-content-primary">
+            Version {version.versionNumber}
+          </p>
           <p className="text-helper-01 text-content-secondary">
             {formatDateTime(version.createdAt)}
             {version.createdBy ? ` · ${version.createdBy.name}` : ''}
           </p>
-          {version.note ? <p className="mt-01 text-helper-01 text-content-tertiary">{version.note}</p> : null}
+          {version.note ? (
+            <p className="mt-01 text-helper-01 text-content-tertiary">{version.note}</p>
+          ) : null}
           <Link
             href={`/content/pages/${pageId}/versions/${version.id}`}
             className="mt-02 inline-block text-helper-01 text-interactive no-underline hover:underline"
@@ -869,13 +961,21 @@ function BlockPicker({
   }, {});
 
   return (
-    <div className="fixed inset-0 z-modal flex items-start justify-center bg-gray-100/50 p-05 pt-[8vh]" role="dialog" aria-modal="true" aria-label="Add a block">
+    <div
+      className="fixed inset-0 z-modal flex items-start justify-center bg-gray-100/50 p-05 pt-[8vh]"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Add a block"
+    >
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
 
       <div className="relative flex max-h-[80vh] w-full max-w-2xl flex-col border border-border-subtle bg-surface-base shadow-modal">
         <div className="border-b border-border-subtle px-06 py-04">
           <h2 className="text-heading-03 text-content-primary">Add a block</h2>
           <input
+            // A dialog takes focus when it opens: WAI-ARIA asks for it, and without
+            // it a keyboard user is left behind the overlay with nothing focused.
+            // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -891,7 +991,9 @@ function BlockPicker({
           ) : (
             Object.entries(grouped).map(([category, specs]) => (
               <div key={category} className="mb-06 last:mb-0">
-                <h3 className="mb-03 text-label-01 uppercase tracking-wide text-content-tertiary">{category}</h3>
+                <h3 className="mb-03 text-label-01 uppercase tracking-wide text-content-tertiary">
+                  {category}
+                </h3>
                 <ul className="grid gap-03 sm:grid-cols-2">
                   {specs.map((spec) => (
                     <li key={spec.key}>
@@ -901,8 +1003,12 @@ function BlockPicker({
                         className="w-full border border-border-subtle p-04 text-left transition-colors
                                    duration-fast hover:border-interactive hover:bg-interactive-subtle"
                       >
-                        <span className="block text-body-compact font-medium text-content-primary">{spec.name}</span>
-                        <span className="mt-01 block text-helper-01 text-content-secondary">{spec.description}</span>
+                        <span className="block text-body-compact font-medium text-content-primary">
+                          {spec.name}
+                        </span>
+                        <span className="mt-01 block text-helper-01 text-content-secondary">
+                          {spec.description}
+                        </span>
                       </button>
                     </li>
                   ))}

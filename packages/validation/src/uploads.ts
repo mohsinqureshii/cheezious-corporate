@@ -28,7 +28,12 @@ export const ALLOWED_FILE_TYPES: AllowedFileType[] = [
   { mime: 'image/webp', extensions: ['webp'], magic: [[0x52, 0x49, 0x46, 0x46]], kind: 'IMAGE' },
   { mime: 'image/avif', extensions: ['avif'], magic: [], kind: 'IMAGE' },
   { mime: 'image/gif', extensions: ['gif'], magic: [[0x47, 0x49, 0x46, 0x38]], kind: 'IMAGE' },
-  { mime: 'application/pdf', extensions: ['pdf'], magic: [[0x25, 0x50, 0x44, 0x46]], kind: 'DOCUMENT' },
+  {
+    mime: 'application/pdf',
+    extensions: ['pdf'],
+    magic: [[0x25, 0x50, 0x44, 0x46]],
+    kind: 'DOCUMENT',
+  },
   {
     mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     extensions: ['docx'],
@@ -126,7 +131,9 @@ export function validateUpload(
 
   const extension = extensionOf(safeFilename);
   if (!extension || !type.extensions.includes(extension)) {
-    errors.push(`The file extension does not match its type. Expected: ${type.extensions.join(', ')}.`);
+    errors.push(
+      `The file extension does not match its type. Expected: ${type.extensions.join(', ')}.`,
+    );
   }
 
   if (input.head && type.magic.length > 0) {

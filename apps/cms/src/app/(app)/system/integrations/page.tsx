@@ -43,16 +43,19 @@ interface IntegrationsResponse {
 export default async function IntegrationsPage() {
   const { cookie } = await requireUsableSession();
 
-  const data = await cmsFetch<IntegrationsResponse>('/api/cms/structure/integrations', { cookie }).catch(
-    () => null,
-  );
+  const data = await cmsFetch<IntegrationsResponse>('/api/cms/structure/integrations', {
+    cookie,
+  }).catch(() => null);
 
   if (!data) {
     return (
       <>
         <PageHeader title="Integrations" />
         <div className="p-06">
-          <ErrorState title="Integrations could not be loaded" description="This section is restricted." />
+          <ErrorState
+            title="Integrations could not be loaded"
+            description="This section is restricted."
+          />
         </div>
       </>
     );
@@ -60,10 +63,7 @@ export default async function IntegrationsPage() {
 
   return (
     <>
-      <PageHeader
-        title="Integrations"
-        description="External services this platform talks to."
-      />
+      <PageHeader title="Integrations" description="External services this platform talks to." />
 
       <div className="space-y-06 p-06">
         {data.integrations.length === 0 ? (
@@ -97,7 +97,9 @@ export default async function IntegrationsPage() {
                 <div className="flex gap-03">
                   <dt className="text-content-tertiary">Configured settings</dt>
                   <dd className="text-content-secondary">
-                    {integration.configuredKeys.length > 0 ? integration.configuredKeys.join(', ') : 'None'}
+                    {integration.configuredKeys.length > 0
+                      ? integration.configuredKeys.join(', ')
+                      : 'None'}
                   </dd>
                 </div>
                 <div className="flex gap-03">
@@ -110,12 +112,16 @@ export default async function IntegrationsPage() {
 
               {integration.webhooks.length > 0 ? (
                 <div className="mt-05 border-t border-border-subtle pt-04">
-                  <h3 className="text-label-01 uppercase tracking-wide text-content-tertiary">Webhooks</h3>
+                  <h3 className="text-label-01 uppercase tracking-wide text-content-tertiary">
+                    Webhooks
+                  </h3>
                   <ul className="mt-02 space-y-02">
                     {integration.webhooks.map((webhook) => (
                       <li key={webhook.id}>
                         <p className="text-body-compact text-content-primary">{webhook.name}</p>
-                        <p className="truncate font-mono text-helper-01 text-content-tertiary">{webhook.url}</p>
+                        <p className="truncate font-mono text-helper-01 text-content-tertiary">
+                          {webhook.url}
+                        </p>
                         <p className="text-helper-01 text-content-secondary">
                           {webhook.events.join(', ') || 'No events'} ·{' '}
                           {webhook.lastDeliveryAt
@@ -133,7 +139,8 @@ export default async function IntegrationsPage() {
         )}
 
         <p className="max-w-2xl text-helper-01 text-content-tertiary">
-          Credentials are held in the environment and are never returned by the API or shown on this screen.
+          Credentials are held in the environment and are never returned by the API or shown on this
+          screen.
         </p>
       </div>
     </>

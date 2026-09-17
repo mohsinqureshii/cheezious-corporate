@@ -23,7 +23,9 @@ interface Requirement {
 
 /** The subset of the server policy that can be evaluated in the browser. */
 export function evaluatePassword(value: string): { requirements: Requirement[]; score: number } {
-  const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((pattern) => pattern.test(value)).length;
+  const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((pattern) =>
+    pattern.test(value),
+  ).length;
 
   const requirements: Requirement[] = [
     { label: 'At least 12 characters', met: value.length >= 12 },

@@ -1,5 +1,9 @@
 import type { Locale, Prisma, PrismaClient } from '@cheezious/database';
-import { collectMediaReferences, validateComposition, type PageBlockInput } from '@cheezious/page-builder';
+import {
+  collectMediaReferences,
+  validateComposition,
+  type PageBlockInput,
+} from '@cheezious/page-builder';
 import { normalizePath } from '@cheezious/utilities';
 import { ApiError } from '@cheezious/validation';
 
@@ -65,7 +69,11 @@ export class PageService {
           data: { hitCount: { increment: 1 }, lastHitAt: new Date() },
         })
         .catch(() => undefined); // Counter failures must not break the redirect.
-      return { kind: 'redirect', destination: redirect.destination, statusCode: redirect.statusCode };
+      return {
+        kind: 'redirect',
+        destination: redirect.destination,
+        statusCode: redirect.statusCode,
+      };
     }
 
     const historical = await this.prisma.slugHistory.findFirst({
@@ -134,7 +142,9 @@ export class PageService {
     if (!params.wasPublished || !params.createRedirect) return;
 
     // A redirect whose destination is the path we are leaving would loop.
-    await tx.redirect.deleteMany({ where: { source: params.newPath, locale: params.locale, isAutomatic: true } });
+    await tx.redirect.deleteMany({
+      where: { source: params.newPath, locale: params.locale, isAutomatic: true },
+    });
 
     await tx.redirect.upsert({
       where: { source_locale: { source: params.oldPath, locale: params.locale } },
@@ -159,7 +169,11 @@ export class PageService {
   }
 
   /** Detect a cycle before saving a redirect. */
-  async wouldCreateLoop(source: string, destination: string, locale: Locale | null): Promise<boolean> {
+  async wouldCreateLoop(
+    source: string,
+    destination: string,
+    locale: Locale | null,
+  ): Promise<boolean> {
     if (source === destination) return true;
 
     let current = destination;
@@ -205,14 +219,20 @@ export class PageService {
     const missing = result.blocks.filter((b) => !byKey.has(b.blockKey));
     if (missing.length > 0) {
       throw ApiError.validation(
-        missing.map((b) => ({ field: 'blocks', message: `Block type "${b.blockKey}" is not registered.` })),
+        missing.map((b) => ({
+          field: 'blocks',
+          message: `Block type "${b.blockKey}" is not registered.`,
+        })),
       );
     }
 
     const disabled = result.blocks.filter((b) => byKey.get(b.blockKey)?.isEnabled === false);
     if (disabled.length > 0) {
       throw ApiError.validation(
-        disabled.map((b) => ({ field: 'blocks', message: `Block type "${b.blockKey}" is disabled.` })),
+        disabled.map((b) => ({
+          field: 'blocks',
+          message: `Block type "${b.blockKey}" is disabled.`,
+        })),
       );
     }
 
@@ -263,7 +283,10 @@ export class PageService {
       select: { id: true },
     });
 
-    const page = await tx.page.findUnique({ where: { id: pageId }, select: { title: true, path: true } });
+    const page = await tx.page.findUnique({
+      where: { id: pageId },
+      select: { title: true, path: true },
+    });
 
     if (existing.length > 0) {
       await tx.mediaUsage.createMany({

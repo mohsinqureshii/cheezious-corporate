@@ -1,6 +1,8 @@
 import { verifyPreviewToken } from '@cheezious/auth';
 import { isLocale, type Locale } from '@cheezious/config';
+import type { PrismaClient } from '@cheezious/database';
 import { ApiError } from '@cheezious/validation';
+import type { Response } from 'express';
 import { Router } from 'express';
 import { z } from 'zod';
 
@@ -23,16 +25,17 @@ import { SearchService } from '../services/search';
  * Responses carry cache headers; publishing invalidates by tag.
  */
 
-const localeParam = z.enum(['en', 'ur']);
-
 function parseLocale(value: unknown): Locale {
   if (!isLocale(value)) throw new ApiError('NOT_FOUND', 'Unknown language.');
   return value;
 }
 
 /** Cache headers for content that changes only when an editor publishes. */
-function setPublicCache(res: import('express').Response, seconds = 60): void {
-  res.setHeader('Cache-Control', `public, max-age=0, s-maxage=${seconds}, stale-while-revalidate=${seconds * 10}`);
+function setPublicCache(res: Response, seconds = 60): void {
+  res.setHeader(
+    'Cache-Control',
+    `public, max-age=0, s-maxage=${seconds}, stale-while-revalidate=${seconds * 10}`,
+  );
 }
 
 export function publicRoutes(): Router {
@@ -79,7 +82,9 @@ export function publicRoutes(): Router {
 
       if (resolved.kind === 'redirect') {
         setPublicCache(res, 300);
-        res.json({ redirect: { destination: resolved.destination, statusCode: resolved.statusCode } });
+        res.json({
+          redirect: { destination: resolved.destination, statusCode: resolved.statusCode },
+        });
         return;
       }
       if (resolved.kind === 'notFound') throw ApiError.notFound('Page');
@@ -144,7 +149,13 @@ export function publicRoutes(): Router {
             excludeFromSitemap: false,
             OR: [{ seo: null }, { seo: { noindex: false } }],
           },
-          select: { path: true, type: true, updatedAt: true, publishedAt: true, translationGroupId: true },
+          select: {
+            path: true,
+            type: true,
+            updatedAt: true,
+            publishedAt: true,
+            translationGroupId: true,
+          },
           orderBy: { path: 'asc' },
         }),
         req.ctx.prisma.story.findMany({
@@ -199,16 +210,27 @@ export function publicRoutes(): Router {
             include: {
               page: { select: { id: true, path: true, status: true, navLabel: true, title: true } },
               featuredStory: {
-                select: { id: true, title: true, slug: true, excerpt: true, status: true, heroImage: true },
+                select: {
+                  id: true,
+                  title: true,
+                  slug: true,
+                  excerpt: true,
+                  status: true,
+                  heroImage: true,
+                },
               },
-              featuredImage: { select: { id: true, storageKey: true, altText: true, focalX: true, focalY: true } },
+              featuredImage: {
+                select: { id: true, storageKey: true, altText: true, focalX: true, focalY: true },
+              },
             },
           },
         },
       });
 
       setPublicCache(res, 300);
-      res.json({ navigations: navigations.map((nav) => ({ ...nav, items: buildNavTree(nav.items) })) });
+      res.json({
+        navigations: navigations.map((nav) => ({ ...nav, items: buildNavTree(nav.items) })),
+      });
     }),
   );
 
@@ -302,7 +324,11 @@ export function publicRoutes(): Router {
     '/media/batch',
     asyncHandler(async (req, res) => {
       const { ids } = z.object({ ids: z.string().max(4000) }).parse(req.query);
-      const assetIds = ids.split(',').map((id) => id.trim()).filter(Boolean).slice(0, 100);
+      const assetIds = ids
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean)
+        .slice(0, 100);
 
       if (assetIds.length === 0) {
         res.json({ assets: [] });
@@ -343,7 +369,11 @@ export function publicRoutes(): Router {
     asyncHandler(async (req, res) => {
       const locale = parseLocale(req.params.locale);
       const { ids } = z.object({ ids: z.string().max(4000) }).parse(req.query);
-      const pageIds = ids.split(',').map((id) => id.trim()).filter(Boolean).slice(0, 100);
+      const pageIds = ids
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean)
+        .slice(0, 100);
 
       if (pageIds.length === 0) {
         res.json({ pages: [] });
@@ -420,7 +450,7 @@ export function publicRoutes(): Router {
  * edited. In preview mode the live working copy is returned instead.
  */
 async function loadPageForRender(
-  prisma: import('@cheezious/database').PrismaClient,
+  prisma: PrismaClient,
   pageId: string,
   options: { preview: boolean },
 ) {
@@ -436,7 +466,9 @@ async function loadPageForRender(
 
   if (!page) return null;
 
-  const snapshot = options.preview ? null : (page.publishedVersion?.data as Record<string, unknown> | undefined);
+  const snapshot = options.preview
+    ? null
+    : (page.publishedVersion?.data as Record<string, unknown> | undefined);
 
   const blocks = snapshot?.blocks
     ? (snapshot.blocks as Array<Record<string, unknown>>).filter((block) => block.isHidden !== true)

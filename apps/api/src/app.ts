@@ -19,6 +19,7 @@ import { cmsContentRoutes } from './modules/cms-content.routes';
 import { cmsMediaRoutes } from './modules/cms-media.routes';
 import { cmsPagesRoutes } from './modules/cms-pages.routes';
 import { cmsSubmissionsRoutes } from './modules/cms-submissions.routes';
+import { cmsStructureRoutes } from './modules/cms-structure.routes';
 import { cmsSystemRoutes } from './modules/cms-system.routes';
 import { mediaRoutes } from './modules/media.routes';
 import { publicRoutes } from './modules/public.routes';
@@ -121,6 +122,7 @@ export function createApp(ctx: AppContext): Express {
   app.use('/api/cms/content', cmsContentRoutes());
   app.use('/api/cms/media', cmsMediaRoutes());
   app.use('/api/cms/submissions', cmsSubmissionsRoutes());
+  app.use('/api/cms/structure', cmsStructureRoutes());
   app.use('/api/cms/system', cmsSystemRoutes());
 
   // File delivery for the local storage driver. Mounted outside /api because

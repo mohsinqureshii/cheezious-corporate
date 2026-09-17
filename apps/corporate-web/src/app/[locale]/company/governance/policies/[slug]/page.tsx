@@ -64,6 +64,7 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
 
   return buildRouteSeo({
     locale,
+    settings,
     path: `/${locale}/company/governance/policies/${slug}`,
     title: policy.seoTitle ?? policy.title,
     description:

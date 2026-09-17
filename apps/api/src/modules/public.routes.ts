@@ -117,6 +117,63 @@ export function publicRoutes(): Router {
     }),
   );
 
+  /**
+   * Everything with a public URL, for the sitemap.
+   *
+   * A dedicated endpoint rather than paging the listing endpoints, which cap
+   * page size at 50 for presentation reasons — using them here would silently
+   * truncate the sitemap at fifty stories and nobody would notice until the
+   * fifty-first stopped being indexed.
+   *
+   * It returns only what a sitemap needs: an address, a date and the
+   * translation group so each URL can declare its alternates.
+   */
+  router.get(
+    '/:locale/sitemap',
+    asyncHandler(async (req, res) => {
+      const locale = parseLocale(req.params.locale);
+      const published = { locale, deletedAt: null, status: 'PUBLISHED' } as const;
+
+      const [pages, stories, pressReleases, people, policies, jobs] = await Promise.all([
+        req.ctx.prisma.page.findMany({
+          where: { ...published, excludeFromSitemap: false },
+          select: { path: true, type: true, updatedAt: true, publishedAt: true, translationGroupId: true },
+          orderBy: { path: 'asc' },
+        }),
+        req.ctx.prisma.story.findMany({
+          where: published,
+          select: { slug: true, updatedAt: true, publishedAt: true, translationGroupId: true },
+          orderBy: { publishedAt: 'desc' },
+        }),
+        req.ctx.prisma.pressRelease.findMany({
+          where: { ...published, noindex: false },
+          select: { slug: true, updatedAt: true, publishedAt: true, translationGroupId: true },
+          orderBy: { publishedAt: 'desc' },
+        }),
+        req.ctx.prisma.person.findMany({
+          where: published,
+          select: { slug: true, updatedAt: true, publishedAt: true, translationGroupId: true },
+          orderBy: { sortOrder: 'asc' },
+        }),
+        req.ctx.prisma.policy.findMany({
+          where: published,
+          select: { slug: true, updatedAt: true, publishedAt: true, translationGroupId: true },
+          orderBy: { title: 'asc' },
+        }),
+        // Only open roles: a closed job in the sitemap invites a crawl to a
+        // page that will tell the visitor they are too late.
+        req.ctx.prisma.job.findMany({
+          where: { locale, deletedAt: null, status: 'OPEN', noindex: false },
+          select: { slug: true, updatedAt: true, postedAt: true, translationGroupId: true },
+          orderBy: { postedAt: 'desc' },
+        }),
+      ]);
+
+      setPublicCache(res, 900);
+      res.json({ pages, stories, pressReleases, people, policies, jobs });
+    }),
+  );
+
   // ---------------------------------------------------------------------------
   // Navigation, footer and settings
   // ---------------------------------------------------------------------------
@@ -187,14 +244,40 @@ export function publicRoutes(): Router {
     asyncHandler(async (req, res) => {
       const locale = parseLocale(req.params.locale);
 
-      const settings = await req.ctx.prisma.siteSetting.findMany({
-        where: { locale, group: { in: ['public', 'boilerplate', 'seo', 'social'] } },
-        select: { key: true, value: true, group: true },
-      });
+      const [settings, defaultOgImage] = await Promise.all([
+        req.ctx.prisma.siteSetting.findMany({
+          where: { locale, group: { in: ['public', 'boilerplate', 'seo', 'social'] } },
+          select: { key: true, value: true, group: true },
+        }),
+        req.ctx.prisma.globalSetting.findUnique({
+          where: { key: 'seo.defaultOgImageId' },
+          select: { value: true },
+        }),
+      ]);
+
+      // Two things can name the site-wide social image. The seed writes a
+      // storage key directly, so a fresh install shares with a preview rather
+      // than a blank card; an editor picking an asset in the CMS writes an id.
+      // The id wins where it is set, and is resolved to a key here rather than
+      // making every route fetch the asset for itself.
+      const defaultOgImageId =
+        typeof defaultOgImage?.value === 'string' && defaultOgImage.value.length > 0
+          ? defaultOgImage.value
+          : null;
+
+      const asset = defaultOgImageId
+        ? await req.ctx.prisma.mediaAsset.findFirst({
+            where: { id: defaultOgImageId, deletedAt: null },
+            select: { storageKey: true },
+          })
+        : null;
 
       setPublicCache(res, 300);
       res.json({
-        settings: Object.fromEntries(settings.map((setting) => [setting.key, setting.value])),
+        settings: {
+          ...Object.fromEntries(settings.map((setting) => [setting.key, setting.value])),
+          ...(asset ? { 'seo.defaultOgImageKey': asset.storageKey } : {}),
+        },
       });
     }),
   );

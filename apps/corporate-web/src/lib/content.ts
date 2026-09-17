@@ -337,6 +337,34 @@ export async function getPolicies(locale: Locale, params: { category?: string } 
   });
 }
 
+export interface SitemapEntryRecord {
+  slug: string;
+  updatedAt: string | null;
+  publishedAt?: string | null;
+  postedAt?: string | null;
+  translationGroupId: string;
+}
+
+export interface SitemapPayload {
+  pages: Array<{
+    path: string;
+    type: string;
+    updatedAt: string | null;
+    publishedAt: string | null;
+    translationGroupId: string;
+  }>;
+  stories: SitemapEntryRecord[];
+  pressReleases: SitemapEntryRecord[];
+  people: SitemapEntryRecord[];
+  policies: SitemapEntryRecord[];
+  jobs: SitemapEntryRecord[];
+}
+
+/** Everything with a public URL, uncapped, for the sitemap. */
+export async function getSitemap(locale: Locale): Promise<SitemapPayload> {
+  return apiFetch(`/api/public/${locale}/sitemap`, { revalidate: 900 });
+}
+
 export async function getPolicy(locale: Locale, slug: string) {
   return apiFetchOptional<{ policy: Record<string, unknown>; alternates: Record<string, string> }>(
     `/api/public/${locale}/policies/${encodeURIComponent(slug)}`,

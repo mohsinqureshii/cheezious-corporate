@@ -54,6 +54,7 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
 
   return buildRouteSeo({
     locale,
+    settings,
     path: `/${locale}/careers/jobs/${slug}`,
     title: (job.seoTitle as string) ?? `${job.title as string}`,
     description: (job.seoDescription as string) ?? descriptionParts.join(' ') ?? `Apply for ${job.title as string} at Cheezious.`,

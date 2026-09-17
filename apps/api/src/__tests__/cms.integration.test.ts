@@ -1174,3 +1174,55 @@ describe('workflow permissions across content types', () => {
     await request(app).delete(`/api/cms/content/stories/${second.body.item.id}`).set('Cookie', cookie);
   });
 });
+
+describe('sitemap data', () => {
+  it('returns every published page rather than a page of them', async () => {
+    const published = await ctx.prisma.page.count({
+      where: { locale: 'en', status: 'PUBLISHED', deletedAt: null, excludeFromSitemap: false },
+    });
+
+    const response = await request(app).get('/api/public/en/sitemap');
+
+    expect(response.status).toBe(200);
+    // The listing endpoints cap at 50 for presentation reasons. Using one here
+    // would silently truncate the sitemap and nobody would notice until the
+    // fifty-first page stopped being indexed.
+    expect(response.body.pages).toHaveLength(published);
+  });
+
+  it('carries the translation group so every URL can declare its alternates', async () => {
+    const response = await request(app).get('/api/public/en/sitemap');
+
+    for (const collection of ['pages', 'stories', 'pressReleases', 'people', 'policies', 'jobs']) {
+      for (const record of response.body[collection] as Array<Record<string, unknown>>) {
+        expect(typeof record.translationGroupId).toBe('string');
+      }
+    }
+  });
+
+  it('leaves out what should not be crawled', async () => {
+    const cookie = await signIn(await createUser('sitemap-owner', 'CORPORATE_COMMUNICATIONS'));
+
+    const created = await request(app)
+      .post('/api/cms/content/stories')
+      .set('Cookie', cookie)
+      .send({ locale: 'en', title: `${TEST_PREFIX} unpublished story` });
+
+    const before = await request(app).get('/api/public/en/sitemap');
+    const slugs = (before.body.stories as Array<{ slug: string }>).map((entry) => entry.slug);
+
+    // A draft has no public URL, so it has no business in the sitemap.
+    expect(slugs).not.toContain(created.body.item.slug);
+
+    await request(app).delete(`/api/cms/content/stories/${created.body.item.id}`).set('Cookie', cookie);
+  });
+
+  it('offers a social image for every page, even one without its own', async () => {
+    const response = await request(app).get('/api/public/en/settings');
+
+    expect(response.status).toBe(200);
+    // Without this, a link to a page with no image of its own is shared as a
+    // bare URL — which is most of what a newsroom link is worth.
+    expect(typeof response.body.settings['seo.defaultOgImageKey']).toBe('string');
+  });
+});

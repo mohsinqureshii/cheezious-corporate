@@ -40,6 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
 
   return buildRouteSeo({
     locale,
+    settings,
     path: `/${locale}/company/newsroom/stories/${slug}`,
     title: story.title,
     description: story.excerpt ?? `A story from the Cheezious newsroom.`,

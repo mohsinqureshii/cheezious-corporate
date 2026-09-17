@@ -205,7 +205,18 @@ export function buildRouteSeo(options: {
   publishedTime?: Date | string | null;
   modifiedTime?: Date | string | null;
   alternates?: Partial<Record<Locale, string>>;
+  /**
+   * Site settings, so a route without its own image still shares with the
+   * site-wide one. Without this, a story with no hero image would be shared as
+   * a bare link — which is most of what a newsroom link is worth.
+   */
+  settings?: Record<string, unknown>;
 }): Metadata {
+  const settings = options.settings ?? {};
+  const defaultOgImageKey = settings['seo.defaultOgImageKey'] as string | undefined;
+  const fallbackImageUrl =
+    options.imageUrl ?? (defaultOgImageKey ? (mediaUrl(defaultOgImageKey) ?? undefined) : undefined);
+
   return toNextMetadata(
     {
       title: options.title,
@@ -218,8 +229,8 @@ export function buildRouteSeo(options: {
       path: options.path,
       fallbackTitle: options.title,
       fallbackDescription: options.description,
-      fallbackImageUrl: options.imageUrl,
-      siteName: options.siteName ?? 'Cheezious Corporate',
+      fallbackImageUrl,
+      siteName: options.siteName ?? (settings['site.name'] as string) ?? 'Cheezious Corporate',
       alternates: options.alternates ?? { [options.locale]: options.path },
       type: options.type ?? 'website',
       publishedTime: options.publishedTime,

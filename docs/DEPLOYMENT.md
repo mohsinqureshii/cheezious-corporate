@@ -97,19 +97,68 @@ Every process binds `PORT` when the platform sets one — Railway, Fly, Heroku a
 Cloud Run all inject it. `API_PORT` remains the configured name and is used when
 `PORT` is absent; the public site and CMS fall back to 3000 and 3001.
 
+## One repository, four processes
+
+Most platforms infer what to run from the root `package.json`. This repository
+has four answers, so the root has no single `start` script and detection fails —
+Railway's Railpack reports "no start command detected" and refuses to build.
+
+`scripts/service.mjs` is that command. It reads `SERVICE` and dispatches:
+
+| `SERVICE` | `pnpm build` builds | `pnpm start` runs               |
+| --------- | ------------------- | ------------------------------- |
+| `api`     | packages + API      | `apps/api/dist/server.cjs`      |
+| `worker`  | packages + API      | `apps/api/dist/worker.cjs`      |
+| `web`     | packages + web      | `next start` on the public site |
+| `cms`     | packages + CMS      | `next start` on the CMS         |
+| unset     | everything          | refuses, and says what to set   |
+
+`pnpm build` with no `SERVICE` still builds the whole workspace, so a
+developer's workflow is unchanged. `pnpm start` with no `SERVICE` fails with a
+readable message rather than starting something arbitrary.
+
+The wrapper forwards SIGTERM and SIGINT to the process it started. Without that,
+a deploy's shutdown signal stops at the wrapper and the service is killed
+mid-request instead of draining.
+
+## The public site's build needs the API running
+
+`next build` prerenders around 108 pages, and each one fetches its content from
+`NEXT_PUBLIC_API_URL`. With the API unreachable the build does not fail loudly:
+it logs `ECONNREFUSED`, leaves `.next` incomplete, and the site then dies at
+startup on a missing `prerender-manifest.json`.
+
+So the API must be deployed and serving **before** the public site or the CMS is
+built. `NEXT_PUBLIC_API_URL` must also be the API's _public_ origin, never a
+private network address: it is inlined into the client bundle, so the browser
+uses the same value.
+
 ## Railway
 
 Five services: PostgreSQL, the API, the worker, the public site and the CMS. The
-four application services all deploy the same repository and differ only in
-their build and start commands, which live in `railway/*.json`. Point each
-service at its file under **Settings → Config-as-code**:
+four application services all deploy the same repository and differ only in one
+variable:
 
-| Service     | Config file           |
-| ----------- | --------------------- |
-| API         | `railway/api.json`    |
-| Worker      | `railway/worker.json` |
-| Public site | `railway/web.json`    |
-| CMS         | `railway/cms.json`    |
+| Service     | Variable         |
+| ----------- | ---------------- |
+| API         | `SERVICE=api`    |
+| Worker      | `SERVICE=worker` |
+| Public site | `SERVICE=web`    |
+| CMS         | `SERVICE=cms`    |
+
+That is enough on its own: no build or start command needs configuring, because
+the root scripts read it.
+
+`railway/*.json` carry the same commands explicitly, along with the API's health
+check and its pre-deploy migration step. They apply only when a service is
+pointed at one under **Settings → Config-as-code**; a service left on the
+default looks for `railway.json` at the repository root, which does not exist
+here. If a build still reports "no start command detected", that setting has not
+taken effect — and `SERVICE` is what makes the build work regardless.
+
+Deploy in order: PostgreSQL, then the API (which runs the migrations), then the
+worker, the public site and the CMS. The two Next.js apps build against the
+running API, per the section above.
 
 Leave the root directory at the repository root. Setting it to `apps/api` breaks
 pnpm workspace resolution, because the lockfile and the `@cheezious/*` packages

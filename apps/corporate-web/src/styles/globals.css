@@ -121,6 +121,21 @@
     @apply text-body-md text-ink-soft;
   }
 
+  /**
+   * Long-form editorial body.
+   *
+   * A step larger than block body copy, because a newsroom article is read
+   * rather than scanned, and a narrow measure at 16px is the single most common
+   * reason a corporate article does not get finished.
+   */
+  .rich-text.prose-editorial {
+    @apply text-body-lg text-ink-soft;
+  }
+
+  .rich-text.prose-editorial > p:first-child {
+    @apply text-ink;
+  }
+
   .rich-text > * + * {
     @apply mt-[1.1em];
   }

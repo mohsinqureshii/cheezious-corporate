@@ -93,6 +93,9 @@ afterAll(async () => {
   await ctx.prisma.contactSubmission.deleteMany({ where: { email: { startsWith: TEST_PREFIX } } });
   await ctx.prisma.job.deleteMany({ where: { title: { startsWith: TEST_PREFIX } } });
   await ctx.prisma.story.deleteMany({ where: { title: { startsWith: TEST_PREFIX } } });
+  await ctx.prisma.pressRelease.deleteMany({ where: { headline: { startsWith: TEST_PREFIX } } });
+  await ctx.prisma.policy.deleteMany({ where: { title: { startsWith: TEST_PREFIX } } });
+  await ctx.prisma.person.deleteMany({ where: { name: { startsWith: TEST_PREFIX } } });
   await ctx.prisma.auditLog.deleteMany({ where: { actorEmail: { startsWith: TEST_PREFIX } } });
   await ctx.prisma.loginAttempt.deleteMany({ where: { email: { startsWith: TEST_PREFIX } } });
   await ctx.prisma.user.deleteMany({ where: { email: { startsWith: TEST_PREFIX } } });
@@ -1102,5 +1105,72 @@ describe('scheduled publishing', () => {
       .send({ action: 'SCHEDULE', scheduledFor: new Date(Date.now() + 3_600_000).toISOString() });
 
     expect(response.status).toBe(403);
+  });
+});
+
+describe('workflow permissions across content types', () => {
+  it('lets every workflow content type run its whole workflow', async () => {
+    // Each editorial content type derives the permission it needs as
+    // `<prefix>.update` and `<prefix>.publish`. A type missing either is one
+    // nobody can move at all, super administrator included — which is how
+    // policies shipped unable to be published by anyone.
+    const cookie = await signIn(await createUser('workflow-admin', 'SUPER_ADMIN'));
+
+    const types: Array<{ path: string; body: Record<string, unknown> }> = [
+      { path: 'stories', body: { locale: 'en', title: `${TEST_PREFIX} workflow story` } },
+      { path: 'news', body: { locale: 'en', title: `${TEST_PREFIX} workflow news` } },
+      { path: 'press-releases', body: { locale: 'en', headline: `${TEST_PREFIX} workflow release` } },
+      { path: 'people', body: { locale: 'en', name: `${TEST_PREFIX} Person`, role: 'Test role' } },
+      { path: 'policies', body: { locale: 'en', title: `${TEST_PREFIX} workflow policy` } },
+    ];
+
+    for (const type of types) {
+      const created = await request(app)
+        .post(`/api/cms/content/${type.path}`)
+        .set('Cookie', cookie)
+        .send(type.body);
+      expect(created.status, `create ${type.path}: ${JSON.stringify(created.body)}`).toBe(201);
+
+      const id = created.body.item.id as string;
+
+      for (const action of ['SUBMIT_FOR_REVIEW', 'APPROVE', 'PUBLISH']) {
+        const response = await request(app)
+          .post(`/api/cms/content/${type.path}/${id}/transition`)
+          .set('Cookie', cookie)
+          .send({ action });
+        expect(response.status, `${type.path} ${action}: ${JSON.stringify(response.body)}`).toBe(200);
+      }
+
+      await request(app)
+        .post(`/api/cms/content/${type.path}/${id}/transition`)
+        .set('Cookie', cookie)
+        .send({ action: 'UNPUBLISH' });
+      await request(app).delete(`/api/cms/content/${type.path}/${id}`).set('Cookie', cookie);
+    }
+  });
+
+  it('frees the address when content is deleted', async () => {
+    const cookie = await signIn(await createUser('slug-release', 'CORPORATE_COMMUNICATIONS'));
+    const title = `${TEST_PREFIX} reusable name`;
+
+    const first = await request(app)
+      .post('/api/cms/content/stories')
+      .set('Cookie', cookie)
+      .send({ locale: 'en', title });
+    const slug = first.body.item.slug as string;
+
+    await request(app).delete(`/api/cms/content/stories/${first.body.item.id}`).set('Cookie', cookie);
+
+    // Deleting a draft called "Annual Report" must not reserve that address
+    // forever.
+    const second = await request(app)
+      .post('/api/cms/content/stories')
+      .set('Cookie', cookie)
+      .send({ locale: 'en', title });
+
+    expect(second.status).toBe(201);
+    expect(second.body.item.slug).toBe(slug);
+
+    await request(app).delete(`/api/cms/content/stories/${second.body.item.id}`).set('Cookie', cookie);
   });
 });

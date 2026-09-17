@@ -337,6 +337,27 @@ export async function getPolicies(locale: Locale, params: { category?: string } 
   });
 }
 
+export async function getPolicy(locale: Locale, slug: string) {
+  return apiFetchOptional<{ policy: Record<string, unknown>; alternates: Record<string, string> }>(
+    `/api/public/${locale}/policies/${encodeURIComponent(slug)}`,
+    { revalidate: 600, tags: [CACHE_TAGS.collection('policies')] },
+  );
+}
+
+export async function getEmployeeStory(locale: Locale, slug: string) {
+  return apiFetchOptional<{ story: Record<string, unknown>; alternates: Record<string, string> }>(
+    `/api/public/${locale}/employee-stories/${encodeURIComponent(slug)}`,
+    { revalidate: 600, tags: [CACHE_TAGS.collection('employeeStories')] },
+  );
+}
+
+export async function getImpactStory(locale: Locale, slug: string) {
+  return apiFetchOptional<{ story: Record<string, unknown>; alternates: Record<string, string> }>(
+    `/api/public/${locale}/impact/stories/${encodeURIComponent(slug)}`,
+    { revalidate: 600, tags: [CACHE_TAGS.collection('impact')] },
+  );
+}
+
 export async function getAwards(locale: Locale) {
   return apiFetch<{ awards: Array<Record<string, unknown>> }>(`/api/public/${locale}/awards`, {
     revalidate: 600,

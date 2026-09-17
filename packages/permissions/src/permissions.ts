@@ -40,6 +40,9 @@ export const PERMISSIONS = {
   // --- People --------------------------------------------------------------
   'people.read': 'View people records',
   'people.manage': 'Create and edit people records',
+  // See the note beside the policy permissions: the editorial workflow needs
+  // `<prefix>.update` as well as `<prefix>.publish`.
+  'people.update': 'Edit a profile and submit it for review',
   'people.publish': 'Publish people profiles',
   'leadership.manage': 'Manage leadership groups, ordering and featured leaders',
   'employeeStories.manage': 'Manage employee stories',
@@ -65,6 +68,12 @@ export const PERMISSIONS = {
   'reports.manage': 'Manage reports and publications',
   'policies.read': 'View policies',
   'policies.manage': 'Manage policies and policy versions',
+  // The editorial workflow derives the permission it needs as
+  // `<prefix>.update` and `<prefix>.publish`, so a content type that runs the
+  // workflow must have both, whatever else it has. Without them no transition
+  // is possible for anybody, super administrator included.
+  'policies.update': 'Edit a policy and submit it for review',
+  'policies.publish': 'Publish and unpublish policies',
 
   // --- Partners & lead generation ------------------------------------------
   'suppliers.read': 'View supplier submissions (contains contact data)',
@@ -170,10 +179,10 @@ export const PERSONAL_DATA_PERMISSIONS: readonly Permission[] = [
 export const PERMISSION_GROUPS: Array<{ key: string; label: string; permissions: Permission[] }> = [
   { key: 'pages', label: 'Pages', permissions: ['pages.read', 'pages.create', 'pages.update', 'pages.delete', 'pages.publish', 'pages.restore'] },
   { key: 'editorial', label: 'Editorial', permissions: ['stories.read', 'stories.create', 'stories.update', 'stories.delete', 'stories.publish', 'news.read', 'news.create', 'news.update', 'news.delete', 'news.publish', 'pressReleases.read', 'pressReleases.create', 'pressReleases.update', 'pressReleases.delete', 'pressReleases.publish', 'mediaCoverage.manage'] },
-  { key: 'people', label: 'People & leadership', permissions: ['people.read', 'people.manage', 'people.publish', 'leadership.manage', 'employeeStories.manage'] },
+  { key: 'people', label: 'People & leadership', permissions: ['people.read', 'people.update', 'people.manage', 'people.publish', 'leadership.manage', 'employeeStories.manage'] },
   { key: 'company', label: 'Company records', permissions: ['timeline.manage', 'awards.manage', 'locations.manage'] },
   { key: 'careers', label: 'Careers', permissions: ['careers.read', 'careers.manage', 'careers.publish', 'applications.read', 'applications.manage', 'applications.export', 'applications.delete'] },
-  { key: 'impact', label: 'Impact & publications', permissions: ['impact.read', 'impact.manage', 'reports.read', 'reports.manage', 'policies.read', 'policies.manage'] },
+  { key: 'impact', label: 'Impact & publications', permissions: ['impact.read', 'impact.manage', 'reports.read', 'reports.manage', 'policies.read', 'policies.update', 'policies.manage', 'policies.publish'] },
   { key: 'partners', label: 'Partners & leads', permissions: ['suppliers.read', 'suppliers.manage', 'suppliers.export', 'properties.read', 'properties.manage', 'properties.export', 'partnerships.read', 'partnerships.manage'] },
   { key: 'forms', label: 'Forms & contact', permissions: ['forms.read', 'forms.manage', 'forms.export', 'contact.read', 'contact.manage'] },
   { key: 'media', label: 'Media', permissions: ['media.read', 'media.upload', 'media.update', 'media.delete', 'media.manageBrandAssets'] },

@@ -281,7 +281,12 @@ function registerCollection(router: Router, config: CollectionConfig): void {
 
       const existing = await model.findFirst({
         where: { id: param(req, 'id'), ...(config.softDelete ? { deletedAt: null } : {}) },
-        select: { id: true, [config.labelField]: true, ...(config.workflow ? { status: true } : {}) },
+        select: {
+          id: true,
+          [config.labelField]: true,
+          ...(config.slugField ? { [config.slugField]: true } : {}),
+          ...(config.workflow ? { status: true } : {}),
+        },
       });
       if (!existing) throw ApiError.notFound(config.label);
 
@@ -295,7 +300,18 @@ function registerCollection(router: Router, config: CollectionConfig): void {
       }
 
       if (config.softDelete) {
-        await model.update({ where: { id: existing.id as string }, data: { deletedAt: new Date() } });
+        // The slug is released as well as the record. The unique constraint
+        // counts soft-deleted rows, so leaving it in place would reserve that
+        // address forever — someone would delete a draft called "Annual
+        // Report" and never be able to use the name again.
+        const released = config.slugField
+          ? { [config.slugField]: `${String(existing[config.slugField] ?? existing.id)}-deleted-${Date.now()}`.slice(0, 190) }
+          : {};
+
+        await model.update({
+          where: { id: existing.id as string },
+          data: { deletedAt: new Date(), ...released },
+        });
       } else {
         await model.delete({ where: { id: existing.id as string } });
       }

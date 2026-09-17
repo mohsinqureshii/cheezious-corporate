@@ -14,7 +14,12 @@ import {
   toPrincipal,
   verifyPassword,
 } from '@cheezious/auth';
-import { ApiError, email as emailSchema } from '@cheezious/validation';
+import {
+  ApiError,
+  email as emailSchema,
+  optionalString,
+  requiredString,
+} from '@cheezious/validation';
 import { Router } from 'express';
 import { z } from 'zod';
 
@@ -173,6 +178,46 @@ export function authRoutes(): Router {
           where: { userId: req.principal!.id, readAt: null },
         }),
       });
+    }),
+  );
+
+  /**
+   * Update your own profile.
+   *
+   * Deliberately narrow: a person may correct how their name and job title are
+   * displayed, and nothing else. Email address, roles and account status are
+   * identity and authorisation, so they change only through user
+   * administration, where the action is attributable to someone other than the
+   * account being changed.
+   */
+  router.patch(
+    '/me',
+    requireAuth(),
+    asyncHandler(async (req, res) => {
+      const input = z
+        .object({
+          name: requiredString('Name', 120),
+          jobTitle: optionalString(120),
+        })
+        .parse(req.body);
+
+      const user = await req.ctx.prisma.user.update({
+        where: { id: req.principal!.id },
+        data: { name: input.name, jobTitle: input.jobTitle ?? null },
+        select: { id: true, name: true, email: true, jobTitle: true },
+      });
+
+      await new AuditService(req.ctx.prisma).record(
+        { id: user.id, email: user.email, ipAddress: clientIp(req) },
+        {
+          action: 'UPDATE',
+          entityType: 'user',
+          entityId: user.id,
+          summary: 'Updated own profile',
+        },
+      );
+
+      res.json({ user });
     }),
   );
 

@@ -599,3 +599,119 @@ describe('public API exposure', () => {
     expect(response.status).toBe(403);
   });
 });
+
+describe('account self-service', () => {
+  it('refuses a password change without the current password', async () => {
+    const email = await createUser('selfservice-wrongpw', 'VIEWER');
+    const cookie = await signIn(email);
+
+    const response = await request(app)
+      .post('/api/auth/password/change')
+      .set('Cookie', cookie)
+      .send({ currentPassword: 'not-the-current-password', newPassword: 'another-long-passphrase-4471' });
+
+    expect(response.status).toBe(422);
+    expect(response.body.error.fields[0].field).toBe('currentPassword');
+
+    // The old password still works, which is the point of the check.
+    await expect(signIn(email)).resolves.toContain('=');
+  });
+
+  it('enforces the password policy on the new password', async () => {
+    const email = await createUser('selfservice-weak', 'VIEWER');
+    const cookie = await signIn(email);
+
+    const response = await request(app)
+      .post('/api/auth/password/change')
+      .set('Cookie', cookie)
+      .send({ currentPassword: PASSWORD, newPassword: 'short' });
+
+    expect(response.status).toBe(422);
+    expect(response.body.error.fields.some((field: { field: string }) => field.field === 'newPassword')).toBe(true);
+  });
+
+  it('changes the password, ends other sessions and keeps the current one', async () => {
+    const email = await createUser('selfservice-change', 'VIEWER');
+
+    const otherCookie = await signIn(email);
+    const cookie = await signIn(email);
+
+    const newPassword = 'a-replacement-passphrase-5580';
+    const response = await request(app)
+      .post('/api/auth/password/change')
+      .set('Cookie', cookie)
+      .send({ currentPassword: PASSWORD, newPassword });
+
+    expect(response.status).toBe(200);
+    expect(response.body.revokedSessions).toBeGreaterThanOrEqual(1);
+
+    // The session that made the change survives; the other one does not.
+    expect((await request(app).get('/api/auth/me').set('Cookie', cookie)).status).toBe(200);
+    expect((await request(app).get('/api/auth/me').set('Cookie', otherCookie)).status).toBe(401);
+
+    // And the old password no longer signs in.
+    await rateLimitStore.reset('login:::ffff:127.0.0.1');
+    await rateLimitStore.reset('login:127.0.0.1');
+    const stale = await request(app).post('/api/auth/login').send({ email, password: PASSWORD });
+    expect(stale.status).toBe(401);
+  });
+
+  it('lets a user correct their own name but not their email or roles', async () => {
+    const email = await createUser('selfservice-profile', 'VIEWER');
+    const cookie = await signIn(email);
+
+    const response = await request(app)
+      .patch('/api/auth/me')
+      .set('Cookie', cookie)
+      .send({ name: 'Corrected Name', jobTitle: 'Analyst', email: 'someone-else@example.test', roles: ['SUPER_ADMIN'] });
+
+    expect(response.status).toBe(200);
+    expect(response.body.user.name).toBe('Corrected Name');
+    // The fields that carry authorisation are ignored, not honoured.
+    expect(response.body.user.email).toBe(email);
+
+    const me = await request(app).get('/api/auth/me').set('Cookie', cookie);
+    expect(me.body.user.roles).toEqual(['VIEWER']);
+  });
+
+  it('rejects an empty name rather than blanking the profile', async () => {
+    const email = await createUser('selfservice-blank', 'VIEWER');
+    const cookie = await signIn(email);
+
+    const response = await request(app).patch('/api/auth/me').set('Cookie', cookie).send({ name: '   ' });
+
+    expect(response.status).toBe(422);
+  });
+
+  it('lists the caller’s own sessions and no one else’s', async () => {
+    const mine = await createUser('selfservice-sessions-a', 'VIEWER');
+    const theirs = await createUser('selfservice-sessions-b', 'VIEWER');
+
+    await signIn(theirs);
+    const cookie = await signIn(mine);
+
+    const response = await request(app).get('/api/auth/sessions').set('Cookie', cookie);
+
+    expect(response.status).toBe(200);
+    expect(response.body.sessions.length).toBe(1);
+    expect(response.body.sessions[0].isCurrent).toBe(true);
+  });
+
+  it('refuses to end a session belonging to someone else', async () => {
+    const mine = await createUser('selfservice-revoke-a', 'VIEWER');
+    const theirs = await createUser('selfservice-revoke-b', 'VIEWER');
+
+    const theirCookie = await signIn(theirs);
+    const myCookie = await signIn(mine);
+
+    const theirSessions = await request(app).get('/api/auth/sessions').set('Cookie', theirCookie);
+    const theirSessionId = theirSessions.body.sessions[0].id;
+
+    const response = await request(app).delete(`/api/auth/sessions/${theirSessionId}`).set('Cookie', myCookie);
+
+    // Not found rather than forbidden: one user has no business learning that
+    // another user's session id exists.
+    expect(response.status).toBe(404);
+    expect((await request(app).get('/api/auth/me').set('Cookie', theirCookie)).status).toBe(200);
+  });
+});

@@ -82,7 +82,14 @@ export async function seedAccessControl(prisma: PrismaClient) {
   }
 
   const email = (process.env.SEED_ADMIN_EMAIL ?? 'admin@cheezious.local').toLowerCase();
-  const password = process.env.SEED_ADMIN_PASSWORD ?? 'ChangeMe!Admin123';
+  const name = 'Platform Administrator';
+  const password = process.env.SEED_ADMIN_PASSWORD ?? 'ChangeMe-First-Signin-2026';
+
+  // The seeded password has to satisfy the same policy the application enforces.
+  // A temporary credential the system would refuse on change is a trap: the
+  // account signs in, is told to choose a new password, and cannot work out why
+  // the one it was handed would not have been allowed.
+  assertSeedPasswordIsAcceptable(password, { email, name });
 
   const superAdmin = await prisma.role.findUniqueOrThrow({ where: { key: 'SUPER_ADMIN' } });
 
@@ -90,7 +97,7 @@ export async function seedAccessControl(prisma: PrismaClient) {
     where: { email },
     create: {
       email,
-      name: 'Platform Administrator',
+      name,
       jobTitle: 'Administrator',
       passwordHash: await argon2.hash(password, { type: argon2.argon2id, memoryCost: 19456, timeCost: 2, parallelism: 1 }),
       status: 'ACTIVE',
@@ -148,4 +155,42 @@ export async function seedAccessControl(prisma: PrismaClient) {
   }
 
   return { adminUser };
+}
+
+/**
+ * The subset of the password policy that a seed can check without depending on
+ * the auth package — which depends on this one, so importing it here would
+ * close a cycle. It mirrors `checkPasswordPolicy`: length, character variety,
+ * and the rule that a password may not contain the account's own email address
+ * or name.
+ */
+function assertSeedPasswordIsAcceptable(password: string, account: { email: string; name: string }): void {
+  const problems: string[] = [];
+  const lower = password.toLowerCase();
+
+  if (password.length < 12) problems.push('it is shorter than 12 characters');
+
+  const classes = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((pattern) => pattern.test(password)).length;
+  if (password.length < 16 && classes < 3) {
+    problems.push('it is under 16 characters and mixes fewer than three character types');
+  }
+
+  const localPart = account.email.split('@')[0]?.toLowerCase();
+  if (localPart && localPart.length >= 3 && lower.includes(localPart)) {
+    problems.push('it contains the account email address');
+  }
+  for (const part of account.name.toLowerCase().split(/\s+/)) {
+    if (part.length >= 4 && lower.includes(part)) {
+      problems.push('it contains the account name');
+      break;
+    }
+  }
+
+  if (problems.length > 0) {
+    // The password itself is never echoed, here or anywhere else.
+    throw new Error(
+      `SEED_ADMIN_PASSWORD is not acceptable: ${problems.join(', ')}. ` +
+        'Choose one the application would also accept when the account changes it.',
+    );
+  }
 }

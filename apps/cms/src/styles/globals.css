@@ -1,0 +1,213 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * CMS global styles.
+ *
+ * Carbon's interaction fundamentals: a high-contrast focus ring that is visible
+ * on every surface, dense but legible form controls, and data tables that stay
+ * readable at 1440px with twelve columns.
+ */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-surface-subtle text-content-primary font-sans text-body-01 antialiased;
+  }
+
+  /*
+    Carbon's focus indicator: a 2px inset ring in interactive blue. Inset rather
+    than outset so it never gets clipped by a table cell or a scroll container,
+    which is the usual reason focus becomes invisible in dense interfaces.
+  */
+  :focus-visible {
+    outline: 2px solid theme('colors.border.focus');
+    outline-offset: -2px;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Tabular figures everywhere numbers are compared down a column. */
+  .tabular,
+  td,
+  th {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* --- Buttons ---------------------------------------------------------- */
+
+  .btn {
+    @apply inline-flex items-center justify-start gap-03 border border-transparent
+           px-05 py-03 text-body-compact font-normal
+           transition-colors duration-fast ease-productive
+           disabled:cursor-not-allowed disabled:bg-gray-30 disabled:text-content-disabled;
+    /* Carbon buttons are left-aligned with a fixed height, so a row of them
+       lines up regardless of label length. */
+    min-height: 2.5rem;
+  }
+
+  .btn-primary {
+    @apply btn bg-interactive text-content-inverse hover:bg-interactive-hover active:bg-interactive-active;
+  }
+
+  .btn-secondary {
+    @apply btn bg-gray-80 text-content-inverse hover:bg-gray-70 active:bg-gray-90;
+  }
+
+  .btn-tertiary {
+    @apply btn border-interactive bg-transparent text-interactive
+           hover:bg-interactive hover:text-content-inverse;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-interactive hover:bg-gray-10;
+  }
+
+  .btn-danger {
+    @apply btn bg-status-danger text-content-inverse hover:brightness-110;
+  }
+
+  .btn-sm {
+    min-height: 2rem;
+    @apply px-04 py-02;
+  }
+
+  /* --- Form controls ----------------------------------------------------- */
+
+  .field-label {
+    @apply mb-02 block text-label-01 text-content-secondary;
+  }
+
+  .field-helper {
+    @apply mt-02 text-helper-01 text-content-secondary;
+  }
+
+  .field-error {
+    @apply mt-02 flex items-start gap-02 text-helper-01 text-status-danger;
+  }
+
+  /*
+    Carbon inputs carry a bottom border rather than a full box: it reduces
+    visual weight in a dense form while keeping the field boundary obvious.
+  */
+  .input {
+    @apply w-full border-0 border-b border-border-strong bg-gray-10
+           px-05 py-03 text-body-01 text-content-primary
+           transition-colors duration-fast
+           placeholder:text-content-placeholder
+           focus:outline-2 focus:outline-offset-[-2px] focus:outline-border-focus
+           disabled:cursor-not-allowed disabled:border-b-transparent disabled:bg-gray-10 disabled:text-content-disabled;
+    min-height: 2.5rem;
+  }
+
+  .input-invalid {
+    @apply outline outline-2 outline-offset-[-2px] outline-status-danger;
+  }
+
+  .textarea {
+    @apply input resize-y;
+    min-height: 6rem;
+  }
+
+  .select {
+    @apply input appearance-none pr-09;
+  }
+
+  .checkbox {
+    @apply h-4 w-4 shrink-0 appearance-none border border-content-primary bg-transparent
+           checked:border-content-primary checked:bg-content-primary
+           focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-border-focus;
+  }
+
+  /* --- Data table -------------------------------------------------------- */
+
+  .data-table {
+    @apply w-full border-collapse bg-surface-base text-body-compact;
+  }
+
+  .data-table thead th {
+    @apply border-b border-border-subtle bg-gray-10 px-05 py-03
+           text-left text-heading-compact text-content-primary;
+    /* Sticky headers: a 50-row table is unusable if the columns scroll away. */
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .data-table tbody td {
+    @apply border-b border-border-subtle px-05 py-03 align-middle text-content-primary;
+    height: 3rem;
+  }
+
+  .data-table tbody tr {
+    @apply transition-colors duration-fast;
+  }
+
+  .data-table tbody tr:hover {
+    @apply bg-surface-hover;
+  }
+
+  .data-table tbody tr[data-selected='true'] {
+    @apply bg-interactive-subtle;
+  }
+
+  /* --- Tags and status --------------------------------------------------- */
+
+  .tag {
+    @apply inline-flex items-center gap-02 rounded-full px-03 py-01 text-label-01 font-medium;
+  }
+
+  /* --- Layout ------------------------------------------------------------ */
+
+  .page-header {
+    @apply border-b border-border-subtle bg-surface-base px-06 py-05;
+  }
+
+  .panel {
+    @apply border border-border-subtle bg-surface-base;
+  }
+
+  /* Skip link, for keyboard users bypassing the sidebar. */
+  .skip-link {
+    @apply sr-only;
+  }
+
+  .skip-link:focus {
+    @apply not-sr-only fixed left-05 top-05 z-toast bg-interactive px-05 py-03
+           text-body-compact font-medium text-content-inverse;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.gray.40') transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: theme('colors.gray.40');
+  }
+}
+
+/* Motion is functional in an operational tool; removing it costs nothing. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

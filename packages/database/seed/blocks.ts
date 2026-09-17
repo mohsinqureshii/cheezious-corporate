@@ -1,5 +1,5 @@
 import { BLOCK_SPECS } from '@cheezious/page-builder';
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import { zodToJsonSchema } from './lib/json-schema';
 
 /**
@@ -19,7 +19,7 @@ export async function seedBlocks(prisma: PrismaClient): Promise<void> {
         description: spec.description,
         category: spec.category,
         icon: spec.icon,
-        schema: zodToJsonSchema(spec.schema, spec.key),
+        schema: asJson(zodToJsonSchema(spec.schema, spec.key)),
         defaults: {},
         allowedPageTypes: (spec.allowedPageTypes ?? []) as never,
         sortOrder: spec.sortOrder,
@@ -29,10 +29,21 @@ export async function seedBlocks(prisma: PrismaClient): Promise<void> {
         description: spec.description,
         category: spec.category,
         icon: spec.icon,
-        schema: zodToJsonSchema(spec.schema, spec.key),
+        schema: asJson(zodToJsonSchema(spec.schema, spec.key)),
         sortOrder: spec.sortOrder,
         // `isEnabled` is intentionally not updated: it belongs to the administrator.
       },
     });
   }
+}
+
+/**
+ * JSON Schema, as Prisma's JSON input type.
+ *
+ * `JsonSchemaNode` is a closed interface, so it does not structurally satisfy
+ * `InputJsonObject`, which requires an index signature. The value is ordinary
+ * JSON; only the two type descriptions disagree.
+ */
+function asJson(value: unknown): Prisma.InputJsonObject {
+  return value as Prisma.InputJsonObject;
 }

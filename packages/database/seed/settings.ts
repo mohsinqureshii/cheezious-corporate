@@ -189,6 +189,7 @@ export async function seedSettings(prisma: PrismaClient): Promise<void> {
     {
       key: 'privacy.submissionRetentionDays',
       label: 'Supplier and property submission retention (days)',
+      description: 'Supplier and property submissions become eligible for deletion after this period.',
       value: 730,
       group: 'privacy',
     },

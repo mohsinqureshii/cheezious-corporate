@@ -279,6 +279,15 @@ export async function seedMedia(
     ]),
   );
 
+  // Image generation is the one part of the seed that depends on the host
+  // rather than the database: `sharp` renders the placeholder text through
+  // libvips, which needs fontconfig, and a slim container may not have it. That
+  // must not cost a seed its hundred pages of content, so a failure here is
+  // reported and skipped — the pages arrive with empty image slots, which the
+  // renderer already handles, and re-running the seed after installing fonts
+  // fills them in.
+  const failures: string[] = [];
+
   for (const spec of PLACEHOLDERS) {
     const storageKey = `media/placeholders/${spec.key}.jpg`;
 
@@ -291,42 +300,25 @@ export async function seedMedia(
       continue;
     }
 
-    const buffer = await render(spec);
-    const [width, height] = RATIOS[spec.ratio];
+    try {
+      await writePlaceholder(prisma, spec, storageKey, storageRoot, folders, actorId, assetIdByKey);
+    } catch (error) {
+      failures.push(spec.key);
+      if (failures.length === 1) {
+        console.warn(
+          `    ! could not generate placeholder images: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      }
+    }
+  }
 
-    const target = path.resolve(storageRoot, storageKey);
-    await mkdir(path.dirname(target), { recursive: true });
-    await writeFile(target, buffer);
-
-    // A tiny blurred version is inlined as the loading placeholder, so the page
-    // does not flash empty boxes before images arrive.
-    const blur = await sharp(buffer).resize(16).blur(1).jpeg({ quality: 40 }).toBuffer();
-
-    const asset = await prisma.mediaAsset.create({
-      data: {
-        kind: 'IMAGE',
-        folderId: folders.get(spec.folder) ?? null,
-        storageKey,
-        originalName: `${spec.key}.jpg`,
-        mimeType: 'image/jpeg',
-        byteSize: buffer.byteLength,
-        checksum: createHash('sha256').update(buffer).digest('hex'),
-        width,
-        height,
-        blurDataUrl: `data:image/jpeg;base64,${blur.toString('base64')}`,
-        placeholderColor: TONES[spec.tone].background,
-        title: `[Placeholder] ${spec.title}`,
-        // Alt text describes the intended photograph, so the slot is accessible
-        // even while the real image is outstanding.
-        altText: `Placeholder image. Intended photograph: ${spec.brief.toLowerCase()}.`,
-        usageNotes: `PLACEHOLDER. Replace with approved photography: ${spec.brief}.`,
-        visibility: 'CMS_ONLY',
-        uploadedById: actorId,
-      },
-      select: { id: true },
-    });
-
-    assetIdByKey.set(spec.key, asset.id);
+  if (failures.length > 0) {
+    console.warn(
+      `    ! ${failures.length} placeholder image(s) skipped. Content is seeded; image slots are ` +
+        'empty. Install fontconfig and a font, then re-run the seed to fill them.',
+    );
   }
 
   // Point the site-wide social sharing image at the generated default, so links
@@ -371,4 +363,57 @@ export function heroForPath(pathname: string): string {
   if (pathname.includes('/business') || pathname.includes('/supply-chain'))
     return 'hero-operations';
   return 'hero-corporate';
+}
+
+/**
+ * Render one placeholder, store it, and register it as a media asset.
+ *
+ * Separate from the loop so that a host without the fonts `sharp` needs fails
+ * one image rather than the whole seed.
+ */
+async function writePlaceholder(
+  prisma: PrismaClient,
+  spec: (typeof PLACEHOLDERS)[number],
+  storageKey: string,
+  storageRoot: string,
+  folders: Map<string, string>,
+  actorId: string,
+  assetIdByKey: Map<string, string>,
+): Promise<void> {
+  const buffer = await render(spec);
+  const [width, height] = RATIOS[spec.ratio];
+
+  const target = path.resolve(storageRoot, storageKey);
+  await mkdir(path.dirname(target), { recursive: true });
+  await writeFile(target, buffer);
+
+  // A tiny blurred version is inlined as the loading placeholder, so the page
+  // does not flash empty boxes before images arrive.
+  const blur = await sharp(buffer).resize(16).blur(1).jpeg({ quality: 40 }).toBuffer();
+
+  const asset = await prisma.mediaAsset.create({
+    data: {
+      kind: 'IMAGE',
+      folderId: folders.get(spec.folder) ?? null,
+      storageKey,
+      originalName: `${spec.key}.jpg`,
+      mimeType: 'image/jpeg',
+      byteSize: buffer.byteLength,
+      checksum: createHash('sha256').update(buffer).digest('hex'),
+      width,
+      height,
+      blurDataUrl: `data:image/jpeg;base64,${blur.toString('base64')}`,
+      placeholderColor: TONES[spec.tone].background,
+      title: `[Placeholder] ${spec.title}`,
+      // Alt text describes the intended photograph, so the slot is accessible
+      // even while the real image is outstanding.
+      altText: `Placeholder image. Intended photograph: ${spec.brief.toLowerCase()}.`,
+      usageNotes: `PLACEHOLDER. Replace with approved photography: ${spec.brief}.`,
+      visibility: 'CMS_ONLY',
+      uploadedById: actorId,
+    },
+    select: { id: true },
+  });
+
+  assetIdByKey.set(spec.key, asset.id);
 }

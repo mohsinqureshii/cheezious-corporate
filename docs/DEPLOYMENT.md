@@ -303,6 +303,25 @@ owner's floor plan — is refused by the public file route whatever the key says
 and reachable only through the submission queue that owns it, under that queue's
 permission, with every download audited.
 
+## Seeding, and what it needs from the host
+
+`pnpm db:seed` is content: permissions, roles, block definitions, the site map
+and the demonstration records. It is idempotent, and it needs the migrations to
+have run first — `pnpm db:migrate:deploy` creates the tables.
+
+One step depends on the host rather than the database. Placeholder photography
+is rendered by `sharp`, which draws text through libvips and therefore wants
+fontconfig and a font; a slim container often has neither, and emits
+`Fontconfig error: Cannot load default config file`. That warning alone is
+harmless. A genuine failure is caught per image: the seed reports how many were
+skipped and carries on, because a hundred pages of content matters more than
+twenty decorative images. Re-running the seed after installing fonts fills them
+in.
+
+**Readiness does not check the schema.** `/ready` runs a connectivity query, so
+it returns 200 against a database with no tables in it. A green health check is
+not evidence that the migrations have run.
+
 ## Health and readiness
 
 - `GET /health` — the process is up.

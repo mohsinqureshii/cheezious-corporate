@@ -3,7 +3,13 @@ import { notFound } from 'next/navigation';
 
 import { Footer } from '@/components/shell/Footer';
 import { Header } from '@/components/shell/Header';
-import { getFooter, getNavigation, getSettings } from '@/lib/content';
+import {
+  getFooter,
+  getNavigation,
+  getSettings,
+  type FooterData,
+  type NavigationGroup,
+} from '@/lib/content';
 
 /**
  * Locale layout.
@@ -56,6 +62,24 @@ const LABELS: Record<
   },
 };
 
+/**
+ * Fetch one piece of site furniture, falling back rather than failing the page.
+ *
+ * Returns `fallback` when the call throws, after logging what went wrong and
+ * which call it was. Nothing here is worth a 500.
+ */
+async function resilient<T>(what: string, load: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await load();
+  } catch (error) {
+    console.error(
+      `[layout] could not load ${what}; rendering without it.`,
+      error instanceof Error ? error.message : error,
+    );
+    return fallback;
+  }
+}
+
 export default async function LocaleLayout({
   children,
   params,
@@ -69,10 +93,19 @@ export default async function LocaleLayout({
 
   // Fetched concurrently: three sequential round trips on every page would be
   // three round trips too many.
+  //
+  // Each one degrades on its own rather than throwing. This is the root layout,
+  // so an unhandled failure here is not a missing menu — it is a 500 on every
+  // page of the site, including the pages that would have rendered perfectly
+  // well without a footer. A site with no navigation is bad; a site that is
+  // entirely down because the navigation endpoint hiccuped is worse.
+  //
+  // The failure is logged rather than swallowed: the operator needs to know the
+  // furniture is missing, and which call could not be made.
   const [navigations, footer, settings] = await Promise.all([
-    getNavigation(locale),
-    getFooter(locale),
-    getSettings(locale),
+    resilient('navigation', () => getNavigation(locale), [] as NavigationGroup[]),
+    resilient('footer', () => getFooter(locale), { footer: null, groups: [] } as FooterData),
+    resilient('settings', () => getSettings(locale), {} as Record<string, unknown>),
   ]);
 
   const primary = navigations.find((nav) => nav.location === 'PRIMARY')?.items ?? [];

@@ -2,6 +2,7 @@ import { disconnect } from '@cheezious/database';
 
 import { createApp } from './app';
 import { createContext } from './lib/context';
+import { startWorker, stopWorker } from './worker-runtime';
 
 /**
  * API entry point.
@@ -15,10 +16,24 @@ async function main(): Promise<void> {
 
   const server = app.listen(ctx.env.API_PORT, ctx.env.API_HOST, () => {
     ctx.logger.info(
-      { port: ctx.env.API_PORT, host: ctx.env.API_HOST, env: ctx.env.NODE_ENV },
+      {
+        port: ctx.env.API_PORT,
+        host: ctx.env.API_HOST,
+        env: ctx.env.NODE_ENV,
+        worker: ctx.env.RUN_WORKER ? 'embedded' : 'separate',
+      },
       'Cheezious API listening',
     );
   });
+
+  // The worker, when this deployment runs it here rather than as its own
+  // service. Started after the server is listening so a slow first scan cannot
+  // delay readiness, and deliberately not awaited — it runs until shutdown.
+  if (ctx.env.RUN_WORKER) {
+    void startWorker().catch((error: unknown) => {
+      ctx.logger.error({ err: error }, 'embedded worker stopped unexpectedly');
+    });
+  }
 
   /**
    * Graceful shutdown: stop accepting connections, let in-flight requests
@@ -35,6 +50,9 @@ async function main(): Promise<void> {
     forceExit.unref();
 
     server.close(async () => {
+      // The worker holds the same connection pool, so it has to finish before
+      // the pool closes under it.
+      if (ctx.env.RUN_WORKER) await stopWorker().catch(() => undefined);
       await disconnect(ctx.prisma).catch(() => undefined);
       clearTimeout(forceExit);
       process.exit(0);

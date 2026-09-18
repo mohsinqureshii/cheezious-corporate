@@ -124,6 +124,24 @@ The wrapper forwards SIGTERM and SIGINT to the process it started. Without that,
 a deploy's shutdown signal stops at the wrapper and the service is killed
 mid-request instead of draining.
 
+## Running the worker inside the API
+
+`RUN_WORKER=true` on the API service runs the background loop in that process
+instead of as its own service, and the worker service can then be deleted. It is
+off by default.
+
+Separate is the better arrangement and stays the default: a long job cannot
+block a request, and the two scale independently. Embedding trades that for one
+fewer thing to deploy, which is the right trade at low traffic.
+
+**Never set it with more than one API replica.** Each replica would run its own
+loop. Jobs are claimed by conditional update so they would not double-publish,
+but the content-health scan and the expiry sweep are not claimed, and would run
+once per replica.
+
+It is the same code either way — `worker-runtime.ts` — so nothing behaves
+differently, and moving back to a separate service is deleting the variable.
+
 ## The public site's build needs the API running
 
 `next build` prerenders around 108 pages, and each one fetches its content from

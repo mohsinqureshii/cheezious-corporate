@@ -87,6 +87,17 @@ export const apiSchema = runtimeSchema.merge(databaseSchema).extend({
 
   SMTP_URL: z.string().optional().or(z.literal('')),
   MAIL_FROM: z.string().default('Cheezious Corporate <no-reply@example.com>'),
+
+  /**
+   * Run the background worker inside the API process.
+   *
+   * Off by default, because a separate worker is the better arrangement: a long
+   * job cannot block a request, and the two scale independently. Turning it on
+   * trades that for one fewer service to deploy, which is the right trade at
+   * low traffic. Never turn it on with more than one API replica — each replica
+   * would run its own loop.
+   */
+  RUN_WORKER: boolish.default('false'),
 });
 
 /**

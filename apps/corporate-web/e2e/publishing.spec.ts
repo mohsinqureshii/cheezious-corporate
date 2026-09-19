@@ -13,7 +13,8 @@ import { API_URL, RUN_ID, SITE_URL, fetchPublic, signIn } from './support';
  *   1. A draft is not on the public site.
  *   2. Publishing puts it there, with its metadata.
  *   3. Editing a published page does **not** change what the public site serves.
- *   4. Publishing again does.
+ *   4. Preview does show it, on its own uncacheable route.
+ *   5. Publishing again releases it.
  *
  * Point three is the one worth having a browser for. It is the whole reason
  * draft and published are separate records, and it is invisible to any test that
@@ -108,6 +109,36 @@ test.describe('publishing round trip', () => {
     const { body } = await fetchPublic(request, `/en${path}`);
     expect(body).toContain('First published text.');
     expect(body).not.toContain('Edited but not yet published.');
+  });
+
+  test('preview shows the working copy the public site is withholding', async ({ request }) => {
+    const issued = await request.post(`${API_URL}/api/cms/pages/${pageId}/preview`, {
+      headers: { Cookie: cookie },
+    });
+    expect(issued.ok(), await issued.text()).toBeTruthy();
+    const { url } = await issued.json();
+
+    // Preview is its own route. The published page keeps its own address, so a
+    // preview can never be served in its place — and the route is always
+    // dynamic, which is what lets it read a token at all.
+    expect(url).toContain(`/en/preview${path}`);
+
+    const preview = await request.get(url, { failOnStatusCode: false });
+    expect(preview.status()).toBe(200);
+    const body = await preview.text();
+
+    expect(body).toContain('Edited but not yet published.');
+    expect(body).toContain('this shows unpublished content');
+
+    // Unpublished content behind a per-editor token must not be cached by
+    // anything between the server and that editor.
+    expect(preview.headers()['cache-control']).toContain('no-store');
+    expect(body).toContain('noindex');
+  });
+
+  test('preview without a token is not a second copy of the page', async ({ request }) => {
+    const { status } = await fetchPublic(request, `/en/preview${path}`);
+    expect(status, 'the preview route must not serve published content').toBe(404);
   });
 
   test('publishing again releases the edit', async ({ request }) => {

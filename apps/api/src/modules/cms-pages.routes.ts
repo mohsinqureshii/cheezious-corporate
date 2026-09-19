@@ -703,7 +703,10 @@ export function cmsPagesRoutes(): Router {
       );
 
       res.json({
-        url: `${browserSiteOrigin(req)}/${page.locale}${page.path}?preview=${encodeURIComponent(token)}`,
+        // `/preview` is a route of its own on the site: always dynamic, never
+        // cached, and disallowed in robots.txt. The published page keeps its own
+        // address, so a preview can never be mistaken for it.
+        url: `${browserSiteOrigin(req)}/${page.locale}/preview${page.path}?preview=${encodeURIComponent(token)}`,
         expiresAt: new Date(expiresAt),
       });
     }),

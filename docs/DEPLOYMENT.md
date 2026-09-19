@@ -219,17 +219,31 @@ once per replica.
 It is the same code either way — `worker-runtime.ts` — so nothing behaves
 differently, and moving back to a separate service is deleting the variable.
 
-## The public site's build needs the API running
+## The public site's build can reach the API, or not
 
-`next build` prerenders around 108 pages, and each one fetches its content from
-`NEXT_PUBLIC_API_URL`. With the API unreachable the build does not fail loudly:
-it logs `ECONNREFUSED`, leaves `.next` incomplete, and the site then dies at
-startup on a missing `prerender-manifest.json`.
+`next build` prerenders the roughly 108 published pages, each fetching its
+content from the API. When the API is reachable that is what happens, and the
+site starts with its pages already built.
 
-So the API must be deployed and serving **before** the public site or the CMS is
-built. `NEXT_PUBLIC_API_URL` must also be the API's _public_ origin, never a
-private network address: it is inlined into the client bundle, so the browser
-uses the same value.
+When it is not — which is always under `SERVICE=all`, where the API is a process
+in the very service being built — the build logs `ECONNREFUSED` for each page and
+succeeds anyway, prerendering nothing. Every page then renders on its first
+request and is cached from there. This is supported and correct; the only cost is
+that the first visitor to each page waits for it.
+
+Under the four-service arrangement the API should still be deployed and serving
+first, and `NEXT_PUBLIC_API_URL` must be the API's _public_ origin, never a
+private address: it is inlined into the client bundle, so the browser uses the
+same value.
+
+**Do not add a dynamic API to the page route to work around anything.** A
+statically generated route that reads `searchParams`, `cookies()` or `headers()`
+throws `DYNAMIC_SERVER_USAGE` whenever it renders on demand — which is every page
+published after the build, and _every page_ when the build prerendered nothing.
+The symptom is a 500 on a page that is entirely healthy, with the API returning
+200 for that page's content a millisecond earlier. Preview needs a token from the
+query string, and it is a separate always-dynamic route (`/[locale]/preview`)
+for precisely this reason.
 
 ## Railway
 

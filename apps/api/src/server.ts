@@ -1,6 +1,7 @@
 import { disconnect } from '@cheezious/database';
 
 import { createApp } from './app';
+import { stopGateway } from './gateway';
 import { createContext } from './lib/context';
 import { startWorker, stopWorker } from './worker-runtime';
 
@@ -53,6 +54,7 @@ async function main(): Promise<void> {
       // The worker holds the same connection pool, so it has to finish before
       // the pool closes under it.
       if (ctx.env.RUN_WORKER) await stopWorker().catch(() => undefined);
+      if (ctx.env.SERVE_ALL) stopGateway();
       await disconnect(ctx.prisma).catch(() => undefined);
       clearTimeout(forceExit);
       process.exit(0);

@@ -119,6 +119,23 @@ export const apiSchema = runtimeSchema.merge(databaseSchema).extend({
    * would run its own loop.
    */
   RUN_WORKER: boolish.default('false'),
+
+  /**
+   * Serve the whole platform from this one process.
+   *
+   * The API keeps its own routes and puts the public site and the CMS behind
+   * them on the same origin, running each as a child process on loopback. One
+   * service, one domain, and — because the browser only ever talks to one
+   * origin — no CORS at all, which is the entire class of configuration that
+   * makes a four-service deployment tedious to get right.
+   *
+   * The cost is that the site and the CMS can no longer be scaled or deployed
+   * independently. Below a certain size that is not a cost at all.
+   */
+  SERVE_ALL: boolish.default('false'),
+  /** Loopback ports for the child applications. Never exposed. */
+  WEB_INTERNAL_PORT: port.default(3000),
+  CMS_INTERNAL_PORT: port.default(3001),
 });
 
 /**

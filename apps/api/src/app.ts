@@ -3,6 +3,7 @@ import cors from 'cors';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
 
+import { mountGateway } from './gateway';
 import type { AppContext } from './lib/context';
 import {
   accessLog,
@@ -43,18 +44,11 @@ export function createApp(ctx: AppContext): Express {
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
 
+  // Transport-level headers apply to everything this process serves.
   app.use(
     helmet({
-      // The API serves JSON and media, never HTML pages, so a restrictive
-      // default CSP is safe here. The public site sets its own.
-      contentSecurityPolicy: {
-        directives: {
-          defaultSrc: ["'none'"],
-          frameAncestors: ["'none'"],
-          baseUri: ["'none'"],
-          formAction: ["'none'"],
-        },
-      },
+      // The content policy is mounted separately, below.
+      contentSecurityPolicy: false,
       crossOriginResourcePolicy: { policy: 'cross-origin' },
       referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
       hsts:
@@ -62,14 +56,52 @@ export function createApp(ctx: AppContext): Express {
     }),
   );
 
+  /**
+   * The content policy, on the API's own routes only.
+   *
+   * `default-src 'none'` is right for JSON and media, and catastrophic for an
+   * HTML page: it blocks the inline bootstrap and the fetches that hydrate it,
+   * so the page arrives intact and never becomes usable. When this process also
+   * serves the site and the CMS, those responses have to keep the policies
+   * their own applications set, which is why this is scoped by path rather than
+   * applied to everything.
+   */
+  const apiContentPolicy = helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+      baseUri: ["'none'"],
+      formAction: ["'none'"],
+    },
+  });
+  app.use('/api', apiContentPolicy);
+  app.use('/files', apiContentPolicy);
+
+  // `cors` does not pass the request to its origin callback, so the Host is
+  // recorded here, one middleware earlier, for the same-origin comparison below.
+  let requestHost = '';
+  app.use((req, _res, next) => {
+    requestHost = req.headers.host ?? '';
+    next();
+  });
+
   app.use(
     cors({
       origin(origin, callback) {
-        // Server-to-server calls and same-origin requests carry no Origin.
+        // A GET carries no Origin, and neither does a server-to-server call.
         if (!origin) return callback(null, true);
 
         const allowed = ctx.env.CORS_ALLOWED_ORIGINS;
         if (allowed.length === 0 || allowed.includes(origin)) return callback(null, true);
+
+        // Same-origin requests still send `Origin` on anything that is not a
+        // simple GET. When this process serves the site and the CMS, that
+        // origin is its own — and it cannot be configured in advance, because
+        // the deployment's own domain is not known until it has one. Comparing
+        // the Origin's host against the Host the request arrived on settles it
+        // without widening anything: a genuinely cross-site request has a
+        // different host by definition.
+        if (ctx.env.SERVE_ALL && sameOrigin(origin, requestHost)) return callback(null, true);
 
         ctx.logger.warn({ origin }, 'CORS origin rejected');
         callback(new Error('Origin not allowed'));
@@ -143,8 +175,31 @@ export function createApp(ctx: AppContext): Express {
   // these are assets, not API responses, and are cached very differently.
   app.use('/files', mediaRoutes());
 
+  // When this process serves the whole platform, the site and the CMS sit
+  // behind the API's own routes — so an unknown /api path still answers as the
+  // API rather than being handed to Next.
+  if (ctx.env.SERVE_ALL) mountGateway(app, ctx);
+
   app.use(notFoundHandler());
   app.use(errorHandler());
 
   return app;
+}
+
+/**
+ * Is this Origin the same host the request arrived on?
+ *
+ * Compares host and port, which is what "same origin" means for the purpose of
+ * deciding whether a request needs CORS at all. The scheme is deliberately not
+ * compared: behind a TLS-terminating proxy the request arrives as http while
+ * the browser's Origin says https, and treating that as cross-site would reject
+ * every request the deployment actually receives.
+ */
+function sameOrigin(origin: string, host: string): boolean {
+  if (!host) return false;
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
 }

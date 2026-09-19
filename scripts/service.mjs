@@ -22,6 +22,10 @@ import { spawn } from 'node:child_process';
  */
 
 const SERVICES = {
+  // Everything in one process: the API serves its own routes and puts the
+  // public site and the CMS behind them on the same origin. One service, one
+  // domain, and no CORS. See `SERVE_ALL` and `apps/api/src/gateway.ts`.
+  all: { pkg: '@cheezious/api', start: 'start', builds: 'all' },
   api: { pkg: '@cheezious/api', start: 'start' },
   worker: { pkg: '@cheezious/api', start: 'worker:start' },
   web: { pkg: '@cheezious/corporate-web', start: 'start' },
@@ -61,9 +65,13 @@ const platformName = (
 
 const service = process.env.SERVICE?.trim() || ALIASES[platformName];
 
-function run(args) {
+function run(args, env = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn('pnpm', args, { stdio: 'inherit', shell: false });
+    const child = spawn('pnpm', args, {
+      stdio: 'inherit',
+      shell: false,
+      env: { ...process.env, ...env },
+    });
     // Signals have to reach the real process, or a deploy's SIGTERM stops at
     // this wrapper and the service is killed mid-request instead of draining.
     for (const signal of ['SIGTERM', 'SIGINT']) {
@@ -93,10 +101,22 @@ if (task === 'build') {
   await run(['build:packages']);
   // No SERVICE means a developer running `pnpm build` locally, who wants all of
   // it. A platform sets SERVICE and builds only what that service runs.
+  // `all` needs every application built, as does a developer with no SERVICE.
+  const buildsEverything = !service || SERVICES[service].builds === 'all';
+
+  // `NEXT_PUBLIC_*` is compiled into the browser bundle, not read at startup,
+  // so the single-service layout has to be decided here rather than when the
+  // process starts. Empty means "same origin", which is the whole point of it.
+  const singleServiceBuild =
+    service === 'all'
+      ? { NEXT_PUBLIC_API_URL: '', NEXT_PUBLIC_CMS_API_URL: '', CMS_BASE_PATH: '/admin' }
+      : {};
+
   await run(
-    service
-      ? ['--filter', SERVICES[service].pkg, 'build']
-      : ['-r', '--filter', './apps/**', 'build'],
+    buildsEverything
+      ? ['-r', '--filter', './apps/**', 'build']
+      : ['--filter', SERVICES[service].pkg, 'build'],
+    singleServiceBuild,
   );
 } else if (task === 'start') {
   if (!service) {
@@ -112,7 +132,10 @@ if (task === 'build') {
           : 'No platform service name was visible either, so there was nothing to infer it from.'),
     );
   }
-  await run(['--filter', SERVICES[service].pkg, SERVICES[service].start]);
+  await run(
+    ['--filter', SERVICES[service].pkg, SERVICES[service].start],
+    service === 'all' ? { SERVE_ALL: 'true' } : {},
+  );
 } else {
   fail(`Usage: node scripts/service.mjs <build|start>`);
 }

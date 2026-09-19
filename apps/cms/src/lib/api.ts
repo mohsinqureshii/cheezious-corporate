@@ -9,7 +9,18 @@ import type { Permission } from '@cheezious/permissions';
  * an inconvenience.
  */
 
-const API_URL = process.env.NEXT_PUBLIC_CMS_API_URL ?? 'http://localhost:4000';
+/**
+ * Where to reach the API.
+ *
+ * This module runs in both places, so it resolves differently in each. On the
+ * server, `INTERNAL_API_URL` points at loopback when the platform is one
+ * process. In the browser, an empty `NEXT_PUBLIC_CMS_API_URL` means the API is
+ * on this same origin — which is the arrangement that needs no CORS at all.
+ */
+const API_URL =
+  typeof window === 'undefined'
+    ? process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_CMS_API_URL || 'http://localhost:4000'
+    : (process.env.NEXT_PUBLIC_CMS_API_URL ?? 'http://localhost:4000').replace(/\/+$/, '');
 
 export class CmsApiError extends Error {
   constructor(

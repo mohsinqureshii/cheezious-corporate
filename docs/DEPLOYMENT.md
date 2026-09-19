@@ -97,6 +97,38 @@ Every process binds `PORT` when the platform sets one — Railway, Fly, Heroku a
 Cloud Run all inject it. `API_PORT` remains the configured name and is used when
 `PORT` is absent; the public site and CMS fall back to 3000 and 3001.
 
+## One service, or four
+
+The platform can run either way, and the choice is one variable.
+
+**`SERVICE=all`** runs everything in one process. The API serves its own routes
+and puts the public site and the CMS behind them, each as a child on loopback,
+with the CMS under `/admin`. One service, one domain, one set of variables.
+
+That single origin is the point. A browser that only ever talks to one host
+needs no CORS, no preflight, and no API origin compiled into a bundle — which
+between them are most of what makes the four-service arrangement fiddly to
+configure. It is the right default below the traffic at which the trade starts
+to hurt.
+
+What it gives up: the site and the CMS can no longer be deployed or scaled
+apart, and one process holds three applications, so a crash takes all of them.
+When that matters, deploy `api`, `web` and `cms` separately again — the code is
+identical, and only the variables change.
+
+Two details follow from the single origin and are worth knowing:
+
+- **The content policy is scoped by path.** `default-src 'none'` is right for
+  JSON and wrong for an HTML page — it blocks the inline bootstrap and the
+  fetches that hydrate it, so the page arrives complete and never becomes
+  usable. It applies to `/api` and `/files` only; the two applications keep the
+  headers they set themselves.
+- **Same-origin requests are recognised.** A browser sends `Origin` on anything
+  that is not a simple GET, including to its own host, and the deployment's own
+  domain cannot be known in advance. With `SERVE_ALL`, an `Origin` whose host
+  matches the request's `Host` is allowed; anything else still goes through
+  `CORS_ALLOWED_ORIGINS`.
+
 ## One repository, four processes
 
 Most platforms infer what to run from the root `package.json`. This repository
@@ -107,6 +139,7 @@ Railway's Railpack reports "no start command detected" and refuses to build.
 
 | `SERVICE` | `pnpm build` builds | `pnpm start` runs               |
 | --------- | ------------------- | ------------------------------- |
+| `all`     | everything          | the API, the site and the CMS   |
 | `api`     | packages + API      | `apps/api/dist/server.cjs`      |
 | `worker`  | packages + API      | `apps/api/dist/worker.cjs`      |
 | `web`     | packages + web      | `next start` on the public site |

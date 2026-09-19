@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  /**
+   * Served under `/admin` when the platform runs as one service, so that the
+   * CMS and the public site can share a domain. Empty when the CMS has a
+   * domain of its own, which is the better arrangement at scale.
+   */
+  basePath: process.env.CMS_BASE_PATH || undefined,
+
   reactStrictMode: true,
   poweredByHeader: false,
   eslint: { ignoreDuringBuilds: true },

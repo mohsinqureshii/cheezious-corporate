@@ -3,6 +3,8 @@
 import type { Locale } from '@cheezious/config';
 import { useId, useRef, useState } from 'react';
 
+import { apiOrigin } from '@/lib/urls';
+
 /**
  * Job application form.
  *
@@ -94,7 +96,7 @@ export function JobApplicationForm({
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'}/api/public/${locale}/jobs/${encodeURIComponent(jobSlug)}/apply`,
+        `${apiOrigin()}/api/public/${locale}/jobs/${encodeURIComponent(jobSlug)}/apply`,
         { method: 'POST', body: formData },
       );
 

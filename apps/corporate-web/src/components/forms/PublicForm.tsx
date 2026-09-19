@@ -3,6 +3,8 @@
 import type { Locale } from '@cheezious/config';
 import { useId, useRef, useState } from 'react';
 
+import { apiOrigin } from '@/lib/urls';
+
 /**
  * Public form.
  *
@@ -320,10 +322,10 @@ export function PublicForm({
     formData.set('elapsedMs', String(Date.now() - mountedAt.current));
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'}/api/submit/${endpoint}`,
-        { method: 'POST', body: formData },
-      );
+      const response = await fetch(`${apiOrigin()}/api/submit/${endpoint}`, {
+        method: 'POST',
+        body: formData,
+      });
       const body = (await response.json()) as {
         ok?: boolean;
         reference?: string;

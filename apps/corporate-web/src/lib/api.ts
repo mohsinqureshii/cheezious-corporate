@@ -12,7 +12,16 @@ import 'server-only';
  * can revalidate exactly the routes that show it rather than the whole site.
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+/**
+ * Where this server reaches the API.
+ *
+ * `INTERNAL_API_URL` is set when the platform runs as one process: the API is
+ * then on loopback, so a render talks to it directly instead of going back out
+ * through the public edge and in again. Otherwise it is the public origin, as
+ * it was when the API was a service of its own.
+ */
+const API_URL =
+  process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 export interface FetchOptions {
   /** Seconds before Next revalidates. `false` opts out of caching entirely. */

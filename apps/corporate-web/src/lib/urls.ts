@@ -9,12 +9,23 @@ import { DEFAULT_LOCALE, type Locale } from '@cheezious/config';
  * bundle.
  */
 
+/**
+ * The origin the browser should call the API on.
+ *
+ * Empty when the platform is served from one process: the API is then on the
+ * same origin as the page, so a relative path is both correct and immune to the
+ * domain changing. A separate API service sets the variable to its own origin.
+ */
+export function apiOrigin(): string {
+  const configured = process.env.NEXT_PUBLIC_API_URL;
+  if (configured !== undefined) return configured.replace(/\/+$/, '');
+  return 'http://localhost:4000';
+}
+
 /** Resolve a stored media key to a URL the browser can load. */
 export function mediaUrl(storageKey: string | null | undefined): string | null {
   if (!storageKey) return null;
-  const base =
-    process.env.NEXT_PUBLIC_MEDIA_URL ??
-    `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000'}/files`;
+  const base = process.env.NEXT_PUBLIC_MEDIA_URL ?? `${apiOrigin()}/files`;
   return `${base.replace(/\/+$/, '')}/${storageKey.replace(/^\/+/, '')}`;
 }
 

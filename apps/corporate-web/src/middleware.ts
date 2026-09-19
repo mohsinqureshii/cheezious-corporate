@@ -1,6 +1,8 @@
 import { DEFAULT_LOCALE, LOCALES, type Locale } from '@cheezious/config';
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { resolveRequestOrigin } from '@/lib/origin';
+
 /**
  * Locale routing.
  *
@@ -67,7 +69,12 @@ export function middleware(request: NextRequest): NextResponse {
   // The bare root goes to the corporate home, not to an empty locale root.
   const target = pathname === '/' ? `/${locale}/company` : `/${locale}${pathname}`;
 
-  const response = NextResponse.redirect(new URL(`${target}${search}`, request.url));
+  const origin = resolveRequestOrigin((name) => request.headers.get(name), {
+    url: request.url,
+    scheme: request.nextUrl.protocol.replace(':', ''),
+  });
+
+  const response = NextResponse.redirect(new URL(`${target}${search}`, origin));
 
   // Remember the resolved locale so a returning visitor is not re-detected on
   // every navigation.

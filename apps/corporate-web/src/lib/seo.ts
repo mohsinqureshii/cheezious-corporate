@@ -6,6 +6,7 @@ import type { Metadata } from 'next';
 
 import { mediaUrl } from './api';
 import type { CorporatePage } from './content';
+import { resolveSiteUrl } from './origin';
 
 /**
  * SEO for Next.js.
@@ -16,8 +17,9 @@ import type { CorporatePage } from './content';
  * title, description, canonical URL and hreflang alternates.
  */
 
+/** The published origin — see `resolveSiteUrl` for why it is resolved this way. */
 export function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/+$/, '');
+  return resolveSiteUrl(process.env);
 }
 
 /**

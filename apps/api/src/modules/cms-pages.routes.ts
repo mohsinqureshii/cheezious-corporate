@@ -9,7 +9,7 @@ import {
 } from '@cheezious/permissions';
 import { normalizePath, slugify } from '@cheezious/utilities';
 import { ApiError, sanitizeHtml } from '@cheezious/validation';
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import { z } from 'zod';
 
 import { AuditService } from '../lib/audit';
@@ -703,7 +703,7 @@ export function cmsPagesRoutes(): Router {
       );
 
       res.json({
-        url: `${req.ctx.env.CORPORATE_WEB_URL}/${page.locale}${page.path}?preview=${encodeURIComponent(token)}`,
+        url: `${browserSiteOrigin(req)}/${page.locale}${page.path}?preview=${encodeURIComponent(token)}`,
         expiresAt: new Date(expiresAt),
       });
     }),
@@ -809,4 +809,22 @@ async function syncSearchIndex(
   } catch {
     // Indexing is best-effort: a publish must succeed even if search is down.
   }
+}
+
+/**
+ * The origin to hand a browser for a preview link.
+ *
+ * The opposite of the revalidation service's question. Under `SERVE_ALL` the
+ * site, the CMS and this API share one origin — the one the editor's browser is
+ * already on — and the platform assigns it, so it can only be learned from the
+ * request. `CORPORATE_WEB_URL` would be the loopback default, which opens on the
+ * editor's own machine and shows nothing.
+ */
+function browserSiteOrigin(req: Request): string {
+  if (!req.ctx.env.SERVE_ALL) return req.ctx.env.CORPORATE_WEB_URL;
+
+  const host = req.headers.host;
+  if (!host) return req.ctx.env.CORPORATE_WEB_URL;
+
+  return `${req.protocol}://${host}`;
 }

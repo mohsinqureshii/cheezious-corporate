@@ -27,9 +27,12 @@ export interface RevalidationTarget {
 }
 
 /**
- * The sitemap is a route handler with its own cache entry, not a page assembled
- * from tagged fetches, so clearing the tag its data came from is not enough to
- * make it re-render. It has to be named as a path.
+ * The sitemap is named as a path as well as by tag.
+ *
+ * It renders per request today, so the tag is what actually clears it and the
+ * path costs nothing. It is kept because a route handler that is cached again
+ * later would hold its own entry, which no tag reaches — and the failure then is
+ * silent: a sitemap that looks right and is a day old.
  */
 const SITEMAP_PATH = '/sitemap.xml';
 
@@ -78,7 +81,7 @@ export class RevalidationService {
     if (!env.REVALIDATE_SECRET) return;
 
     try {
-      const response = await fetch(`${env.CORPORATE_WEB_URL}/api/revalidate`, {
+      const response = await fetch(`${publicSiteOrigin(this.ctx)}/api/revalidate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -98,4 +101,19 @@ export class RevalidationService {
       logger.warn({ err: error, target }, 'revalidation could not be reached');
     }
   }
+}
+
+/**
+ * Where this process can reach the public site.
+ *
+ * Not the same question as where a *browser* reaches it. Under `SERVE_ALL` the
+ * site is a child process on loopback and the deployment's public domain is
+ * assigned by the platform, so `CORPORATE_WEB_URL` is neither set nor useful:
+ * sending the revalidation to it means sending it nowhere, and a publish then
+ * takes the full revalidation window to appear. Loopback is also one hop rather
+ * than a round trip out through the public edge and back.
+ */
+function publicSiteOrigin(ctx: AppContext): string {
+  const { env } = ctx;
+  return env.SERVE_ALL ? `http://127.0.0.1:${env.WEB_INTERNAL_PORT}` : env.CORPORATE_WEB_URL;
 }

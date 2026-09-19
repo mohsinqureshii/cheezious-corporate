@@ -20,7 +20,15 @@ import { siteUrl } from '@/lib/seo';
  * open roles change daily and say so; a policy archive does not.
  */
 
-export const revalidate = 3600;
+/**
+ * Rendered per request, cached at the edge.
+ *
+ * Prerendering this at build time would freeze the site's own origin into it,
+ * and on a platform that assigns the domain after the build that origin is
+ * wrong. The `Cache-Control` below still keeps the work off the origin, and
+ * the data this reads is cached and tag-invalidated independently.
+ */
+export const dynamic = 'force-dynamic';
 
 /** URL builders per collection, so a path is written once. */
 const PATHS = {

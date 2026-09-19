@@ -128,6 +128,50 @@ Two details follow from the single origin and are worth knowing:
   domain cannot be known in advance. With `SERVE_ALL`, an `Origin` whose host
   matches the request's `Host` is allowed; anything else still goes through
   `CORS_ALLOWED_ORIGINS`.
+- **Redirects and canonicals resolve the origin themselves.** See below; a
+  deployment that is assigned its domain after the build cannot get either from
+  a compiled-in value.
+
+## Knowing its own address
+
+Two things need the site's origin, and they need different answers.
+
+A **redirect** — the locale prefix middleware adds to an unprefixed path — needs
+the origin the visitor is actually using. Next cannot supply it: self-hosted, its
+`request.url` is built from the address the server is bound to and ignores the
+`Host` header entirely, so `NextResponse.redirect(new URL(path, request.url))`
+sends every visitor to `localhost:3000`. That is not a misconfiguration and no
+variable fixes it. The middleware reads `Host` (falling back to
+`X-Forwarded-Host`) and the proxy's `X-Forwarded-Proto` instead. `Host` is
+preferred because the edge routes to this service by it, so it is the one name
+known to reach us, and a forged `X-Forwarded-Host` cannot redirect a visitor
+somewhere else.
+
+A **canonical URL** — and hreflang, JSON-LD and the sitemap — needs the origin
+the site is _published_ at, which has to be the same for every visitor or search
+engines see a different canonical per hostname. That comes from configuration,
+resolved in this order:
+
+| Source                  | When it is read | Use it for                          |
+| ----------------------- | --------------- | ----------------------------------- |
+| `SITE_URL`              | Runtime         | Any deployment. Prefer this.        |
+| `NEXT_PUBLIC_SITE_URL`  | Build           | Local development.                  |
+| `RAILWAY_PUBLIC_DOMAIN` | Runtime         | Nothing to set; Railway injects it. |
+| `http://localhost:3000` | —               | Last resort.                        |
+
+Runtime comes first deliberately. `NEXT_PUBLIC_*` is compiled into the bundle, so
+a wrong value survives every restart and can only be corrected by rebuilding —
+and on a platform that assigns the domain _after_ the image is built, the value
+at build time is necessarily wrong. `SITE_URL` is read by the running server.
+
+On Railway neither needs to be set: `RAILWAY_PUBLIC_DOMAIN` is the service's
+primary domain. Set `SITE_URL` once a real domain is attached, because the
+canonical should name the domain the brand publishes, not the platform's.
+
+`robots.txt` and `sitemap.xml` render per request for this reason — prerendering
+them would freeze the origin into the build. Content pages are prerendered but
+revalidate every five minutes, so a corrected origin reaches them shortly after a
+restart without a rebuild.
 
 ## One repository, four processes
 
@@ -189,9 +233,90 @@ uses the same value.
 
 ## Railway
 
-Five services: PostgreSQL, the API, the worker, the public site and the CMS. The
-four application services all deploy the same repository and differ only in one
-variable:
+Two services: PostgreSQL and one application service running `SERVICE=all`. That
+is the arrangement this section describes, and the one to start from.
+
+Splitting into four application services is supported and documented at the end
+of this section, but it is not where to begin: four services mean four sets of
+variables, two domains that must be told about each other, and a CORS
+configuration whose only symptom when wrong is a sign-in that silently fails.
+
+`railway/*.json` carry per-service build and start commands, but they apply only
+to a service pointed at one under **Settings → Config-as-code**, and services
+created after 26 August 2026 cannot be. Do not rely on them. `SERVICE` is what
+makes the build work, on any service, with nothing to configure.
+
+Leave the root directory at the repository root. Setting it to `apps/api` breaks
+pnpm workspace resolution, because the lockfile and the `@cheezious/*` packages
+live above it.
+
+### First deployment, step by step
+
+1. **Add PostgreSQL.** Railway's own PostgreSQL service. Nothing to configure.
+
+2. **Deploy this repository** as a second service. Leave the root directory
+   empty, and set no build or start command — the root scripts read `SERVICE`.
+
+3. **Generate a domain** under **Settings → Networking**. Generate exactly one.
+   A second domain is not harmful, but only one can be canonical, and having two
+   makes it ambiguous which one that is.
+
+4. **Set the pre-deploy command** to `pnpm db:migrate:deploy`, under
+   **Settings → Deploy**. Migrations then run once per release, before the new
+   version starts serving.
+
+5. **Set the variables.** This is the complete list; everything else has a
+   working default:
+
+   ```
+   SERVICE=all
+   PORT=8080
+   RUN_WORKER=true
+   DATABASE_URL=${{Postgres.DATABASE_URL}}
+   DIRECT_DATABASE_URL=${{Postgres.DATABASE_URL}}
+   SESSION_SECRET=<openssl rand -base64 48>
+   PREVIEW_SECRET=<a different one>
+   REVALIDATE_SECRET=<a different one>
+   INTERNAL_API_KEY=<a different one>
+   NEXT_PUBLIC_SEO_NOINDEX=1
+   ```
+
+   No URL variables at all. The single origin means the browser never needs one,
+   and the site reads its own domain from `RAILWAY_PUBLIC_DOMAIN` for canonicals
+   — see "Knowing its own address" above.
+
+   Both database URLs point at the same place on purpose: Railway's PostgreSQL is
+   not pooled, and the two differ only when it is. Four _distinct_ secrets, not
+   one value repeated — the API refuses to start in production with a
+   placeholder, but it cannot tell that you reused a real one.
+
+6. **Deploy, and wait for it to come up.** The first build is slow: it builds the
+   API, the public site and the CMS in turn.
+
+7. **Seed once.** Migrations run themselves; seeding does not. Open the
+   service's shell and run `pnpm db:seed` against the empty database, once.
+
+8. **Check it.** On the generated domain:
+
+   - `/ready` returns `{"status":"ready"}`
+   - `/` redirects to `/en/company` **on that same domain** — if it redirects to
+     `localhost:3000`, the deployment predates the fix described in "Knowing its
+     own address"
+   - `/admin` redirects to `/admin/sign-in`
+
+   Sign in as the seeded administrator, which immediately requires a new
+   password. That is intended, not a fault.
+
+Keep `NEXT_PUBLIC_SEO_NOINDEX=1` until approved content has replaced the
+placeholders. Everything the seed writes is demonstration data and says so.
+
+Once a real domain is attached, add `SITE_URL=https://<that domain>` so the
+canonical names the brand's domain rather than the platform's.
+
+### Splitting it into four
+
+Only worth doing when the site and the CMS need to scale or deploy apart. Deploy
+this repository four times, with one variable different in each:
 
 | Service     | Variable         |
 | ----------- | ---------------- |
@@ -200,103 +325,37 @@ variable:
 | Public site | `SERVICE=web`    |
 | CMS         | `SERVICE=cms`    |
 
-That is enough on its own: no build or start command needs configuring, because
-the root scripts read it.
+Name the API service `api` and the site `web`; the others reference them by
+name. Generate domains for `api`, `web` and `cms` — the worker serves no HTTP.
+Put the pre-deploy migration on the API service only, so migrations run once per
+release rather than from four services at once.
 
-`railway/*.json` carry the same commands explicitly, along with the API's health
-check and its pre-deploy migration step. They apply only when a service is
-pointed at one under **Settings → Config-as-code**; a service left on the
-default looks for `railway.json` at the repository root, which does not exist
-here. If a build still reports "no start command detected", that setting has not
-taken effect — and `SERVICE` is what makes the build work regardless.
+Then, once the domains exist:
 
-Deploy in order: PostgreSQL, then the API (which runs the migrations), then the
-worker, the public site and the CMS. The two Next.js apps build against the
-running API, per the section above.
+```
+# web
+NEXT_PUBLIC_API_URL=https://${{api.RAILWAY_PUBLIC_DOMAIN}}
+SITE_URL=https://${{web.RAILWAY_PUBLIC_DOMAIN}}
+NEXT_PUBLIC_SEO_NOINDEX=1
 
-Leave the root directory at the repository root. Setting it to `apps/api` breaks
-pnpm workspace resolution, because the lockfile and the `@cheezious/*` packages
-live above it.
+# cms
+NEXT_PUBLIC_CMS_API_URL=https://${{api.RAILWAY_PUBLIC_DOMAIN}}
 
-The API service carries `pnpm db:migrate:deploy` as its pre-deploy command, so
-migrations run once per release rather than from four services at once. Seeding
-is a one-off: run `pnpm db:seed` from the API service's shell against the empty
-database, and never again.
+# api and worker
+API_PUBLIC_URL=https://${{api.RAILWAY_PUBLIC_DOMAIN}}
+CORPORATE_WEB_URL=https://${{web.RAILWAY_PUBLIC_DOMAIN}}
+CMS_URL=https://${{cms.RAILWAY_PUBLIC_DOMAIN}}
+CORS_ALLOWED_ORIGINS=https://${{web.RAILWAY_PUBLIC_DOMAIN}},https://${{cms.RAILWAY_PUBLIC_DOMAIN}}
+```
 
-### First deployment, step by step
+Deploy in order — api, then worker, then web and cms — and wait for
+`https://<api>/ready` to return 200 before the two Next.js apps build. They
+prerender against it, and an unreachable API does not fail their build loudly;
+see "The public site's build needs the API running" above.
 
-1. **PostgreSQL.** Add Railway's PostgreSQL service. Nothing else to configure.
-
-2. **The API service.** Deploy this repository, name the service `api` — other
-   services reference it by that name — and generate a public domain under
-   **Settings → Networking**.
-
-3. **Its variables.** Only five are genuinely required; everything else has a
-   working default:
-
-   ```
-   SERVICE=api
-   DATABASE_URL=${{Postgres.DATABASE_URL}}
-   DIRECT_DATABASE_URL=${{Postgres.DATABASE_URL}}
-   SESSION_SECRET=<openssl rand -base64 48>
-   PREVIEW_SECRET=<a different one>
-   REVALIDATE_SECRET=<a different one>
-   INTERNAL_API_KEY=<a different one>
-   ```
-
-   Both database URLs point at the same place on purpose: Railway's PostgreSQL
-   is not pooled, and the two differ only when it is. Four distinct secrets, not
-   one value repeated — the API refuses to start in production with a
-   placeholder, but it cannot tell that you reused a real one.
-
-4. **The other three services.** Deploy the same repository three more times as
-   `worker`, `web` and `cms`. Generate domains for `web` and `cms`; the worker
-   serves no HTTP and needs none.
-
-5. **Their variables.** The worker takes the same set as the API with
-   `SERVICE=worker`. Then:
-
-   ```
-   # web
-   SERVICE=web
-   NEXT_PUBLIC_API_URL=https://${{api.RAILWAY_PUBLIC_DOMAIN}}
-   NEXT_PUBLIC_SITE_URL=https://${{web.RAILWAY_PUBLIC_DOMAIN}}
-   NEXT_PUBLIC_SEO_NOINDEX=1
-
-   # cms
-   SERVICE=cms
-   NEXT_PUBLIC_CMS_API_URL=https://${{api.RAILWAY_PUBLIC_DOMAIN}}
-   NEXT_PUBLIC_SITE_URL=https://${{web.RAILWAY_PUBLIC_DOMAIN}}
-   ```
-
-6. **Close the loop on the API and worker**, now that the domains exist:
-
-   ```
-   API_PUBLIC_URL=https://${{api.RAILWAY_PUBLIC_DOMAIN}}
-   CORPORATE_WEB_URL=https://${{web.RAILWAY_PUBLIC_DOMAIN}}
-   CMS_URL=https://${{cms.RAILWAY_PUBLIC_DOMAIN}}
-   CORS_ALLOWED_ORIGINS=https://${{web.RAILWAY_PUBLIC_DOMAIN}},https://${{cms.RAILWAY_PUBLIC_DOMAIN}}
-   ```
-
-   `CORS_ALLOWED_ORIGINS` is the one that fails confusingly: get it wrong and
-   the browser refuses every call the CMS makes, which presents as a broken
-   sign-in rather than as a configuration error.
-
-7. **Deploy in order** — api, then worker, then web and cms. Wait for
-   `https://<api>/ready` to return 200 before the two Next.js apps build. They
-   prerender against it, and an unreachable API does not fail their build
-   loudly; see the section above.
-
-8. **Seed once.** Migrations run themselves. Seeding does not: open the API
-   service's shell and run `pnpm db:seed` against the empty database, once.
-
-9. **Check it.** `https://<api>/ready` returns 200; `https://<web>/en/company`
-   serves the corporate home page; `https://<cms>` redirects to `/sign-in`.
-   Sign in as the seeded administrator, which will immediately require a new
-   password. That is the intended behaviour, not a fault.
-
-Keep `NEXT_PUBLIC_SEO_NOINDEX=1` until approved content has replaced the
-placeholders. Everything the seed writes is demonstration data and says so.
+`CORS_ALLOWED_ORIGINS` is the one that fails confusingly: get it wrong and the
+browser refuses every call the CMS makes, which presents as a broken sign-in
+rather than as a configuration error.
 
 ## Releasing
 

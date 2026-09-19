@@ -21,6 +21,27 @@ const boolish = z
 
 const port = z.coerce.number().int().min(1).max(65535);
 
+/**
+ * A URL that falls back to its default when the platform hands us a broken one.
+ *
+ * Hosting platforms build these from references to other services — Railway's
+ * `https://${{cms.RAILWAY_PUBLIC_DOMAIN}}` and its equivalents. Delete that
+ * service's domain and the reference resolves to nothing, leaving `https://`,
+ * which is not a URL. Treating that as a fatal misconfiguration means removing
+ * a domain from the CMS takes the whole API offline — which is what happened,
+ * and is far out of proportion to what these values are for: building links
+ * back to the other applications.
+ *
+ * A genuinely malformed value still fails. Only the empty and scheme-only
+ * cases, which is precisely what an unresolved reference produces, fall back.
+ */
+const serviceUrl = (fallback: string) =>
+  z.preprocess((value) => {
+    if (typeof value !== 'string') return value;
+    const trimmed = value.trim();
+    return trimmed === '' || /^https?:\/\/$/.test(trimmed) ? undefined : trimmed;
+  }, z.string().url().default(fallback));
+
 const csv = z
   .string()
   .default('')
@@ -51,10 +72,10 @@ export const apiSchema = runtimeSchema.merge(databaseSchema).extend({
   PORT: port.optional(),
   API_PORT: port.default(4000),
   API_HOST: z.string().default('0.0.0.0'),
-  API_PUBLIC_URL: z.string().url().default('http://localhost:4000'),
+  API_PUBLIC_URL: serviceUrl('http://localhost:4000'),
 
-  CORPORATE_WEB_URL: z.string().url().default('http://localhost:3000'),
-  CMS_URL: z.string().url().default('http://localhost:3001'),
+  CORPORATE_WEB_URL: serviceUrl('http://localhost:3000'),
+  CMS_URL: serviceUrl('http://localhost:3001'),
 
   REDIS_URL: z.string().url().optional().or(z.literal('')),
 
